@@ -178,7 +178,7 @@ No sistema SocialSelling, o **LangGraph representa o quadro negro**: o `LeadStat
 - `LeadState.dominant_hypothesis`: hipótese com maior `posterior` entre as ACTIVE (ou melhor CANDIDATE)
 - `LeadState.committee`: `CommitteeMap` completo com `bmo`, `sc`, `influencers`, `completeness`
 - `LeadState.scores`: `ScoreVector` completo com todos os componentes intermediários e `P_score` final
-- Escrita em banco: `evaluated_hypotheses` (Layer 3), `committee_members`, `score_snapshots`, `analytical_feature_store`
+- Escrita em banco: `evaluated_hypotheses` (Layer 3), `committee_members`, `behavioral_momentum_log`, `analytical_feature_store`
 
 **Barramentos de Memória:**
 - **Leitura de `generated_inferences` (Layer 2):** o Triage Agent lê as inferências versionadas da Layer 2 no banco para garantir consistência com o estado persisto anteriormente (especialmente em Delta Search reativada, onde evidências anteriores podem estar no banco mas não no `evidence_batch` em memória)
@@ -237,7 +237,7 @@ No sistema SocialSelling, o **LangGraph representa o quadro negro**: o `LeadStat
 
 **Outputs do Agente (campos escritos no LeadState):**
 - `LeadState.blueprint`: `ConversationBlueprint` completo (ou parcial com flags)
-- Escrita em banco: `analytical_feature_store.approach_blueprint`, `blueprint_log`
+- Escrita em banco: `analytical_feature_store` (campo `dominant_hypothesis_id` e payload do blueprint serializado no XAI response)
 
 **Barramentos de Memória:**
 - **Read-only sobre `evaluated_hypotheses` (Layer 3):** o Copywriter Agent lê hipóteses mas nunca modifica scores ou posteriors
@@ -758,7 +758,7 @@ O payload é estruturado para servir três consumidores distintos com necessidad
 
 **Business Logic:**
 1. Valida assinatura HMAC-SHA256 imediatamente — se inválida, retorna 401 sem processar
-2. Insere em `crm_feedback_log` com `status='QUEUED'`
+2. Insere em `crm_outcome_log` com `processed_at=NULL` (pendente de processamento assíncrono)
 3. Publica mensagem em SQS `socialselling-crm-feedback` com payload completo
 4. Retorna 202 imediatamente — nunca bloqueia o ciclo ativo
 

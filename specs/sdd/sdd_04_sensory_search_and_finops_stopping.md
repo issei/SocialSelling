@@ -7,9 +7,9 @@
 **Escopo do Documento:** Arquitetura de coleta assíncrona multiprovedor, modelo de qualidade de fonte (Source Quality Vector), mecanismo de saturação de descoberta (DSS), regra de parada FinOps por Information Gain (EIG/MIC), Delta Search Mode e o Adaptive Investigation Engine como núcleo cognitivo de stopping.
 
 **Documentos relacionados:**
-- `sdd_01_product_vision_and_core_dag.md` — Arquitetura LangGraph, AgentState, DAG de fases
+- `sdd_01_product_vision_and_core_dag.md` — Arquitetura LangGraph, LeadState (denominado `LeadState` no SDD-01; padronizado como `LeadState` a partir do SDD-07), DAG de fases
 - `sdd_02_mathematical_core_scoring.md` — Fórmulas P_score, O_score, C_score, SRS_k
-- `sdd_06_database_schema_and_graph_ready_ddl.md` — DDL das tabelas `observed_evidence`, `source_reliability_scores`
+- `sdd_06_database_schema_and_graph_ready_ddl.md` — DDL das tabelas `observed_evidence` (evidências brutas append-only), `source_reliability` (SRS e qualidade por fonte — campos: `srs_current`, `true_positives`, `false_positives`, `coverage_last_cycle`, `historical_accuracy_weighted`), `search_logs` (log de execuções), `pruned_reason_log` (eventos de poda)
 - `sdd_07_event_storming_and_saga_orchestration.md` — EV-15 (Delta Search), EV-18 (SRS feedback loop)
 
 ---
@@ -311,7 +311,7 @@ RRF_Score(E) = 1/(60+5) + 0 + 1/(60+4)
 
 ### 1.4 DSL Query Builder
 
-O DSL Query Builder e o componente responsavel por parametrizar as queries de scraping e busca conforme o segmento de mercado do ICP contract ativo. Nao implementa exploracao probabilistica (sem epsilon-Greedy): toda selecao de queries e deterministica, governada pelo estado do DSS e pelos atributos do `AgentState`.
+O DSL Query Builder e o componente responsavel por parametrizar as queries de scraping e busca conforme o segmento de mercado do ICP contract ativo. Nao implementa exploracao probabilistica (sem epsilon-Greedy): toda selecao de queries e deterministica, governada pelo estado do DSS e pelos atributos do `LeadState`.
 
 #### 1.4.1 Templates por Segmento
 
@@ -444,14 +444,14 @@ QueryTemplate(
 
 #### 1.4.2 Mecanismo de Selecao Determinisico
 
-A selecao de queries dentro de cada template nao e aleatoria. O `QuerySelector` avalia o estado corrente do `AgentState` e prioriza queries conforme:
+A selecao de queries dentro de cada template nao e aleatoria. O `QuerySelector` avalia o estado corrente do `LeadState` e prioriza queries conforme:
 
 1. **Atributos com maior `u` atual** — queries que reduzem incerteza nos atributos mais incertos tem prioridade
 2. **Hipoteses com `posterior` na faixa `[0.35, 0.65]`** — hipoteses em zona de indecisao tem maior EIG esperado
 3. **Fontes com `SQS_k` mais alto disponivel** — queries de fontes mais confiaveis executam primeiro
 4. **Budget restante de Tavily** — queries de baixo EIG sao cortadas se `finops_budget_remaining < 3`
 
-Sem qualquer componente probabilistico: dado o mesmo `AgentState`, o `QuerySelector` sempre produz a mesma sequencia de queries.
+Sem qualquer componente probabilistico: dado o mesmo `LeadState`, o `QuerySelector` sempre produz a mesma sequencia de queries.
 
 ---
 
@@ -551,7 +551,7 @@ Este delta e persistido em `pruned_reason_log` via EV-15 (Event Storming).
 
 O mecanismo epsilon-Greedy introduz nao-determinismo por design: com probabilidade epsilon, uma acao e selecionada uniformemente ao acaso em vez de seguir a politica greedy. Isso cria os seguintes problemas para um sistema de inteligencia de dados auditavel:
 
-1. **Nao-reprodutibilidade de resultados:** dado o mesmo `AgentState`, duas execucoes podem produzir conjuntos de evidencias distintos devido ao sorteio epsilon. A auditoria de "por que este lead foi priorizado" se torna impossivel.
+1. **Nao-reprodutibilidade de resultados:** dado o mesmo `LeadState`, duas execucoes podem produzir conjuntos de evidencias distintos devido ao sorteio epsilon. A auditoria de "por que este lead foi priorizado" se torna impossivel.
 
 2. **Violacao do principio de determinismo do scoring:** o P_score e uma funcao deterministica do estado de evidencias. Se as evidencias coletadas sao aleatorias, o P_score e uma variavel aleatoria — incompativel com uso para tomada de decisao comercial repetivel.
 
@@ -984,8 +984,8 @@ async def check_anchor_profile_interaction(
 Quando qualquer dos tres checks detecta um `TriggerEvent` com `urgency_level` em `["ALTA", "MEDIA"]`, o sistema executa a sequencia de reativacao (EV-16 do Event Storming):
 
 ```
-1. UPDATE leads SET search_mode='DELTA_ACTIVE' WHERE lead_id=$1
-2. INSERT INTO trigger_event_log (event_type, urgency_level, source, payload)
+1. UPDATE entity_nodes SET last_updated_at=NOW() WHERE entity_id=$1 -- marca reativação no nó de entidade
+2. INSERT INTO behavioral_momentum_log (event_id, entity_id, trigger_type, trigger_source, trigger_weight, detected_at, window_days, is_active, cycle_id) VALUES (...)
 3. Enfileirar na SQS: ReactivationJob { lead_id, trigger_event_id }
 4. Consumer Lambda executa subconjunto do pipeline:
    [ScraperNode para fonte do trigger]
@@ -1339,14 +1339,14 @@ n > 32.19
 
 ### 5.8 Tabela de Atualizacao das Dimensoes do SQV_k
 
-| Dimensao | Quando e Atualizada | Trigger | Tabela BD Destino |
+| Dimensao | Quando e Atualizada | Trigger | Tabela BD Destino (schema SDD-06) |
 |---|---|---|---|
-| `CRED_k` | Apos processamento de feedback CRM (EV-18) | `CRMFeedbackReceived` -> SQS consumer | `source_reliability_scores` — campos `tp_count`, `tn_count`, `fp_count`, `fn_count`, `cred_score` |
-| `FRESH_k` | Em tempo real antes de qualquer uso da evidencia | Calculo inline: `now() - collected_at` | Nao persiste no BD — calculado em runtime como funcao pura |
-| `COV_k` | Apos cada coleta de evidencia (EV-03, EV-04, EV-05) | `EvidenceCollected` por fonte | `source_collection_stats` — campos `attributes_expected`, `attributes_observed`, `cov_score`, `collected_at` |
-| `HACC_k` | Apos processamento de feedback CRM (EV-18) | `CRMFeedbackReceived` -> SQS consumer | `source_historical_accuracy` — campos `cycle_id`, `accuracy_score`, `weight`, `hacc_rolling` |
-| `SRS_k` | Apos processamento de feedback CRM (EV-18) | `SRSUpdated` via EV-18 | `source_reliability_scores` — campo `srs_value` (bounded 0.10–1.00) |
-| `SQS_k` | Calculado sob demanda ou snapshot por ciclo | Requisicao de `SQS_k` por qualquer no | `source_quality_snapshots` — snapshot por `(source_key, cycle_id)` para auditoria |
+| `CRED_k` | Apos processamento de feedback CRM (EV-18) | `CRMFeedbackReceived` -> SQS consumer | `source_reliability` — campos `true_positives`, `true_negatives`, `false_positives`, `false_negatives` (SRS_current recalculado em trigger) |
+| `FRESH_k` | Em tempo real antes de qualquer uso da evidencia | Calculo inline: `now() - last_recalculated` da fonte | Nao persiste separadamente no MVP — calculado em runtime; V1: campo adicional em `source_reliability` |
+| `COV_k` | Apos cada coleta de evidencia (EV-03, EV-04, EV-05) | `EvidenceCollected` por fonte | Calculado em memória no MVP; V1: campo `coverage_last_cycle` em `source_reliability` |
+| `HACC_k` | Apos processamento de feedback CRM (EV-18) | `CRMFeedbackReceived` -> SQS consumer | `source_reliability` — campo `historical_accuracy_weighted` (média exponencialmente ponderada) |
+| `SRS_k` | Apos processamento de feedback CRM (EV-18) | `SRSUpdated` via EV-18 | `source_reliability` — campo `srs_current` (bounded 0.00–1.00 via CHECK constraint) |
+| `SQS_k` | Calculado sob demanda por ciclo | Requisicao de `SQS_k` por qualquer no | Calculado em memória; componentes persistidos individualmente nos campos acima de `source_reliability` |
 
 ---
 
