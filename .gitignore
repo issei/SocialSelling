@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Ambientes
+.venv/
+venv/
+env/
+
+# Segredos
+.env
+
+# Caches de ferramentas
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Dados e logs gerados em runtime (mantemos a estrutura via .gitkeep)
+data/cache/
+data/*.json
+logs/*.jsonl
+logs/*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,31 @@
+# Parametros de runtime do PoC. Valores default documentados (ADR-000 / roadmap Fase 0).
+# Nenhum segredo aqui — chaves de API ficam no .env.
+
+[cache]
+# TTL do cache frio de chamadas externas (T-24h). Ver SDD v1.0 secao 1.4.
+ttl_hours = 24
+
+[finops]
+# Limiar minimo de P_score abaixo do qual o lead e podado (Progressive Early Termination).
+tau_finops = 0.60
+# Fator de penalidade aplicado ao C_score quando qualquer sensor opera DEGRADED (0,1).
+kappa_degraded = 0.80
+
+[scoring]
+# Fórmula linear do PoC: P = (w_fit * Fit + w_intent * Intent) * (Confianca ^ confidence_exponent)
+w_fit = 0.60
+w_intent = 0.40
+confidence_exponent = 0.5
+
+[tavily]
+max_results = 10
+search_depth = "basic"
+
+[gemini]
+model = "gemini-2.0-flash"
+max_retries = 3
+backoff_base_seconds = 2
+
+[runtime]
+# Limite de leads por ciclo no PoC (controle de custo/latencia).
+max_leads_per_cycle = 50

@@ -1,0 +1,39 @@
+{
+  "hypotheses": [
+    {
+      "hypothesis_id": "H_01",
+      "description": "Estresse de crescimento de infraestrutura cloud.",
+      "prior": 0.25,
+      "surface_signals": ["contratacao_sre", "aumento_vagas_tecnicas", "uso_aws"],
+      "sources": ["job_boards", "web_search"]
+    },
+    {
+      "hypothesis_id": "H_02",
+      "description": "Substituicao de legado ou migracao tecnologica.",
+      "prior": 0.20,
+      "surface_signals": ["vagas_modernizacao", "mencao_microservicos", "remocao_tags_legado"],
+      "sources": ["web_search", "job_boards"]
+    },
+    {
+      "hypothesis_id": "H_03",
+      "description": "Injecao de capital com foco em expansao tecnica.",
+      "prior": 0.18,
+      "surface_signals": ["rodada_investimento", "aumento_headcount"],
+      "sources": ["financial_news", "web_search"]
+    },
+    {
+      "hypothesis_id": "H_04",
+      "description": "Necessidade de automacao por gargalo operacional.",
+      "prior": 0.15,
+      "surface_signals": ["mencao_processos_manuais", "vagas_automacao", "crescimento_clientes"],
+      "sources": ["web_search"]
+    },
+    {
+      "hypothesis_id": "H_05",
+      "description": "Centralizacao excessiva / gargalo de lideranca.",
+      "prior": 0.12,
+      "surface_signals": ["unico_rosto_publico", "ausencia_mencao_equipe"],
+      "sources": ["web_search"]
+    }
+  ]
+}
