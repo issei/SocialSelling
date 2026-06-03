@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SocialSelling — UI local</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <header class="bg-white border-b">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-bold">SocialSelling <span class="text-slate-400 font-normal">— Operador local</span></h1>
+      <nav class="text-sm space-x-4">
+        <a href="#parametros" class="text-indigo-600 hover:underline">Parâmetros</a>
+        <a href="#assistente" class="text-indigo-600 hover:underline">Assistente</a>
+        <a href="#resultados" class="text-indigo-600 hover:underline">Resultados</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 py-8 space-y-10">
+
+    <!-- ASSISTENTE -->
+    <section id="assistente" class="bg-white rounded-xl shadow-sm border p-6 space-y-3">
+      <h2 class="text-lg font-semibold">🤖 Assistente (Gemini) — parametrização inicial</h2>
+      <p class="text-sm text-slate-500">Descreva seu negócio e o público-alvo; a IA gera um rascunho de ICP que você revisa e salva.</p>
+      <textarea id="assistDesc" rows="3" class="w-full border rounded-lg p-3 text-sm" placeholder="Ex.: Vendo um programa de gestão para fundadoras de consultoria e advocacia, 5–30 pessoas, Sudeste/Sul..."></textarea>
+      <div class="flex items-center gap-3">
+        <button id="btnAssist" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">Gerar rascunho de ICP</button>
+        <span id="assistStatus" class="text-sm"></span>
+      </div>
+    </section>
+
+    <!-- PARAMETROS -->
+    <section id="parametros" class="bg-white rounded-xl shadow-sm border p-6 space-y-6">
+      <h2 class="text-lg font-semibold">⚙️ Parâmetros</h2>
+
+      <div class="space-y-2">
+        <h3 class="font-medium">ICP (Ideal Customer Profile)</h3>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="icpSelect" class="border rounded-lg p-2 text-sm"></select>
+          <button id="btnLoadIcp" class="border px-3 py-2 rounded-lg text-sm hover:bg-slate-50">Carregar</button>
+          <input id="icpName" class="border rounded-lg p-2 text-sm flex-1 min-w-[220px]" placeholder="salvar como: icp_criteria.meu.json" />
+          <button id="btnSaveIcp" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-700">Validar &amp; Salvar</button>
+        </div>
+        <textarea id="icpJson" rows="14" class="w-full border rounded-lg p-3 font-mono text-xs"></textarea>
+        <span id="icpStatus" class="text-sm"></span>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-2">
+          <h3 class="font-medium">Pesos do score</h3>
+          <div id="scoringFields" class="grid grid-cols-2 gap-2 text-sm"></div>
+          <button id="btnSaveScoring" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-700">Salvar pesos</button>
+          <span id="scoringStatus" class="text-sm"></span>
+        </div>
+        <div class="space-y-2">
+          <h3 class="font-medium">Hipóteses (timing)</h3>
+          <textarea id="hypJson" rows="8" class="w-full border rounded-lg p-3 font-mono text-xs"></textarea>
+          <button id="btnSaveHyp" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-700">Salvar hipóteses</button>
+          <span id="hypStatus" class="text-sm"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTADOS -->
+    <section id="resultados" class="bg-white rounded-xl shadow-sm border p-6 space-y-4">
+      <h2 class="text-lg font-semibold">🚀 Executar &amp; Resultados</h2>
+      <div class="flex flex-wrap items-center gap-2">
+        <select id="runIcp" class="border rounded-lg p-2 text-sm"></select>
+        <button id="btnRun" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">Executar</button>
+        <span id="runStatus" class="text-sm"></span>
+      </div>
+      <div id="cards" class="grid md:grid-cols-2 gap-4"></div>
+    </section>
+  </main>
+
+  <script>
+    const SCORING_KEYS = ["w_fit","w_intent","confidence_exponent","w_fit_tech","w_fit_industry"];
+    const $ = (id) => document.getElementById(id);
+    const setStatus = (id, msg, ok) => { const e=$(id); e.textContent=msg; e.className="text-sm "+(ok?"text-emerald-600":"text-rose-600"); };
+
+    async function api(method, url, body) {
+      const opt = { method, headers: { "Content-Type": "application/json" } };
+      if (body !== undefined) opt.body = JSON.stringify(body);
+      const r = await fetch(url, opt);
+      let data = null; try { data = await r.json(); } catch (_) {}
+      if (!r.ok) {
+        const detail = data && data.detail ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail)) : ("HTTP " + r.status);
+        throw new Error(detail);
+      }
+      return data;
+    }
+
+    function fillSelect(sel, items, current) {
+      sel.innerHTML = "";
+      for (const it of items) { const o=document.createElement("option"); o.value=it; o.textContent=it; sel.appendChild(o); }
+      if (current) sel.value = current;
+    }
+
+    async function boot() {
+      const cfg = await api("GET", "/api/config");
+      fillSelect($("icpSelect"), cfg.icp_files, cfg.icp_files.find(f=>f.includes("talita")));
+      fillSelect($("runIcp"), cfg.icp_files, cfg.icp_files.find(f=>f.includes("talita")));
+      const sf = $("scoringFields"); sf.innerHTML="";
+      for (const k of SCORING_KEYS) {
+        const wrap=document.createElement("label"); wrap.className="flex flex-col";
+        wrap.innerHTML = `<span class="text-slate-500">${k}</span><input data-k="${k}" type="number" step="0.05" value="${cfg.scoring[k]}" class="border rounded p-1" />`;
+        sf.appendChild(wrap);
+      }
+      try { const hyp = await api("GET","/api/config/hypotheses"); $("hypJson").value = JSON.stringify(hyp, null, 2); } catch(_){}
+      await loadIcp();
+    }
+
+    async function loadIcp() {
+      const name = $("icpSelect").value;
+      try {
+        const icp = await api("GET", "/api/config/icp?name=" + encodeURIComponent(name));
+        $("icpJson").value = JSON.stringify(icp, null, 2);
+        $("icpName").value = name;
+        setStatus("icpStatus", "Carregado: " + name, true);
+      } catch (e) { setStatus("icpStatus", "Erro: " + e.message, false); }
+    }
+
+    async function saveIcp() {
+      let icp; try { icp = JSON.parse($("icpJson").value); } catch (e) { return setStatus("icpStatus","JSON invalido: "+e.message,false); }
+      const name = ($("icpName").value || "").trim();
+      if (!name) return setStatus("icpStatus","Informe o nome do arquivo.",false);
+      try { await api("POST","/api/config/icp",{name, icp}); setStatus("icpStatus","Salvo: "+name,true); await boot(); $("icpSelect").value=name; }
+      catch (e) { setStatus("icpStatus","Nao salvo (invalido): "+e.message,false); }
+    }
+
+    async function saveScoring() {
+      const body={}; document.querySelectorAll('#scoringFields input').forEach(i=>body[i.dataset.k]=parseFloat(i.value));
+      try { await api("POST","/api/config/scoring",body); setStatus("scoringStatus","Pesos salvos.",true); }
+      catch(e){ setStatus("scoringStatus","Erro: "+e.message,false); }
+    }
+
+    async function saveHyp() {
+      let cat; try { cat = JSON.parse($("hypJson").value); } catch(e){ return setStatus("hypStatus","JSON invalido: "+e.message,false); }
+      try { const r=await api("POST","/api/config/hypotheses",cat); setStatus("hypStatus","Salvo ("+r.count+" hipoteses).",true); }
+      catch(e){ setStatus("hypStatus","Nao salvo (invalido): "+e.message,false); }
+    }
+
+    async function assist() {
+      const description = $("assistDesc").value.trim();
+      if (!description) return setStatus("assistStatus","Descreva o negocio primeiro.",false);
+      setStatus("assistStatus","Gerando com Gemini...",true); $("btnAssist").disabled=true;
+      try {
+        const icp = await api("POST","/api/assist/icp",{description});
+        $("icpJson").value = JSON.stringify(icp, null, 2);
+        $("icpName").value = (icp.icp_id ? "icp_criteria."+icp.icp_id+".json" : "icp_criteria.novo.json");
+        setStatus("assistStatus","Rascunho gerado — revise em Parametros e salve.",true);
+        document.getElementById("parametros").scrollIntoView({behavior:"smooth"});
+      } catch(e){ setStatus("assistStatus","Erro: "+e.message,false); }
+      finally { $("btnAssist").disabled=false; }
+    }
+
+    function card(l) {
+      const ig = l.links && l.links.instagram;
+      const li = l.links && l.links.linkedin;
+      const site = l.links && l.links.website;
+      const head = `#${l.rank} · ${l.display_name}` + (l.role && l.company ? ` — ${l.role} @ ${l.company}` : (l.company && l.company!==l.display_name ? ` — ${l.company}` : ""));
+      const meta = [l.sector, l.location].filter(Boolean).join(" · ");
+      const why = (l.why_now||[]).map(w=>`<li>${w}</li>`).join("");
+      const gaps = (l.gaps||[]).map(g=>`<li class="text-amber-600">⚠ ${g}</li>`).join("");
+      const s = l.score;
+      return `<div class="border rounded-xl p-4 space-y-2">
+        <div class="font-semibold">${head}</div>
+        <div class="text-xs text-slate-500">${meta}${meta?" · ":""}P=${s.p_score.toFixed(3)} (fit ${s.fit.toFixed(2)} · intent ${s.intent.toFixed(2)} · conf ${s.confidence.toFixed(2)})</div>
+        <div class="text-sm space-x-3">
+          ${ig?`<a class="text-pink-600 hover:underline" target="_blank" rel="noopener" href="${ig}">📸 Instagram</a>`:""}
+          ${li?`<a class="text-blue-700 hover:underline" target="_blank" rel="noopener" href="${li}">🔗 LinkedIn</a>`:""}
+          ${site?`<a class="text-slate-600 hover:underline" target="_blank" rel="noopener" href="${site}">🌐 Site</a>`:""}
+        </div>
+        ${why?`<ul class="text-sm list-disc list-inside text-emerald-700">${why}</ul>`:""}
+        ${gaps?`<ul class="text-xs list-disc list-inside">${gaps}</ul>`:""}
+        <div class="text-xs text-slate-400">${(l.sources||[]).length} fonte(s)</div>
+      </div>`;
+    }
+
+    async function run() {
+      const icp_name = $("runIcp").value;
+      setStatus("runStatus","Executando (pode levar alguns segundos)...",true);
+      $("btnRun").disabled=true; $("cards").innerHTML="";
+      try {
+        const res = await api("POST","/api/run",{icp_name});
+        setStatus("runStatus", res.count + " leads.", true);
+        $("cards").innerHTML = (res.leads||[]).map(card).join("");
+      } catch(e){ setStatus("runStatus","Erro: "+e.message,false); }
+      finally { $("btnRun").disabled=false; }
+    }
+
+    $("btnLoadIcp").onclick=loadIcp;
+    $("btnSaveIcp").onclick=saveIcp;
+    $("btnSaveScoring").onclick=saveScoring;
+    $("btnSaveHyp").onclick=saveHyp;
+    $("btnAssist").onclick=assist;
+    $("btnRun").onclick=run;
+    boot().catch(e=>console.error(e));
+  </script>
+</body>
+</html>

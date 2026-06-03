@@ -84,6 +84,14 @@ def read_icp(config_dir: Path, name: str) -> dict[str, Any]:
     return data
 
 
+def read_hypotheses(config_dir: Path) -> dict[str, Any]:
+    """Lê o catálogo de hipóteses cru (para edição na UI)."""
+    data: dict[str, Any] = json.loads(
+        (config_dir / "hypotheses_catalog.json").read_text(encoding="utf-8")
+    )
+    return data
+
+
 def save_icp(config_dir: Path, name: str, icp: ICPCriteria) -> None:
     """Grava o ICP (já validado) atomicamente."""
     path = _safe_icp_path(config_dir, name)

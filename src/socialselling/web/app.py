@@ -36,6 +36,7 @@ from socialselling.web.services import (
     MissingKeys,
     assist_icp,
     load_config,
+    read_hypotheses,
     read_icp,
     run_for_icp,
     save_hypotheses,
@@ -44,28 +45,9 @@ from socialselling.web.services import (
 )
 
 _ENV_PATH = Path(__file__).resolve().parents[3] / ".env"
+_STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 PipelineRunner = Callable[[str], list[LeadCard]]
-
-_PLACEHOLDER_HTML = """<!doctype html>
-<html lang="pt-br">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SocialSelling — UI local</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800">
-  <main class="max-w-3xl mx-auto p-8 space-y-6">
-    <h1 class="text-2xl font-bold">SocialSelling — Operador local</h1>
-    <section id="parametros"><h2 class="font-semibold">Parâmetros</h2></section>
-    <section id="assistente"><h2 class="font-semibold">Assistente (Gemini)</h2></section>
-    <section id="resultados"><h2 class="font-semibold">Resultados</h2></section>
-    <p class="text-sm text-slate-500">Fundação web (WU-U1). Telas completas nas próximas fatias.</p>
-  </main>
-</body>
-</html>
-"""
 
 
 def create_app(
@@ -96,11 +78,15 @@ def create_app(
 
     @app.get("/", response_class=HTMLResponse)
     def index() -> str:
-        return _PLACEHOLDER_HTML
+        return (_STATIC_DIR / "index.html").read_text(encoding="utf-8")
 
     @app.get("/api/config")
     def api_config() -> dict[str, Any]:
         return load_config(config_dir, runtime_path)
+
+    @app.get("/api/config/hypotheses")
+    def api_get_hypotheses() -> dict[str, Any]:
+        return read_hypotheses(config_dir)
 
     @app.get("/api/config/icp")
     def api_get_icp(name: str) -> dict[str, Any]:

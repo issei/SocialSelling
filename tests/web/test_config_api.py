@@ -85,6 +85,13 @@ def test_post_hypotheses_valido(env: tuple[TestClient, Path]) -> None:
     assert resp.json()["count"] == len(catalog["hypotheses"])
 
 
+def test_get_hypotheses_ok(env: tuple[TestClient, Path]) -> None:
+    client, _ = env
+    resp = client.get("/api/config/hypotheses")
+    assert resp.status_code == 200
+    assert isinstance(resp.json()["hypotheses"], list)
+
+
 def test_post_scoring_atualiza_runtime(env: tuple[TestClient, Path]) -> None:
     client, cfg_dir = env
     resp = client.post(
