@@ -159,6 +159,10 @@ class Inference(BaseModel):
     people: list[PersonEntity] = Field(default_factory=list)
     derived_from: list[str]  # evidence_ids — rastreabilidade Evidence -> Inference
     confidence: float = Field(ge=0.0, le=1.0)
+    # Sinais de intencao/timing detectados (vocabulario das hipoteses) e
+    # desqualificadores detectados (vocabulario fixo). Usados pelo M3 (intent + hard filter).
+    intent_signals: list[str] = Field(default_factory=list)
+    disqualifiers: list[str] = Field(default_factory=list)
 
 
 # --------------------------------------------------------------------------- #

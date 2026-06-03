@@ -30,15 +30,24 @@ _PROMPT_HEADER = (
     '"employee_count":int|null,"industry":str|null,"technologies":[str],'
     '"confidence":number},"people":[{"normalized_name":str,"role_title":str|null,'
     '"seniority":str|null,"confidence":number}],"derived_from":[evidence_id],'
-    '"confidence":number}]}\n'
-    "confidence e um numero entre 0 e 1. derived_from lista os evidence_id usados.\n\n"
+    '"intent_signals":[token],"disqualifiers":[token],"confidence":number}]}\n'
+    "confidence e um numero entre 0 e 1. derived_from lista os evidence_id usados.\n"
+    "intent_signals e disqualifiers: liste APENAS tokens dos vocabularios abaixo que "
+    "estiverem EVIDENTES no texto; se nenhum, use lista vazia (nunca invente).\n\n"
 )
 
 
-def build_prompt(evidences: list[ObservedEvidence]) -> str:
+def build_prompt(
+    evidences: list[ObservedEvidence],
+    intent_vocab: list[str],
+    disqualifier_vocab: list[str],
+) -> str:
     """Prompt determinístico (campos estáveis; ignora captured_at)."""
     ordered = sorted(evidences, key=lambda e: e.evidence_id)
-    lines: list[str] = [_PROMPT_HEADER, "Resultados de busca:"]
+    lines: list[str] = [_PROMPT_HEADER]
+    lines.append(f"VOCABULARIO intent_signals: {', '.join(intent_vocab)}")
+    lines.append(f"VOCABULARIO disqualifiers: {', '.join(disqualifier_vocab)}\n")
+    lines.append("Resultados de busca:")
     for ev in ordered:
         if ev.missing_evidence:
             continue
@@ -69,8 +78,22 @@ def _as_str_or_none(value: Any) -> str | None:
     return text or None
 
 
+def _filter_vocab(values: Any, vocab: list[str]) -> list[str]:
+    """Mantém só tokens conhecidos do vocabulário, sem repetição e em ordem estável."""
+    allowed = set(vocab)
+    out: list[str] = []
+    for raw_token in values or []:
+        token = str(raw_token).strip().lower()
+        if token in allowed and token not in out:
+            out.append(token)
+    return out
+
+
 def _parse_inferences(
-    raw: dict[str, Any], evidences: list[ObservedEvidence]
+    raw: dict[str, Any],
+    evidences: list[ObservedEvidence],
+    intent_vocab: list[str],
+    disqualifier_vocab: list[str],
 ) -> list[Inference]:
     valid_ids = {ev.evidence_id for ev in evidences}
     out: list[Inference] = []
@@ -109,6 +132,8 @@ def _parse_inferences(
                 people=people,
                 derived_from=derived,
                 confidence=_clamp01(float(item.get("confidence", 0.5))),
+                intent_signals=_filter_vocab(item.get("intent_signals"), intent_vocab),
+                disqualifiers=_filter_vocab(item.get("disqualifiers"), disqualifier_vocab),
             )
         )
     return out
@@ -121,12 +146,14 @@ def run_m2(
     cache: JsonCache,
     now: datetime,
     cache_ttl_hours: int,
+    intent_vocab: list[str],
+    disqualifier_vocab: list[str],
 ) -> list[Inference]:
     """Executa o M2: monta o prompt, consulta Gemini (com cache T-24h) e mapeia inferências."""
     observed = [ev for ev in evidences if not ev.missing_evidence]
     if not observed:
         return []
-    prompt = build_prompt(observed)
+    prompt = build_prompt(observed, intent_vocab, disqualifier_vocab)
     payload = cache.get(prompt, now, cache_ttl_hours)
     if payload is None:
         try:
@@ -137,4 +164,4 @@ def run_m2(
             if stale is None:
                 return []
             payload = stale
-    return _parse_inferences(payload, observed)
+    return _parse_inferences(payload, observed, intent_vocab, disqualifier_vocab)

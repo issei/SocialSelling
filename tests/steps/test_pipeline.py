@@ -11,7 +11,7 @@ import pytest
 from pytest_bdd import given, scenarios, then, when
 
 from socialselling.config import load_runtime
-from socialselling.contracts import ICPCriteria, RankedProspect
+from socialselling.contracts import HypothesisCatalog, ICPCriteria, RankedProspect
 from socialselling.core.cache import query_hash
 from socialselling.orchestrator import run_pipeline
 from socialselling.skills.gemini_client import RateLimitError as GeminiRateLimit
@@ -53,12 +53,18 @@ def _icp() -> ICPCriteria:
     return ICPCriteria.model_validate(raw)
 
 
+def _catalog() -> HypothesisCatalog:
+    raw = json.loads((_ROOT / "config" / "hypotheses_catalog.json").read_text("utf-8"))
+    return HypothesisCatalog.model_validate(raw)
+
+
 def _run(cache_root: Path) -> list[RankedProspect]:
     cfg = load_runtime(_ROOT / "config" / "runtime.toml")
     return run_pipeline(
         _icp(),
         tavily=_FakeTavily(),
         gemini=_FakeGemini(),
+        hypotheses=_catalog(),
         cache_root=cache_root,
         now=_NOW,
         cfg=cfg,

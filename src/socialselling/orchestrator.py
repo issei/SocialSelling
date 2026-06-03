@@ -16,13 +16,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from socialselling.config import RuntimeConfig, load_env, load_runtime
-from socialselling.contracts import ICPCriteria, RankedProspect
+from socialselling.contracts import HypothesisCatalog, ICPCriteria, RankedProspect
 from socialselling.core.cache import JsonCache
 from socialselling.modules.m1_busca import is_degraded, run_m1
 from socialselling.modules.m2_extracao import run_m2
 from socialselling.modules.m3_score import run_m3
 from socialselling.modules.m4_ranking import run_m4
 from socialselling.modules.m5_xai import run_m5
+from socialselling.signals import DISQUALIFIER_VOCAB, intent_vocab
 from socialselling.skills.gemini_client import CognitionClient, GeminiClient
 from socialselling.skills.tavily_client import SearchClient, TavilyClient
 
@@ -34,11 +35,13 @@ def run_pipeline(
     *,
     tavily: SearchClient,
     gemini: CognitionClient,
+    hypotheses: HypothesisCatalog,
     cache_root: Path,
     now: datetime,
     cfg: RuntimeConfig,
 ) -> list[RankedProspect]:
     """Executa M1→M5 e monta a lista ranqueada de prospects."""
+    i_vocab = intent_vocab(hypotheses)
     evidences = run_m1(
         icp,
         client=tavily,
@@ -55,6 +58,8 @@ def run_pipeline(
         cache=JsonCache(cache_root / "gemini"),
         now=now,
         cache_ttl_hours=cfg.cache.ttl_hours,
+        intent_vocab=i_vocab,
+        disqualifier_vocab=DISQUALIFIER_VOCAB,
     )
     scores = run_m3(
         inferences,
@@ -124,6 +129,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--icp", required=True, help="caminho do icp_criteria.json")
     parser.add_argument("--out", default=str(_ROOT / "data" / "prospects_ranked.json"))
     parser.add_argument("--config", default=str(_ROOT / "config" / "runtime.toml"))
+    parser.add_argument("--hypotheses", default=str(_ROOT / "config" / "hypotheses_catalog.json"))
     args = parser.parse_args(argv)
 
     cfg = load_runtime(Path(args.config))
@@ -135,10 +141,14 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     icp = ICPCriteria.model_validate(json.loads(Path(args.icp).read_text("utf-8")))
+    hypotheses = HypothesisCatalog.model_validate(
+        json.loads(Path(args.hypotheses).read_text("utf-8"))
+    )
     prospects = run_pipeline(
         icp,
         tavily=TavilyClient(tavily_key),
         gemini=GeminiClient(gemini_key, model=cfg.gemini.model),
+        hypotheses=hypotheses,
         cache_root=_ROOT / "data" / "cache",
         now=datetime.now(UTC),
         cfg=cfg,

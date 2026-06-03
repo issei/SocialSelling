@@ -10,16 +10,23 @@ from typing import Any
 import pytest
 from pytest_bdd import given, scenarios, then, when
 
-from socialselling.contracts import Inference, ObservedEvidence
+from socialselling.contracts import HypothesisCatalog, Inference, ObservedEvidence
 from socialselling.core.cache import JsonCache, query_hash
 from socialselling.modules.m1_busca import run_m1
 from socialselling.modules.m2_extracao import run_m2
+from socialselling.signals import DISQUALIFIER_VOCAB, intent_vocab
 from socialselling.skills.gemini_client import RateLimitError
 
 _ROOT = Path(__file__).resolve().parents[2]
 _TAVILY = _ROOT / "tests" / "fixtures" / "tavily"
 _GEMINI = _ROOT / "tests" / "fixtures" / "gemini"
 _NOW = datetime(2026, 1, 1, tzinfo=UTC)
+
+
+def _vocab() -> list[str]:
+    raw = json.loads((_ROOT / "config" / "hypotheses_catalog.json").read_text("utf-8"))
+    return intent_vocab(HypothesisCatalog.model_validate(raw))
+
 
 scenarios("../features/m2_extracao.feature")
 
@@ -70,7 +77,13 @@ def _run_m2(
     client: FakeGeminiClient, cache_root: Path, evidences: list[ObservedEvidence]
 ) -> list[Inference]:
     return run_m2(
-        evidences, client=client, cache=JsonCache(cache_root), now=_NOW, cache_ttl_hours=24
+        evidences,
+        client=client,
+        cache=JsonCache(cache_root),
+        now=_NOW,
+        cache_ttl_hours=24,
+        intent_vocab=_vocab(),
+        disqualifier_vocab=DISQUALIFIER_VOCAB,
     )
 
 
@@ -136,3 +149,49 @@ def _then_identical(ctx: dict[str, Any]) -> None:
 @then("nenhuma inferencia e produzida")
 def _then_empty(ctx: dict[str, Any]) -> None:
     assert ctx["run1"] == []
+
+
+class _FixedGemini:
+    """Devolve um payload fixo (independe do prompt) para testar o parser."""
+
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self._payload = payload
+
+    def generate_json(self, prompt: str) -> dict[str, Any]:
+        return self._payload
+
+
+def test_m2_filtra_sinais_fora_do_vocabulario(tmp_path: Path) -> None:
+    ev = ObservedEvidence(
+        evidence_id="e1",
+        query="q",
+        source_url="u",
+        title="t",
+        snippet="s",
+        captured_at="2026-01-01T00:00:00+00:00",
+        source_trust=0.5,
+        missing_evidence=False,
+    )
+    payload: dict[str, Any] = {
+        "inferences": [
+            {
+                "company": {"normalized_name": "Acme", "confidence": 0.8},
+                "derived_from": ["e1"],
+                "intent_signals": ["intencao_ia", "TOKEN_INVENTADO"],
+                "disqualifiers": ["solo_sem_equipe", "outro_falso"],
+                "confidence": 0.7,
+            }
+        ]
+    }
+    out = run_m2(
+        [ev],
+        client=_FixedGemini(payload),
+        cache=JsonCache(tmp_path),
+        now=_NOW,
+        cache_ttl_hours=24,
+        intent_vocab=_vocab(),
+        disqualifier_vocab=DISQUALIFIER_VOCAB,
+    )
+    assert len(out) == 1
+    assert out[0].intent_signals == ["intencao_ia"]
+    assert out[0].disqualifiers == ["solo_sem_equipe"]
