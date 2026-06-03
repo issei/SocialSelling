@@ -4,12 +4,12 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** WU-2 (M2 Extração) implementado e verde no gate; merge/tag `v0.3.0` em andamento
-- **ultima_tag_verde:** `v0.2.0` (→ `v0.3.0` após merge do M2)
-- **wu_em_andamento:** WU-2 concluindo (PR aberto)
-- **passo_atual:** WU-2 / S6 (PR → auto-merge → tag)
-- **branch:** `feat/m2-extracao`
-- **proxima_acao:** Iniciar WU-3 (M3 Score). Módulo PURO (sem rede) — fórmula linear de `runtime.toml` sobre `Inference` → `ProspectScore`. Fixtures = JSON sintético (sem API). Bom candidato a janela autônoma curta.
+- **marco_atual:** WU-3 (M3 Score) implementado e verde no gate; merge/tag `v0.4.0` em andamento
+- **ultima_tag_verde:** `v0.3.0` (→ `v0.4.0` após merge do M3)
+- **wu_em_andamento:** WU-3 concluindo (PR aberto)
+- **passo_atual:** WU-3 / S6 (PR → auto-merge → tag)
+- **branch:** `feat/m3-score`
+- **proxima_acao:** Iniciar WU-4 (M4 Ranking). Módulo PURO — ordenar `list[ProspectScore]` por `p_score` com tie-break estável (ex.: `company_id`). Reexecução byte-idêntica.
 - **bloqueios:** NENHUM
 
 ## Pré-condições antes de liberar autonomia plena
@@ -25,3 +25,4 @@
 | 2026-06-03 | Planejamento + fluxo PR | PR #1 (docs), PR #2 (fix StrEnum), CI verde, branch protection | `v0.1.1` |
 | 2026-06-03 | WU-1 M1 Busca (autônomo) | cliente Tavily + cache atômico + degradação; BDD determinístico; fixtures reais gravadas | `v0.2.0` |
 | 2026-06-03 | WU-2 M2 Extração (autônomo) | cliente Gemini + cache + degradação; 17 inferências reais; isolamento de camadas; BDD determinístico | `v0.3.0` |
+| 2026-06-03 | WU-3 M3 Score (autônomo) | módulo puro; fórmula linear Fit/Intent/Confiança; hard filter; determinismo 1e-9 | `v0.4.0` |

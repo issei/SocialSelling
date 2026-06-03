@@ -50,6 +50,10 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   Aplicar: `flash-lite` + `timeout=120s` + enxugar prompt (snippet ≤ 800 chars). Saída JSON via `responseMimeType=application/json`, `temperature=0`.
 - **L-017 | Cognição | Cache por hash do prompt dá determinismo e FinOps** (igual ao M1). Prompt exclui `captured_at` para o hash ser estável.
 
+- **L-018 | Lint | Rodar `ruff format` ANTES do commit evita os E501 (linha > 100).**
+  Aplicar: `py -m ruff format .` faz parte do ciclo; o gate só roda `ruff check` (lint), não formata.
+- **L-019 | Intent | No PoC, Intent é um PROXY** (`|derived_from| / norm`) — placeholder honesto; Intent Worker dedicado é V1 (documentado em `m3_score.py`).
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
