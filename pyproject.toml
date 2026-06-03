@@ -45,4 +45,5 @@ markers = [
   "M3: modulo Score",
   "M4: modulo Ranking",
   "M5: modulo Explicacao (XAI)",
+  "objetivo: cenario de objetivo de negocio (ranking reflete a estrategia)",
 ]

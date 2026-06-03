@@ -58,6 +58,11 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   Aplicar: V1 precisa de resolução de entidades com lista de exclusão de vendors (aws, google, microsoft…) antes do scoring.
 - **L-021 | E2E | Orquestrador com clientes injetados (Protocol) permite smoke determinístico (fixtures) E run real (CLI)** com o mesmo código.
 
+## Motor de intenção (público Talita)
+- **L-022 | Git | SEMPRE `git checkout -b` ANTES de editar.** Commitei a fatia B na `main` local por engano; recuperei com `git branch <feat>` + `git reset --hard origin/main`. A proteção do remoto evitou estrago, mas o fluxo exige branch primeiro.
+- **L-023 | Score | Intent = Σ priors das hipóteses que disparam** (surface_signals ∩ intent_signals), não contagem de evidências. Ausência de sinal ⇒ intent 0 (Open-World). Desqualificador detectado zera o lead. Ver ADR-001. (Substitui L-019.)
+- **L-024 | Aderência | O motor de BUSCA (M1/Tavily) ainda é afinado p/ empresas tech em inglês.** Para founders de serviços (Talita), a query generation e a extração precisam de outra rodada — provável sondagem empírica antes de codar. Priors das hipóteses são chutes a calibrar.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
