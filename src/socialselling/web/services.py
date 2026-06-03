@@ -7,14 +7,18 @@ e delega ao núcleo. Mantém o núcleo (M1–M5) intocado (ADR-002).
 from __future__ import annotations
 
 import json
+import os
 import re
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from socialselling.config import load_runtime
-from socialselling.contracts import HypothesisCatalog, ICPCriteria
+from socialselling.config import load_env, load_runtime
+from socialselling.contracts import HypothesisCatalog, ICPCriteria, LeadCard
 from socialselling.core.atomic import atomic_write_text
-from socialselling.skills.gemini_client import CognitionClient
+from socialselling.orchestrator import run_pipeline
+from socialselling.skills.gemini_client import CognitionClient, GeminiClient
+from socialselling.skills.tavily_client import TavilyClient
 
 _ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CONFIG_DIR = _ROOT / "config"
@@ -32,6 +36,10 @@ _SCORING_KEYS = (
 
 class InvalidName(ValueError):
     """Nome de arquivo de ICP fora do padrão permitido."""
+
+
+class MissingKeys(RuntimeError):
+    """Chaves de API ausentes no .env para executar o pipeline."""
 
 
 def _safe_icp_path(config_dir: Path, name: str) -> Path:
@@ -108,6 +116,34 @@ def assist_icp(description: str, client: CognitionClient) -> ICPCriteria:
     """Gera um rascunho de ICP a partir da descrição do negócio (Gemini) e valida."""
     payload = client.generate_json(_ICP_ASSIST_PROMPT + description.strip())
     return ICPCriteria.model_validate(payload)
+
+
+def run_for_icp(
+    config_dir: Path,
+    runtime_path: Path,
+    env_path: Path,
+    icp_name: str,
+) -> list[LeadCard]:
+    """Executa o pipeline real (Tavily+Gemini) para o ICP selecionado → Lead Cards."""
+    env = load_env(env_path)
+    tkey = env.get("TAVILY_API_KEY") or os.environ.get("TAVILY_API_KEY", "")
+    gkey = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
+    if not tkey or not gkey:
+        raise MissingKeys("TAVILY_API_KEY/GEMINI_API_KEY ausentes no .env")
+    cfg = load_runtime(runtime_path)
+    icp = ICPCriteria.model_validate(read_icp(config_dir, icp_name))
+    catalog = HypothesisCatalog.model_validate(
+        json.loads((config_dir / "hypotheses_catalog.json").read_text(encoding="utf-8"))
+    )
+    return run_pipeline(
+        icp,
+        tavily=TavilyClient(tkey),
+        gemini=GeminiClient(gkey, model=cfg.gemini.model),
+        hypotheses=catalog,
+        cache_root=_ROOT / "data" / "cache",
+        now=datetime.now(UTC),
+        cfg=cfg,
+    )
 
 
 def save_scoring(runtime_path: Path, scoring: dict[str, float]) -> None:

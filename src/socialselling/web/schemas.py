@@ -20,6 +20,12 @@ class AssistRequest(BaseModel):
     description: str = Field(min_length=1)
 
 
+class RunRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    icp_name: str = Field(min_length=1)
+
+
 class ScoringUpdate(BaseModel):
     """Pesos editáveis da fórmula de score (subconjunto de runtime.toml [scoring])."""
 
