@@ -1,0 +1,19 @@
+{
+  "icp_id": "icp_servicos_gestao_brasil",
+  "firmographics": {
+    "industries": ["consultoria", "advocacia", "software", "saas", "engenharia"],
+    "employee_range": { "min": 5, "max": 30 },
+    "geographies": { "country": "BR", "regions": ["SE", "S"] },
+    "business_models": ["B2B"]
+  },
+  "technographics": {
+    "mandatory": ["clickup", "notion", "trello"],
+    "preferred": ["asana", "monday", "pipedrive"],
+    "excluded": ["planilhas_manuais", "whatsapp_gestao"]
+  },
+  "persona_matrix": {
+    "target_roles": ["FOUNDER", "CEO", "MANAGING_PARTNER"],
+    "min_seniority": "OWNER_LEVEL"
+  },
+  "intent_triggers": ["JOB_OPENING_TECH", "BUSINESS_EXPANSION", "MENTORSHIP_COMPLETION", "AI_ADOPTION_INTENT", "TEAM_GROWTH"]
+}
