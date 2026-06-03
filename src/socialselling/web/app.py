@@ -9,13 +9,20 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 
+from socialselling.contracts import HypothesisCatalog
+from socialselling.web.schemas import SaveIcpRequest, ScoringUpdate
 from socialselling.web.services import (
     DEFAULT_CONFIG_DIR,
     DEFAULT_RUNTIME,
+    InvalidName,
     load_config,
+    read_icp,
+    save_hypotheses,
+    save_icp,
+    save_scoring,
 )
 
 _PLACEHOLDER_HTML = """<!doctype html>
@@ -54,6 +61,33 @@ def create_app(
     @app.get("/api/config")
     def api_config() -> dict[str, Any]:
         return load_config(config_dir, runtime_path)
+
+    @app.get("/api/config/icp")
+    def api_get_icp(name: str) -> dict[str, Any]:
+        try:
+            return read_icp(config_dir, name)
+        except InvalidName as exc:
+            raise HTTPException(status_code=400, detail=f"nome invalido: {name}") from exc
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=f"ICP nao encontrado: {name}") from exc
+
+    @app.post("/api/config/icp")
+    def api_save_icp(req: SaveIcpRequest) -> dict[str, Any]:
+        try:
+            save_icp(config_dir, req.name, req.icp)
+        except InvalidName as exc:
+            raise HTTPException(status_code=400, detail=f"nome invalido: {req.name}") from exc
+        return {"ok": True, "saved": req.name}
+
+    @app.post("/api/config/hypotheses")
+    def api_save_hypotheses(catalog: HypothesisCatalog) -> dict[str, Any]:
+        save_hypotheses(config_dir, catalog)
+        return {"ok": True, "count": len(catalog.hypotheses)}
+
+    @app.post("/api/config/scoring")
+    def api_save_scoring(update: ScoringUpdate) -> dict[str, Any]:
+        save_scoring(runtime_path, update.model_dump())
+        return {"ok": True}
 
     return app
 
