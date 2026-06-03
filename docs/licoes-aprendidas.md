@@ -36,6 +36,13 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-011 | Auto-merge | Sem branch protection, `gh pr merge --auto` funde na hora (não espera CI).**
   Aplicar: `main` agora exige o check `gate` (sem revisor humano, para não travar a automação). Validar localmente no venv antes do PR economiza ciclos de CI.
 
+## Implementação de módulos
+- **L-012 | Determinismo | Injetar relógio (`now: datetime`) e derivar IDs por hash estável**
+  (`sha256(query|url)[:16]`), nunca UUID aleatório nem `datetime.now()` interno. Garante reexecução byte-idêntica.
+- **L-013 | Fixtures | Gravar respostas reais com `scripts/record_tavily_fixtures.py`; testes usam `FakeTavilyClient`.**
+  Aplicar: rede só no script de gravação; os testes nunca tocam rede (mock por fixture). Re-gravar quando o contrato da API mudar.
+- **L-014 | Pytest | Tags de feature (`@M1`) viram marks — registrar em `[tool.pytest.ini_options].markers`** para evitar `PytestUnknownMarkWarning`.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.

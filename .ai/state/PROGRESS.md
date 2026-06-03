@@ -4,12 +4,12 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** Fundação + planejamento concluídos; `main` CI-verde e protegida
-- **ultima_tag_verde:** `v0.1.1` (primeiro baseline verificado pelo CI)
-- **wu_em_andamento:** — (nenhuma iniciada)
-- **passo_atual:** — (próxima WU = WU-1 / S1)
-- **branch:** `main`
-- **proxima_acao:** Iniciar WU-1 (M1 Busca). S1 = revisar contrato `ObservedEvidence`; depois S2 = escrever `tests/features/m1_busca.feature` + gravar fixtures Tavily. Pré-requisito: rodar `bootstrap` e ter o gate verde no baseline.
+- **marco_atual:** WU-1 (M1 Busca) implementado e verde no gate; merge/tag `v0.2.0` em andamento
+- **ultima_tag_verde:** `v0.1.1` (→ `v0.2.0` após merge do M1)
+- **wu_em_andamento:** WU-1 concluindo (PR aberto)
+- **passo_atual:** WU-1 / S6 (PR → auto-merge → tag)
+- **branch:** `feat/m1-busca`
+- **proxima_acao:** Iniciar WU-2 (M2 Extração/Gemini). S2 = `tests/features/m2_extracao.feature` + gravar fixtures Gemini (supervisionado: usa chave real). Mapear `ObservedEvidence` → `Inference` com `confidence` e `derived_from`.
 - **bloqueios:** NENHUM
 
 ## Pré-condições antes de liberar autonomia plena
@@ -23,3 +23,4 @@
 |---|---|---|---|
 | 2026-06-02 | Fase 0 (fundação) | toolchain + contratos + planejamento | `v0.1.0` (pré-CI) |
 | 2026-06-03 | Planejamento + fluxo PR | PR #1 (docs), PR #2 (fix StrEnum), CI verde, branch protection | `v0.1.1` |
+| 2026-06-03 | WU-1 M1 Busca (autônomo) | cliente Tavily + cache atômico + degradação; BDD determinístico; fixtures reais gravadas | `v0.2.0` |

@@ -39,4 +39,10 @@ files = ["src", "tests"]
 testpaths = ["tests"]
 markers = [
   "smoke: cenario de fumaca cross-module (M1..M5 end-to-end)",
+  "pipeline: cenario cross-module do orquestrador",
+  "M1: modulo Busca (Tavily)",
+  "M2: modulo Extracao (Gemini)",
+  "M3: modulo Score",
+  "M4: modulo Ranking",
+  "M5: modulo Explicacao (XAI)",
 ]

@@ -1,0 +1,64 @@
+{
+  "results": [
+    {
+      "content": "This article shows how AWS Kubernetes is used to setup SAAS consumers from platform Engineering perspective. Naveena Ravi.",
+      "score": 0.47373086,
+      "title": "AWS Kubernetes for SAAS Consumers",
+      "url": "https://builder.aws.com/content/34HzyolGUxtmzn49snPBVJ7UtfT/aws-kubernetes-for-saas-consumers"
+    },
+    {
+      "content": "# On Amazon EKS and SaaS. An opinionated approach to building a… | by Dirk Michel | Medium. As it so often happens, Amazon Web Services (AWS) is a great place to architect, build, and run diverse Software as a Service (SaaS) application designs, including Kubernetes and event-based asynchronous applications. Developing applications for Kubernetes has proven to be an exceedingly successful pattern, particularly when the need arises to maintain the portability of the primary applications between cloud and on-premises environments. The question then arises of how to encapsulate an existing set of Kubernetes applications into a SaaS architecture whilst retaining its portability across different deployment surfaces. One of the first things I typically have to do when describing an approach to SaaS architectures is to run through a disambiguation exercise of the term _SaaS_. > SaaS providers develop a set of Control Plane applications to unify the management and operations of tenants that contain the primary software application instances the subscribers access and use.",
+      "score": 0.43597415,
+      "title": "On Amazon EKS and SaaS",
+      "url": "https://medium.com/@micheldirk/on-amazon-eks-and-saas-835ea973d054"
+    },
+    {
+      "content": "# SaaS deployment architectures with Amazon EKS. SaaS providers must develop robust systems for provisioning and maintaining their application stack across numerous customer environments, implement cross-account monitoring solutions, manage distributed lifecycle updates, and provide consistent security controls. In this post we explore patterns and practices for building and operating these distributed Amazon Elastic Kubernetes Service (Amazon EKS)-based applications effectively. AWS clearly defines the shared responsibility model, where AWS is responsible for security “of” the cloud, while customers are responsible for security “in” the cloud. In a SaaS Provider hosted model, the provider bears the most operational responsibility, including infrastructure management, application security, data protection, and compliance. This is especially important for the “Remote” and “Hybrid Nodes” models, because this is where parts of the service architecture are deployed on a remote environment. In the Remote Application Plane model, the SaaS provider manages the SaaS Control Plane and all application components running in the customer’s data plane.",
+      "score": 0.42548645,
+      "title": "SaaS deployment architectures with Amazon EKS | Containers",
+      "url": "https://aws.amazon.com/blogs/containers/saas-deployment-architectures-with-amazon-eks"
+    },
+    {
+      "content": "AWS approaches Software-as-a-Service (SaaS) as a business and software delivery model that enables organizations to provide their offering to customers.",
+      "score": 0.37476835,
+      "title": "Software-as-a-Service (SaaS) on AWS",
+      "url": "https://aws.amazon.com/saas"
+    },
+    {
+      "content": "This repository provides a reference architecture for building an end to end SaaS solution using Amazon Elastic Kubernetes Service (EKS) - aws-samples/aws-saas-",
+      "score": 0.30641338,
+      "title": "GitHub - aws-samples/aws-saas-factory-eks-reference-architecture ...",
+      "url": "https://github.com/aws-samples/aws-saas-factory-eks-reference-architecture"
+    },
+    {
+      "content": "It provides a way to build and deploy multi-tenant microservices that can help them realize their agility, scale, cost, and operational goals.",
+      "score": 0.15575814,
+      "title": "Amazon EKS SaaS - SaaS Lens - AWS Documentation",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/saas-lens/amazon-eks-saas.html"
+    },
+    {
+      "content": "Hey SaaS Founders! Have you ever used Kubernetes to host your startup projects? I've tried it for one of mines, and I find it very useful.",
+      "score": 0.13517526,
+      "title": "Do you guys use Kubernetes to host your SaaS projects? - Reddit",
+      "url": "https://www.reddit.com/r/SaaS/comments/1eggxv5/do_you_guys_use_kubernetes_to_host_your_saas"
+    },
+    {
+      "content": "AWS EKS makes Kubernetes accessible, optimizing costs and supporting diverse applications across cloud environments.",
+      "score": 0.1087274,
+      "title": "Kubernetes on AWS: Accessibility and Innovation",
+      "url": "https://aws.amazon.com/video/watch/9983f2d5b77"
+    },
+    {
+      "content": "Palette is an enterprise Kubernetes management platform that helps you take control of your Kubernetes clusters in AWS and other environments. It makes it easy",
+      "score": 0.097056314,
+      "title": "Amazon EKS Kubernetes Cluster Management with Palette",
+      "url": "https://www.spectrocloud.com/fleet-orchestration/aws"
+    },
+    {
+      "content": "... Kubernetes Service (Amazon EKS). Learn a number of the strategies for isolating customers (tenants), workloads, and data in an EKS cluster",
+      "score": 0.084954865,
+      "title": "AWS re:Invent 2019: Architecting multi-tenant PaaS offerings with ...",
+      "url": "https://www.youtube.com/watch?v=P29eL_51iYU"
+    }
+  ]
+}
