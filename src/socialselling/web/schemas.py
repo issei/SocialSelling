@@ -14,6 +14,12 @@ class SaveIcpRequest(BaseModel):
     icp: ICPCriteria
 
 
+class AssistRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    description: str = Field(min_length=1)
+
+
 class ScoringUpdate(BaseModel):
     """Pesos editáveis da fórmula de score (subconjunto de runtime.toml [scoring])."""
 

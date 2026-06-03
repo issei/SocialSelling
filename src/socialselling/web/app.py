@@ -6,24 +6,36 @@ serviços expõem. Roda em localhost (ver `__main__`). Sem auth, sem banco.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from pydantic import ValidationError
 
+from socialselling.config import load_env, load_runtime
 from socialselling.contracts import HypothesisCatalog
-from socialselling.web.schemas import SaveIcpRequest, ScoringUpdate
+from socialselling.skills.gemini_client import (
+    CognitionClient,
+    GeminiClient,
+    GeminiError,
+    RateLimitError,
+)
+from socialselling.web.schemas import AssistRequest, SaveIcpRequest, ScoringUpdate
 from socialselling.web.services import (
     DEFAULT_CONFIG_DIR,
     DEFAULT_RUNTIME,
     InvalidName,
+    assist_icp,
     load_config,
     read_icp,
     save_hypotheses,
     save_icp,
     save_scoring,
 )
+
+_ENV_PATH = Path(__file__).resolve().parents[3] / ".env"
 
 _PLACEHOLDER_HTML = """<!doctype html>
 <html lang="pt-br">
@@ -50,9 +62,19 @@ def create_app(
     *,
     config_dir: Path = DEFAULT_CONFIG_DIR,
     runtime_path: Path = DEFAULT_RUNTIME,
+    cognition_client: CognitionClient | None = None,
 ) -> FastAPI:
-    """Cria o app FastAPI. Paths injetáveis para testes (FS isolado)."""
+    """Cria o app FastAPI. Paths e cliente Gemini injetáveis para testes (FS/rede isolados)."""
     app = FastAPI(title="SocialSelling — UI local", docs_url=None, redoc_url=None)
+
+    def _gemini() -> CognitionClient:
+        if cognition_client is not None:
+            return cognition_client
+        env = load_env(_ENV_PATH)
+        key = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
+        if not key:
+            raise HTTPException(status_code=400, detail="GEMINI_API_KEY ausente no .env")
+        return GeminiClient(key, model=load_runtime(runtime_path).gemini.model)
 
     @app.get("/", response_class=HTMLResponse)
     def index() -> str:
@@ -88,6 +110,19 @@ def create_app(
     def api_save_scoring(update: ScoringUpdate) -> dict[str, Any]:
         save_scoring(runtime_path, update.model_dump())
         return {"ok": True}
+
+    @app.post("/api/assist/icp")
+    def api_assist_icp(req: AssistRequest) -> dict[str, Any]:
+        client = _gemini()
+        try:
+            icp = assist_icp(req.description, client)
+        except (RateLimitError, GeminiError) as exc:
+            raise HTTPException(status_code=502, detail=f"falha no Gemini: {exc}") from exc
+        except ValidationError as exc:
+            raise HTTPException(
+                status_code=422, detail="o Gemini retornou um ICP invalido"
+            ) from exc
+        return icp.model_dump()
 
     return app
 
