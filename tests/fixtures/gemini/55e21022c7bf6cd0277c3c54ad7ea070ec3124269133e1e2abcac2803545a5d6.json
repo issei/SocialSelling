@@ -1,0 +1,354 @@
+{
+  "inferences": [
+    {
+      "company": {
+        "confidence": 0.9,
+        "domain": "aws.amazon.com",
+        "employee_count": null,
+        "industry": "Cloud Computing",
+        "normalized_name": "AWS",
+        "technologies": [
+          "Kubernetes",
+          "EKS",
+          "EC2",
+          "RDS",
+          "Kinesis",
+          "API Gateway"
+        ]
+      },
+      "confidence": 0.95,
+      "derived_from": [
+        "0149860df9c01714",
+        "0a9df3d3f0b969ff",
+        "11383cc418c91255",
+        "1236d3e28b6ca7b7",
+        "1cb3b1177eb28eba",
+        "1ccd4b2c8cf41596",
+        "1eca6b8d55b4ccc4",
+        "243e233562aba230",
+        "34e8f01a35a81640",
+        "57a09149714b6404",
+        "5c4fa7ef8483ad2f",
+        "63c21319db38bb23",
+        "80b2abdc2b993356",
+        "8701276254b95b0b",
+        "8a1fc6440ae309ed",
+        "8ae3c8d6ba05b3b1",
+        "919c4d2adc988d11",
+        "9e9a29d145035412",
+        "a35878f5a920cc7d",
+        "a454b5f446e526db",
+        "a4cce7fb5ce503cd",
+        "aeaf77cb868203c9",
+        "afe15132a85d358e",
+        "b78020426e0ef247",
+        "b9575c8594e73bff",
+        "d320aa10ddd940b4",
+        "d47f0d95b7eb38dd",
+        "d67fd88161c4c37e",
+        "e52d75beb0acd6bf",
+        "e8e5c5b753170124"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.8,
+        "domain": "spectrocloud.com",
+        "employee_count": null,
+        "industry": "Cloud Management",
+        "normalized_name": "Spectro Cloud",
+        "technologies": [
+          "Palette",
+          "Kubernetes"
+        ]
+      },
+      "confidence": 0.8,
+      "derived_from": [
+        "0149860df9c01714",
+        "80b2abdc2b993356"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Financial Services",
+        "normalized_name": "Northwestern Mutual",
+        "technologies": [
+          "AWS",
+          "Docker",
+          "Kubernetes"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "0a9df3d3f0b969ff"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": "softserveinc.com",
+        "employee_count": null,
+        "industry": "IT Services",
+        "normalized_name": "SoftServe",
+        "technologies": [
+          "AWS"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "11383cc418c91255"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Telecommunications",
+        "normalized_name": "T-Mobile",
+        "technologies": [
+          "AWS",
+          "Kubernetes",
+          "EC2",
+          "RDS",
+          "Kinesis",
+          "API Gateway"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "1236d3e28b6ca7b7"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": null,
+        "normalized_name": "Dirk Michel",
+        "technologies": [
+          "AWS",
+          "Kubernetes",
+          "SaaS"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "1cb3b1177eb28eba"
+      ],
+      "people": [
+        {
+          "confidence": 0.7,
+          "normalized_name": "Dirk Michel",
+          "role_title": null,
+          "seniority": null
+        }
+      ]
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Financial Services",
+        "normalized_name": "LeumGroup",
+        "technologies": [
+          "Amazon EKS Anywhere"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "1eca6b8d55b4ccc4"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Cosmetics",
+        "normalized_name": "L'Oréal Kérastase",
+        "technologies": [
+          "AWS",
+          "VTEX",
+          "Sitecore"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "8a1fc6440ae309ed"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Technology Consulting",
+        "normalized_name": "Valtech",
+        "technologies": [
+          "AWS",
+          "VTEX",
+          "Sitecore"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "8a1fc6440ae309ed"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Manufacturing",
+        "normalized_name": "Stanley Black & Decker",
+        "technologies": [
+          "VTEX Commerce Cloud"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "8a1fc6440ae309ed"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.8,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Financial Technology",
+        "normalized_name": "AccessFintech",
+        "technologies": [
+          "Kubernetes",
+          "ScaleOps"
+        ]
+      },
+      "confidence": 0.8,
+      "derived_from": [
+        "8ae3c8d6ba05b3b1"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": "ailleron.com",
+        "employee_count": null,
+        "industry": "Financial Technology",
+        "normalized_name": "Ailleron",
+        "technologies": [
+          "Kubernetes",
+          "DevOps",
+          "GitOps"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "919c4d2adc988d11"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "AWS Partner",
+        "normalized_name": "binbash",
+        "technologies": [
+          "AWS"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "d320aa10ddd940b4"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": null,
+        "normalized_name": "KungFoo",
+        "technologies": [
+          "AWS"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "d320aa10ddd940b4"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": "rackner.com",
+        "employee_count": null,
+        "industry": "Technology Consulting",
+        "normalized_name": "Rackner",
+        "technologies": [
+          "AWS",
+          "eCommerce"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "d47f0d95b7eb38dd"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": "nutanix.com",
+        "employee_count": null,
+        "industry": "Cloud Computing",
+        "normalized_name": "Nutanix",
+        "technologies": [
+          "AWS",
+          "E-Commerce"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "57a09149714b6404"
+      ],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": "opsworks.co",
+        "employee_count": null,
+        "industry": "Fintech Services",
+        "normalized_name": "OpsWorks Co.",
+        "technologies": [
+          "AWS"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "b9575c8594e73bff"
+      ],
+      "people": []
+    }
+  ]
+}

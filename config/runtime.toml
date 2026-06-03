@@ -23,9 +23,10 @@ max_results = 10
 search_depth = "basic"
 
 [gemini]
-model = "gemini-2.0-flash"
+model = "gemini-2.5-flash-lite"
 max_retries = 3
 backoff_base_seconds = 2
+timeout_seconds = 120
 
 [runtime]
 # Limite de leads por ciclo no PoC (controle de custo/latencia).

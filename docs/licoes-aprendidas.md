@@ -43,6 +43,13 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   Aplicar: rede só no script de gravação; os testes nunca tocam rede (mock por fixture). Re-gravar quando o contrato da API mudar.
 - **L-014 | Pytest | Tags de feature (`@M1`) viram marks — registrar em `[tool.pytest.ini_options].markers`** para evitar `PytestUnknownMarkWarning`.
 
+## Integração Gemini
+- **L-015 | Gemini | A lista `v1beta/models` ENGANA: `gemini-2.0-flash`/`-001` dão 404 em `generateContent`.**
+  Aplicar: usar `gemini-2.5-flash-lite` (rápido) ou `gemini-2.5-flash`. Validar o modelo com uma chamada real, não pela listagem.
+- **L-016 | Gemini | Prompt grande (30 evidências) estoura timeout de 30s no `2.5-flash`.**
+  Aplicar: `flash-lite` + `timeout=120s` + enxugar prompt (snippet ≤ 800 chars). Saída JSON via `responseMimeType=application/json`, `temperature=0`.
+- **L-017 | Cognição | Cache por hash do prompt dá determinismo e FinOps** (igual ao M1). Prompt exclui `captured_at` para o hash ser estável.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
