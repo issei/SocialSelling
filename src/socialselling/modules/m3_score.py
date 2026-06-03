@@ -4,15 +4,22 @@ Módulo PURO e determinístico (sem rede). Fórmula linear documentada do PoC:
 
     P = (w_fit * Fit + w_intent * Intent) * (Confianca ^ confidence_exponent)
 
-- Fit   = w_fit_tech * tech_match + w_fit_industry * industry_match  (∈ [0,1])
-- Intent= proxy do PoC = min(1, |derived_from| / intent_evidence_norm) (placeholder;
-          um Intent Worker dedicado entra na V1).
-- Hard filter: tecnologia proibida pelo ICP zera o lead (hard_filter_passed=False, P=0).
+- Fit    = w_fit_tech * tech_match + w_fit_industry * industry_match  (∈ [0,1])
+- Intent = soma dos `prior` das hipóteses que DISPARAM, ou seja, cujas `surface_signals`
+           intersectam os `intent_signals` detectados na inferência (limitado a 1.0).
+           Ausência de sinal de timing ⇒ Intent = 0 (Open-World: não inventa momentum).
+- Hard filter (zera o lead): tecnologia proibida pelo ICP OU qualquer `disqualifier`
+           detectado (founder solo, negócio imaturo, retração, sem decisora, fora de setor).
 """
 
 from __future__ import annotations
 
-from socialselling.contracts import ICPCriteria, Inference, ProspectScore
+from socialselling.contracts import (
+    HypothesisCatalog,
+    ICPCriteria,
+    Inference,
+    ProspectScore,
+)
 
 
 def _norm_set(values: list[str]) -> set[str]:
@@ -42,23 +49,34 @@ def _has_excluded_tech(inference: Inference, icp: ICPCriteria) -> bool:
     return bool(excluded & _norm_set(inference.company.technologies))
 
 
+def _intent_from_hypotheses(inference: Inference, catalog: HypothesisCatalog) -> float:
+    """Soma dos priors das hipóteses cujas surface_signals batem com os intent_signals."""
+    detected = _norm_set(inference.intent_signals)
+    if not detected:
+        return 0.0
+    total = 0.0
+    for hypothesis in catalog.hypotheses:
+        if _norm_set(hypothesis.surface_signals) & detected:
+            total += hypothesis.prior
+    return min(1.0, total)
+
+
 def _score_one(
     inference: Inference,
     icp: ICPCriteria,
+    catalog: HypothesisCatalog,
     *,
     w_fit: float,
     w_intent: float,
     confidence_exponent: float,
     w_fit_tech: float,
     w_fit_industry: float,
-    intent_evidence_norm: int,
 ) -> ProspectScore:
-    hard_ok = not _has_excluded_tech(inference, icp)
+    hard_ok = not _has_excluded_tech(inference, icp) and not inference.disqualifiers
     fit = w_fit_tech * _tech_match(inference, icp) + w_fit_industry * _industry_match(
         inference, icp
     )
-    norm = max(1, intent_evidence_norm)
-    intent = min(1.0, len(inference.derived_from) / norm)
+    intent = _intent_from_hypotheses(inference, catalog)
     confidence = inference.confidence
     if hard_ok:
         p_score = (w_fit * fit + w_intent * intent) * (confidence**confidence_exponent)
@@ -77,25 +95,25 @@ def _score_one(
 def run_m3(
     inferences: list[Inference],
     icp: ICPCriteria,
+    catalog: HypothesisCatalog,
     *,
     w_fit: float,
     w_intent: float,
     confidence_exponent: float,
     w_fit_tech: float,
     w_fit_industry: float,
-    intent_evidence_norm: int,
 ) -> list[ProspectScore]:
     """Calcula o ProspectScore de cada inferência (ordem de entrada preservada)."""
     return [
         _score_one(
             inf,
             icp,
+            catalog,
             w_fit=w_fit,
             w_intent=w_intent,
             confidence_exponent=confidence_exponent,
             w_fit_tech=w_fit_tech,
             w_fit_industry=w_fit_industry,
-            intent_evidence_norm=intent_evidence_norm,
         )
         for inf in inferences
     ]
