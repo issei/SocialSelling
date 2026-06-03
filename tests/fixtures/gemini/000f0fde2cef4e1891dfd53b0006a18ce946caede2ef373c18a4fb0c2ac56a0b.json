@@ -10,13 +10,14 @@
         "technologies": [
           "Kubernetes",
           "EKS",
+          "API Gateway",
           "EC2",
           "RDS",
           "Kinesis",
-          "API Gateway"
+          "SaaS"
         ]
       },
-      "confidence": 0.95,
+      "confidence": 0.9,
       "derived_from": [
         "0149860df9c01714",
         "0a9df3d3f0b969ff",
@@ -49,6 +50,12 @@
         "e52d75beb0acd6bf",
         "e8e5c5b753170124"
       ],
+      "disqualifiers": [],
+      "intent_signals": [
+        "expansao",
+        "intencao_ia",
+        "quero_modernizar"
+      ],
       "people": []
     },
     {
@@ -59,8 +66,8 @@
         "industry": "Cloud Management",
         "normalized_name": "Spectro Cloud",
         "technologies": [
-          "Palette",
-          "Kubernetes"
+          "Kubernetes",
+          "Palette"
         ]
       },
       "confidence": 0.8,
@@ -68,6 +75,27 @@
         "0149860df9c01714",
         "80b2abdc2b993356"
       ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": "softserveinc.com",
+        "employee_count": null,
+        "industry": "IT Services",
+        "normalized_name": "SoftServe",
+        "technologies": [
+          "AWS"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "11383cc418c91255"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     },
     {
@@ -87,23 +115,8 @@
       "derived_from": [
         "0a9df3d3f0b969ff"
       ],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.7,
-        "domain": "softserveinc.com",
-        "employee_count": null,
-        "industry": "IT Services",
-        "normalized_name": "SoftServe",
-        "technologies": [
-          "AWS"
-        ]
-      },
-      "confidence": 0.7,
-      "derived_from": [
-        "11383cc418c91255"
-      ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     },
     {
@@ -115,17 +128,20 @@
         "normalized_name": "T-Mobile",
         "technologies": [
           "AWS",
-          "Kubernetes",
+          "API Gateway",
           "EC2",
+          "Kubernetes",
           "RDS",
           "Kinesis",
-          "API Gateway"
+          "E-commerce"
         ]
       },
       "confidence": 0.7,
       "derived_from": [
         "1236d3e28b6ca7b7"
       ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     },
     {
@@ -137,14 +153,17 @@
         "normalized_name": "Dirk Michel",
         "technologies": [
           "AWS",
-          "Kubernetes",
-          "SaaS"
+          "EKS",
+          "SaaS",
+          "Kubernetes"
         ]
       },
       "confidence": 0.7,
       "derived_from": [
         "1cb3b1177eb28eba"
       ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": [
         {
           "confidence": 0.7,
@@ -162,68 +181,16 @@
         "industry": "Financial Services",
         "normalized_name": "LeumGroup",
         "technologies": [
-          "Amazon EKS Anywhere"
+          "AWS",
+          "EKS Anywhere"
         ]
       },
       "confidence": 0.7,
       "derived_from": [
         "1eca6b8d55b4ccc4"
       ],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.7,
-        "domain": null,
-        "employee_count": null,
-        "industry": "Cosmetics",
-        "normalized_name": "L'Oréal Kérastase",
-        "technologies": [
-          "AWS",
-          "VTEX",
-          "Sitecore"
-        ]
-      },
-      "confidence": 0.7,
-      "derived_from": [
-        "8a1fc6440ae309ed"
-      ],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.7,
-        "domain": null,
-        "employee_count": null,
-        "industry": "Technology Consulting",
-        "normalized_name": "Valtech",
-        "technologies": [
-          "AWS",
-          "VTEX",
-          "Sitecore"
-        ]
-      },
-      "confidence": 0.7,
-      "derived_from": [
-        "8a1fc6440ae309ed"
-      ],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.7,
-        "domain": null,
-        "employee_count": null,
-        "industry": "Manufacturing",
-        "normalized_name": "Stanley Black & Decker",
-        "technologies": [
-          "VTEX Commerce Cloud"
-        ]
-      },
-      "confidence": 0.7,
-      "derived_from": [
-        "8a1fc6440ae309ed"
-      ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     },
     {
@@ -231,7 +198,7 @@
         "confidence": 0.8,
         "domain": null,
         "employee_count": null,
-        "industry": "Financial Technology",
+        "industry": "Fintech",
         "normalized_name": "AccessFintech",
         "technologies": [
           "Kubernetes",
@@ -242,6 +209,8 @@
       "derived_from": [
         "8ae3c8d6ba05b3b1"
       ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     },
     {
@@ -261,6 +230,8 @@
       "derived_from": [
         "919c4d2adc988d11"
       ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     },
     {
@@ -278,6 +249,8 @@
       "derived_from": [
         "d320aa10ddd940b4"
       ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     },
     {
@@ -287,6 +260,23 @@
         "employee_count": null,
         "industry": null,
         "normalized_name": "KungFoo",
+        "technologies": []
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "d320aa10ddd940b4"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Fintech",
+        "normalized_name": "Flexibility",
         "technologies": [
           "AWS"
         ]
@@ -295,6 +285,8 @@
       "derived_from": [
         "d320aa10ddd940b4"
       ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     },
     {
@@ -302,35 +294,18 @@
         "confidence": 0.7,
         "domain": "rackner.com",
         "employee_count": null,
-        "industry": "Technology Consulting",
+        "industry": "E-commerce Solutions",
         "normalized_name": "Rackner",
         "technologies": [
-          "AWS",
-          "eCommerce"
+          "AWS"
         ]
       },
       "confidence": 0.7,
       "derived_from": [
         "d47f0d95b7eb38dd"
       ],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.7,
-        "domain": "nutanix.com",
-        "employee_count": null,
-        "industry": "Cloud Computing",
-        "normalized_name": "Nutanix",
-        "technologies": [
-          "AWS",
-          "E-Commerce"
-        ]
-      },
-      "confidence": 0.7,
-      "derived_from": [
-        "57a09149714b6404"
-      ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     },
     {
@@ -338,7 +313,7 @@
         "confidence": 0.7,
         "domain": "opsworks.co",
         "employee_count": null,
-        "industry": "Fintech Services",
+        "industry": "Fintech",
         "normalized_name": "OpsWorks Co.",
         "technologies": [
           "AWS"
@@ -348,6 +323,68 @@
       "derived_from": [
         "b9575c8594e73bff"
       ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "AWS Partner",
+        "normalized_name": "Valtech",
+        "technologies": [
+          "VTEX ecommerce platform",
+          "Sitecore"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "8a1fc6440ae309ed"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Manufacturing",
+        "normalized_name": "Stanley Black & Decker",
+        "technologies": [
+          "VTEX Commerce Cloud"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "8a1fc6440ae309ed"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": []
+    },
+    {
+      "company": {
+        "confidence": 0.7,
+        "domain": null,
+        "employee_count": null,
+        "industry": "Cosmetics",
+        "normalized_name": "L’Oréal Kérastase",
+        "technologies": [
+          "AWS",
+          "VTEX ecommerce platform",
+          "Sitecore"
+        ]
+      },
+      "confidence": 0.7,
+      "derived_from": [
+        "8a1fc6440ae309ed"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
       "people": []
     }
   ]

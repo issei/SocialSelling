@@ -20,10 +20,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from socialselling.contracts import ICPCriteria  # noqa: E402
+from socialselling.contracts import HypothesisCatalog, ICPCriteria  # noqa: E402
 from socialselling.core.cache import JsonCache, query_hash  # noqa: E402
 from socialselling.modules.m1_busca import run_m1  # noqa: E402
 from socialselling.modules.m2_extracao import build_prompt  # noqa: E402
+from socialselling.signals import DISQUALIFIER_VOCAB, intent_vocab  # noqa: E402
 from socialselling.skills.gemini_client import GeminiClient  # noqa: E402
 
 TAVILY_FIXTURES = ROOT / "tests" / "fixtures" / "tavily"
@@ -68,7 +69,14 @@ def main() -> int:
         search_depth="basic",
         cache_ttl_hours=24,
     )
-    prompt = build_prompt([ev for ev in evidences if not ev.missing_evidence])
+    catalog = HypothesisCatalog.model_validate(
+        json.loads((ROOT / "config" / "hypotheses_catalog.json").read_text("utf-8"))
+    )
+    prompt = build_prompt(
+        [ev for ev in evidences if not ev.missing_evidence],
+        intent_vocab(catalog),
+        DISQUALIFIER_VOCAB,
+    )
     payload = GeminiClient(key).generate_json(prompt)
     GEMINI_FIXTURES.mkdir(parents=True, exist_ok=True)
     out = GEMINI_FIXTURES / f"{query_hash(prompt)}.json"
