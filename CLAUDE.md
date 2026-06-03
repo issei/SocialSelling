@@ -33,7 +33,7 @@ M1 Busca/Tavily → M2 Extração/Gemini → M3 Score → M4 Ranking → M5 Expl
 2. **Cenários Gherkin** `.feature` + **fixtures gravadas** (JSON) das APIs — *spec-first, antes do código*.
 3. **Implementação** mínima para passar os cenários.
 4. **Gate:** `pytest-bdd` 100% verde (determinístico) + `ruff` + `mypy --strict`.
-5. **Commit** em branch do módulo. Flakiness = falha (zero tolerância a não-determinismo).
+5. **Integração via PR:** branch por mudança → push → `gh pr create --base main --fill` → `gh pr merge --squash --auto --delete-branch`. **Nunca commit/push direto na `main`.** Flakiness = falha (zero tolerância a não-determinismo).
 
 APIs externas **sempre mockadas** nos testes com fixtures gravadas. Asserções numéricas com tolerância `abs(a-b) <= 1e-9`.
 
@@ -75,6 +75,13 @@ logs/     cognitive_trace.jsonl
 
 **Para avançar um módulo M1–M5:** use a skill `sdd-modulo` (institucionaliza o SDD-to-Code Loop com gates).
 **Ao final de cada tarefa:** registre aprendizados em `docs/licoes-aprendidas.md` (auto-learning).
+
+## 10. Planejamento e operação (LER antes de desenvolver)
+- **Plano-mestre:** `docs/planning/execution-plan.md` (WUs, validação, versão, rollback por passo).
+- **Versionamento/rollback:** `docs/planning/versioning-strategy.md` (tags = pontos de restauração).
+- **Operação autônoma (plano Pro):** `docs/planning/autonomous-ops.md` + âncora de estado `.ai/state/PROGRESS.md`.
+- **Práticas:** `docs/governance/devops-sre-iac.md`. CI em `.github/workflows/ci.yml`.
+- **Regra de resume:** todo run autônomo LÊ `.ai/state/PROGRESS.md` no início e o ATUALIZA no fim. Setup do zero: `./scripts/bootstrap.ps1`.
 
 ## 9. Checklist de revisão (antes de cada commit)
 - [ ] Cenários BDD do módulo 100% verdes e determinísticos.
