@@ -4,8 +4,8 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** 🟢 Busca aderente + Lead Card acionável (público Talita). Sondagem feita; run real = 29 leads com Instagram. `v0.9.0`
-- **ultima_tag_verde:** `v0.9.0`
+- **marco_atual:** 🖥️ UI local (FastAPI) completa — parâmetros, assistente Gemini, executar e Lead Cards. `v0.11.x`
+- **ultima_tag_verde:** `v0.11.0` (UI completa; U6 acabamento em PR)
 - **wu_em_andamento:** — (aderência entregue: PR #17 busca+contato `v0.8.1`; PR Lead Card `v0.9.0`)
 - **passo_atual:** — (`main` verde, 21 testes; CLI gera Lead Cards reais)
 - **branch:** `main`
@@ -35,3 +35,4 @@
 | 2026-06-03 | WU-6 Orquestrador + Smoke (autônomo) | pipeline M1→M5 + CLI + persistência atômica; smoke E2E byte-idêntico; run real = 17 prospects | `v0.7.0` |
 | 2026-06-03 | Motor de intenção (público Talita) | ICP+hipóteses (#12); M2 extrai sinais (#13); M3 intent das hipóteses + hard filter (#14); M5 XAI + BDD de objetivo (#15) | `v0.7.1`→`v0.8.0` |
 | 2026-06-03 | Aderência da busca + Lead Card | sondagem empírica; busca PT-BR+Instagram (#17); contato no M2; LeadCard acionável. Run real = 29 leads c/ Instagram | `v0.8.1`→`v0.9.0` |
+| 2026-06-03 | UI de operador local (FastAPI) | ADR-002; fundação web (#20); API params (#21); assistente Gemini (#22); executar/resultados (#23); front-end (#24); E2E+README | `v0.10.0`→`v0.11.x` |
