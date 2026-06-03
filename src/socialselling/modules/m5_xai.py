@@ -50,21 +50,31 @@ def run_m5(
     if missing_tech:
         missing.append(f"tecnologias mandatórias não confirmadas: {', '.join(missing_tech)}")
 
-    if score.intent > 0:
+    if score.intent > 0 and inference.intent_signals:
         positive.append(
             Driver(
-                driver="INTENT_MOMENTUM",
+                driver="INTENT_TIMING",
                 impact=f"+{score.intent:.2f}",
-                text=f"Convergência de {len(inference.derived_from)} evidências independentes.",
+                text=f"Sinais de timing detectados: {', '.join(sorted(inference.intent_signals))}.",
             )
         )
+    elif not inference.intent_signals:
+        missing.append("nenhum sinal de timing/intenção detectado")
 
     if not company.industry:
         missing.append("indústria não identificada")
     if not inference.people:
         missing.append("nenhuma pessoa-chave identificada")
 
-    if not score.hard_filter_passed:
+    for disqualifier in sorted(inference.disqualifiers):
+        negative.append(
+            Driver(
+                driver="DISQUALIFIER",
+                impact="-",
+                text=f"Desqualificador detectado: {disqualifier} — lead descartado.",
+            )
+        )
+    if not score.hard_filter_passed and not inference.disqualifiers:
         negative.append(
             Driver(
                 driver="EXCLUDED_TECH",
