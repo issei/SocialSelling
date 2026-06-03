@@ -1,6 +1,6 @@
 # ADR-002 — UI de operador local (FastAPI) como superfície opcional
 
-- **Status:** Proposto (aguardando aprovação do dono) — 2026-06-03
+- **Status:** Aceito (aprovado pelo dono) — 2026-06-03
 - **Emenda a:** ADR-000 §5 (guardrails anti-overengineering), que proíbe FastAPI.
 
 ## Contexto
