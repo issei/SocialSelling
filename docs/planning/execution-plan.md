@@ -18,7 +18,8 @@ Plano operacional para construir o PoC com rigor DevOps/SRE, versionando cada pa
 
 | Tag | Marco | Estado |
 |---|---|---|
-| `v0.1.0` | Fundação (Fase 0) | ✅ feito |
+| `v0.1.0` | Fundação (Fase 0) — pré-CI (continha lint) | superado |
+| `v0.1.1` | Fundação + planejamento — **1º baseline CI-verde** | ✅ feito |
 | `v0.2.0` | M1 Busca (Tavily) | planejado |
 | `v0.3.0` | M2 Extração (Gemini) | planejado |
 | `v0.4.0` | M3 Score | planejado |
