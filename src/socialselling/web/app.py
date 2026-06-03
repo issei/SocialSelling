@@ -7,6 +7,7 @@ serviços expõem. Roda em localhost (ver `__main__`). Sem auth, sem banco.
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -15,27 +16,36 @@ from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
 from socialselling.config import load_env, load_runtime
-from socialselling.contracts import HypothesisCatalog
+from socialselling.contracts import HypothesisCatalog, LeadCard
 from socialselling.skills.gemini_client import (
     CognitionClient,
     GeminiClient,
     GeminiError,
     RateLimitError,
 )
-from socialselling.web.schemas import AssistRequest, SaveIcpRequest, ScoringUpdate
+from socialselling.web.schemas import (
+    AssistRequest,
+    RunRequest,
+    SaveIcpRequest,
+    ScoringUpdate,
+)
 from socialselling.web.services import (
     DEFAULT_CONFIG_DIR,
     DEFAULT_RUNTIME,
     InvalidName,
+    MissingKeys,
     assist_icp,
     load_config,
     read_icp,
+    run_for_icp,
     save_hypotheses,
     save_icp,
     save_scoring,
 )
 
 _ENV_PATH = Path(__file__).resolve().parents[3] / ".env"
+
+PipelineRunner = Callable[[str], list[LeadCard]]
 
 _PLACEHOLDER_HTML = """<!doctype html>
 <html lang="pt-br">
@@ -63,9 +73,17 @@ def create_app(
     config_dir: Path = DEFAULT_CONFIG_DIR,
     runtime_path: Path = DEFAULT_RUNTIME,
     cognition_client: CognitionClient | None = None,
+    pipeline_runner: PipelineRunner | None = None,
 ) -> FastAPI:
-    """Cria o app FastAPI. Paths e cliente Gemini injetáveis para testes (FS/rede isolados)."""
+    """Cria o app FastAPI. Paths, Gemini e runner injetáveis para testes (FS/rede isolados)."""
     app = FastAPI(title="SocialSelling — UI local", docs_url=None, redoc_url=None)
+    runs: dict[str, dict[str, Any]] = {}
+    counter = {"n": 0}
+
+    def _runner(icp_name: str) -> list[LeadCard]:
+        if pipeline_runner is not None:
+            return pipeline_runner(icp_name)
+        return run_for_icp(config_dir, runtime_path, _ENV_PATH, icp_name)
 
     def _gemini() -> CognitionClient:
         if cognition_client is not None:
@@ -123,6 +141,32 @@ def create_app(
                 status_code=422, detail="o Gemini retornou um ICP invalido"
             ) from exc
         return icp.model_dump()
+
+    @app.post("/api/run")
+    def api_run(req: RunRequest) -> dict[str, Any]:
+        try:
+            cards = _runner(req.icp_name)
+        except InvalidName as exc:
+            raise HTTPException(status_code=400, detail=f"nome invalido: {req.icp_name}") from exc
+        except FileNotFoundError as exc:
+            raise HTTPException(
+                status_code=404, detail=f"ICP nao encontrado: {req.icp_name}"
+            ) from exc
+        except MissingKeys as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except (RateLimitError, GeminiError) as exc:
+            raise HTTPException(status_code=502, detail=f"falha externa: {exc}") from exc
+        counter["n"] += 1
+        run_id = f"run-{counter['n']}"
+        leads = [c.model_dump() for c in cards]
+        runs[run_id] = {"status": "done", "leads": leads}
+        return {"run_id": run_id, "status": "done", "count": len(leads), "leads": leads}
+
+    @app.get("/api/run/{run_id}")
+    def api_run_status(run_id: str) -> dict[str, Any]:
+        if run_id not in runs:
+            raise HTTPException(status_code=404, detail=f"run nao encontrado: {run_id}")
+        return runs[run_id]
 
     return app
 
