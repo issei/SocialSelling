@@ -7,15 +7,36 @@ e delega ao núcleo. Mantém o núcleo (M1–M5) intocado (ADR-002).
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 from socialselling.config import load_runtime
-from socialselling.contracts import HypothesisCatalog
+from socialselling.contracts import HypothesisCatalog, ICPCriteria
+from socialselling.core.atomic import atomic_write_text
 
 _ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CONFIG_DIR = _ROOT / "config"
 DEFAULT_RUNTIME = _ROOT / "config" / "runtime.toml"
+
+_ICP_NAME_RE = re.compile(r"^icp_criteria[\w.\-]*\.json$")
+_SCORING_KEYS = (
+    "w_fit",
+    "w_intent",
+    "confidence_exponent",
+    "w_fit_tech",
+    "w_fit_industry",
+)
+
+
+class InvalidName(ValueError):
+    """Nome de arquivo de ICP fora do padrão permitido."""
+
+
+def _safe_icp_path(config_dir: Path, name: str) -> Path:
+    if not _ICP_NAME_RE.match(name):
+        raise InvalidName(name)
+    return config_dir / name
 
 
 def load_config(
@@ -45,3 +66,35 @@ def load_config(
         },
         "hypotheses": hypotheses,
     }
+
+
+def read_icp(config_dir: Path, name: str) -> dict[str, Any]:
+    """Lê o JSON cru de um ICP (para edição na UI). Valida o nome do arquivo."""
+    path = _safe_icp_path(config_dir, name)
+    data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return data
+
+
+def save_icp(config_dir: Path, name: str, icp: ICPCriteria) -> None:
+    """Grava o ICP (já validado) atomicamente."""
+    path = _safe_icp_path(config_dir, name)
+    atomic_write_text(path, json.dumps(icp.model_dump(), ensure_ascii=False, indent=2) + "\n")
+
+
+def save_hypotheses(config_dir: Path, catalog: HypothesisCatalog) -> None:
+    """Grava o catálogo de hipóteses (já validado) atomicamente."""
+    path = config_dir / "hypotheses_catalog.json"
+    atomic_write_text(path, json.dumps(catalog.model_dump(), ensure_ascii=False, indent=2) + "\n")
+
+
+def save_scoring(runtime_path: Path, scoring: dict[str, float]) -> None:
+    """Atualiza os pesos de [scoring] no runtime.toml, preservando comentários."""
+    text = runtime_path.read_text(encoding="utf-8")
+    for key in _SCORING_KEYS:
+        if key in scoring:
+            text = re.sub(
+                rf"(?m)^{key}\s*=\s*.*$",
+                f"{key} = {scoring[key]}",
+                text,
+            )
+    atomic_write_text(runtime_path, text)
