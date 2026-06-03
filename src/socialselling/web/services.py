@@ -14,6 +14,7 @@ from typing import Any
 from socialselling.config import load_runtime
 from socialselling.contracts import HypothesisCatalog, ICPCriteria
 from socialselling.core.atomic import atomic_write_text
+from socialselling.skills.gemini_client import CognitionClient
 
 _ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CONFIG_DIR = _ROOT / "config"
@@ -85,6 +86,28 @@ def save_hypotheses(config_dir: Path, catalog: HypothesisCatalog) -> None:
     """Grava o catálogo de hipóteses (já validado) atomicamente."""
     path = config_dir / "hypotheses_catalog.json"
     atomic_write_text(path, json.dumps(catalog.model_dump(), ensure_ascii=False, indent=2) + "\n")
+
+
+_ICP_ASSIST_PROMPT = (
+    "Voce e especialista em ICP B2B. A partir da DESCRICAO do negocio, gere um "
+    "icp_criteria valido. Responda SOMENTE com JSON (sem markdown) neste formato exato "
+    "(nao adicione nem renomeie campos):\n"
+    '{"icp_id":str_snake_case,"firmographics":{"industries":[str_minusculo],'
+    '"employee_range":{"min":int>=0,"max":int>=min},"geographies":{"country":str_ISO2,'
+    '"regions":[str]},"business_models":[str]},"technographics":{"mandatory":[str],'
+    '"preferred":[str],"excluded":[str]},"persona_matrix":{"target_roles":[STR_MAIUSC],'
+    '"min_seniority":str},"intent_triggers":[STR_MAIUSC]}\n'
+    "Regras: industries/technographics em minusculas (busca em PT-BR); country ISO-2; "
+    "min<=max; sem campos extras. Para servicos cujo decisor e a fundadora, "
+    "technographics.mandatory pode ser [] (ferramenta de gestao nao e detectavel).\n\n"
+    "DESCRICAO DO NEGOCIO:\n"
+)
+
+
+def assist_icp(description: str, client: CognitionClient) -> ICPCriteria:
+    """Gera um rascunho de ICP a partir da descrição do negócio (Gemini) e valida."""
+    payload = client.generate_json(_ICP_ASSIST_PROMPT + description.strip())
+    return ICPCriteria.model_validate(payload)
 
 
 def save_scoring(runtime_path: Path, scoring: dict[str, float]) -> None:
