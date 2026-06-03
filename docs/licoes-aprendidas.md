@@ -54,6 +54,10 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   Aplicar: `py -m ruff format .` faz parte do ciclo; o gate só roda `ruff check` (lint), não formata.
 - **L-019 | Intent | No PoC, Intent é um PROXY** (`|derived_from| / norm`) — placeholder honesto; Intent Worker dedicado é V1 (documentado em `m3_score.py`).
 
+- **L-020 | Qualidade | Run real revelou que fornecedores vazam como prospect** (ex.: "AWS" ficou #1, com 30 evidências).
+  Aplicar: V1 precisa de resolução de entidades com lista de exclusão de vendors (aws, google, microsoft…) antes do scoring.
+- **L-021 | E2E | Orquestrador com clientes injetados (Protocol) permite smoke determinístico (fixtures) E run real (CLI)** com o mesmo código.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.

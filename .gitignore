@@ -22,6 +22,7 @@ env/
 # Dados e logs gerados em runtime (mantemos a estrutura via .gitkeep)
 data/cache/
 data/*.json
+data/*.md
 logs/*.jsonl
 logs/*.log
 
