@@ -24,16 +24,21 @@ from socialselling.skills.gemini_client import (
 )
 
 _PROMPT_HEADER = (
-    "Voce e um extrator de entidades. A partir dos resultados de busca abaixo, "
-    "identifique empresas e pessoas-chave. Responda SOMENTE com JSON valido no formato:\n"
-    '{"inferences":[{"company":{"normalized_name":str,"domain":str|null,'
-    '"employee_count":int|null,"industry":str|null,"technologies":[str],'
-    '"confidence":number},"people":[{"normalized_name":str,"role_title":str|null,'
-    '"seniority":str|null,"confidence":number}],"derived_from":[evidence_id],'
-    '"intent_signals":[token],"disqualifiers":[token],"confidence":number}]}\n'
-    "confidence e um numero entre 0 e 1. derived_from lista os evidence_id usados.\n"
+    "Voce e um extrator de LEADS (empresarias fundadoras de servicos) e dados de "
+    "contato. A partir dos resultados de busca abaixo, responda SOMENTE com JSON "
+    "valido no formato:\n"
+    '{"inferences":[{"company":{"normalized_name":str,"industry":str|null,'
+    '"location":str|null,"website":str|null,"instagram_url":str|null,'
+    '"linkedin_url":str|null,"email":str|null,"phone":str|null,"confidence":number},'
+    '"people":[{"normalized_name":str,"role_title":str|null,"seniority":str|null,'
+    '"confidence":number}],"derived_from":[evidence_id],"intent_signals":[token],'
+    '"disqualifiers":[token],"confidence":number}]}\n'
+    "Regras: confidence entre 0 e 1; derived_from lista os evidence_id usados; "
+    "instagram_url SO se for um link de instagram.com; linkedin_url SO se for "
+    "linkedin.com; email/phone apenas se EXPLICITOS no texto. Preencha so o que "
+    "estiver EVIDENTE, use null quando nao houver — NUNCA invente.\n"
     "intent_signals e disqualifiers: liste APENAS tokens dos vocabularios abaixo que "
-    "estiverem EVIDENTES no texto; se nenhum, use lista vazia (nunca invente).\n\n"
+    "estiverem EVIDENTES no texto; se nenhum, use lista vazia.\n\n"
 )
 
 
@@ -78,6 +83,23 @@ def _as_str_or_none(value: Any) -> str | None:
     return text or None
 
 
+def _clean_url(value: Any, *, must_contain: str | None = None) -> str | None:
+    """Mantém a URL só se for http(s) e (opcionalmente) contiver um domínio esperado."""
+    text = _as_str_or_none(value)
+    if text is None or not text.lower().startswith(("http://", "https://")):
+        return None
+    if must_contain is not None and must_contain not in text.lower():
+        return None
+    return text
+
+
+def _clean_email(value: Any) -> str | None:
+    text = _as_str_or_none(value)
+    if text is None or "@" not in text or "." not in text.split("@")[-1]:
+        return None
+    return text
+
+
 def _filter_vocab(values: Any, vocab: list[str]) -> list[str]:
     """Mantém só tokens conhecidos do vocabulário, sem repetição e em ordem estável."""
     allowed = set(vocab)
@@ -110,6 +132,12 @@ def _parse_inferences(
             industry=_as_str_or_none(comp.get("industry")),
             technologies=[str(t) for t in comp.get("technologies", [])],
             confidence=_clamp01(float(comp.get("confidence", 0.5))),
+            location=_as_str_or_none(comp.get("location")),
+            website=_clean_url(comp.get("website")),
+            instagram_url=_clean_url(comp.get("instagram_url"), must_contain="instagram.com"),
+            linkedin_url=_clean_url(comp.get("linkedin_url"), must_contain="linkedin.com"),
+            email=_clean_email(comp.get("email")),
+            phone=_as_str_or_none(comp.get("phone")),
         )
         people: list[PersonEntity] = []
         for person in item.get("people", []):

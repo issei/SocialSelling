@@ -32,7 +32,13 @@ scenarios("../features/m2_extracao.feature")
 
 
 class _FixtureTavily:
-    def search(self, query: str, max_results: int, search_depth: str) -> dict[str, Any]:
+    def search(
+        self,
+        query: str,
+        max_results: int,
+        search_depth: str,
+        include_domains: list[str] | None = None,
+    ) -> dict[str, Any]:
         path = _TAVILY / f"{query_hash(query)}.json"
         data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
         return data
@@ -52,19 +58,23 @@ class FakeGeminiClient:
 
 
 def _build_evidences() -> list[ObservedEvidence]:
-    raw = json.loads((_ROOT / "config" / "icp_criteria.example.json").read_text("utf-8"))
+    from socialselling.config import load_runtime
     from socialselling.contracts import ICPCriteria
 
+    raw = json.loads((_ROOT / "config" / "icp_criteria.talita.json").read_text("utf-8"))
     icp = ICPCriteria.model_validate(raw)
+    cfg = load_runtime(_ROOT / "config" / "runtime.toml")
     return run_m1(
         icp,
         client=_FixtureTavily(),
         cache=JsonCache(_ROOT / "data" / "cache" / "_never_used_in_test"),
         now=_NOW,
-        max_queries=3,
-        max_results=10,
-        search_depth="basic",
+        max_queries=cfg.tavily.max_queries,
+        max_results=cfg.tavily.max_results,
+        search_depth=cfg.tavily.search_depth,
         cache_ttl_hours=24,
+        persona_term=cfg.tavily.persona_term,
+        include_domains=cfg.tavily.include_domains,
     )
 
 

@@ -18,15 +18,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from socialselling.config import load_runtime  # noqa: E402
 from socialselling.contracts import ICPCriteria  # noqa: E402
 from socialselling.core.cache import query_hash  # noqa: E402
 from socialselling.modules.m1_busca import generate_queries  # noqa: E402
 from socialselling.skills.tavily_client import TavilyClient  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "tavily"
-MAX_QUERIES = 3
-MAX_RESULTS = 10
-SEARCH_DEPTH = "basic"
+ICP_PATH = ROOT / "config" / "icp_criteria.talita.json"
 
 
 def _load_env() -> dict[str, str]:
@@ -44,13 +43,14 @@ def main() -> int:
     if not key:
         print("TAVILY_API_KEY ausente no .env", file=sys.stderr)
         return 1
-    icp = ICPCriteria.model_validate(
-        json.loads((ROOT / "config" / "icp_criteria.example.json").read_text("utf-8"))
-    )
+    icp = ICPCriteria.model_validate(json.loads(ICP_PATH.read_text("utf-8")))
+    cfg = load_runtime(ROOT / "config" / "runtime.toml")
     client = TavilyClient(key)
     FIXTURES.mkdir(parents=True, exist_ok=True)
-    for query in generate_queries(icp, MAX_QUERIES):
-        payload = client.search(query, MAX_RESULTS, SEARCH_DEPTH)
+    for query in generate_queries(icp, cfg.tavily.max_queries, cfg.tavily.persona_term):
+        payload = client.search(
+            query, cfg.tavily.max_results, cfg.tavily.search_depth, cfg.tavily.include_domains
+        )
         # normaliza para reduzir flutuação entre gravações
         slim = {
             "results": [

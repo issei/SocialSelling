@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 from pytest_bdd import given, scenarios, then, when
 
+from socialselling.config import load_runtime
 from socialselling.contracts import ICPCriteria, ObservedEvidence
 from socialselling.core.cache import JsonCache, query_hash
 from socialselling.modules.m1_busca import is_degraded, run_m1
@@ -29,7 +30,13 @@ class FakeTavilyClient:
         self._dir = fixtures_dir
         self._fail = fail
 
-    def search(self, query: str, max_results: int, search_depth: str) -> dict[str, Any]:
+    def search(
+        self,
+        query: str,
+        max_results: int,
+        search_depth: str,
+        include_domains: list[str] | None = None,
+    ) -> dict[str, Any]:
         if self._fail == "429":
             raise RateLimitError("fake 429")
         path = self._dir / f"{query_hash(query)}.json"
@@ -43,20 +50,23 @@ def ctx() -> dict[str, Any]:
 
 
 def _load_icp() -> ICPCriteria:
-    raw = json.loads((_ROOT / "config" / "icp_criteria.example.json").read_text("utf-8"))
+    raw = json.loads((_ROOT / "config" / "icp_criteria.talita.json").read_text("utf-8"))
     return ICPCriteria.model_validate(raw)
 
 
 def _run(client: FakeTavilyClient, cache_root: Path) -> list[ObservedEvidence]:
+    cfg = load_runtime(_ROOT / "config" / "runtime.toml")
     return run_m1(
         _load_icp(),
         client=client,
         cache=JsonCache(cache_root),
         now=_NOW,
-        max_queries=3,
-        max_results=10,
-        search_depth="basic",
+        max_queries=cfg.tavily.max_queries,
+        max_results=cfg.tavily.max_results,
+        search_depth=cfg.tavily.search_depth,
         cache_ttl_hours=24,
+        persona_term=cfg.tavily.persona_term,
+        include_domains=cfg.tavily.include_domains,
     )
 
 

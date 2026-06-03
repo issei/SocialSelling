@@ -25,8 +25,7 @@ class GeminiError(Exception):
 class CognitionClient(Protocol):
     """Contrato mínimo de um motor cognitivo (real ou fake)."""
 
-    def generate_json(self, prompt: str) -> dict[str, Any]:
-        ...
+    def generate_json(self, prompt: str) -> dict[str, Any]: ...
 
 
 class GeminiClient:

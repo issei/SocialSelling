@@ -25,6 +25,10 @@ intent_evidence_norm = 5
 max_queries = 3
 max_results = 10
 search_depth = "basic"
+# Termo de persona injetado nas queries (publico Talita = fundadoras de servicos).
+persona_term = "fundadora"
+# Vies de dominio: prioriza perfis sociais onde o decisor e achavel (Instagram > LinkedIn).
+include_domains = ["instagram.com", "linkedin.com"]
 
 [gemini]
 model = "gemini-2.5-flash-lite"

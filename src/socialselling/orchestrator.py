@@ -51,6 +51,8 @@ def run_pipeline(
         max_results=cfg.tavily.max_results,
         search_depth=cfg.tavily.search_depth,
         cache_ttl_hours=cfg.cache.ttl_hours,
+        persona_term=cfg.tavily.persona_term,
+        include_domains=cfg.tavily.include_domains,
     )
     inferences = run_m2(
         evidences,
