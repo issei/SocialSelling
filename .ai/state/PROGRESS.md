@@ -4,13 +4,17 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** WU-5 (M5 XAI) implementado e verde no gate; merge/tag `v0.6.0` em andamento
-- **ultima_tag_verde:** `v0.5.0` (→ `v0.6.0` após merge do M5)
-- **wu_em_andamento:** WU-5 concluindo (PR aberto)
-- **passo_atual:** WU-5 / S6 (PR → auto-merge → tag)
-- **branch:** `feat/m5-xai`
-- **proxima_acao:** Iniciar WU-6 (Orquestrador + Smoke E2E). `orchestrator.py` encadeia M1→M5 em memória, monta `RankedProspect`, persiste JSON atômico, expõe CLI `python -m socialselling.orchestrator --icp ...`. Smoke @pipeline: memória vazia + fixtures → N leads; 2ª execução byte-idêntica. Fecha o PoC em `v0.7.0`.
-- **bloqueios:** NENHUM
+- **marco_atual:** 🎉 PoC COMPLETO — orquestrador M1→M5 + CLI + smoke E2E; merge/tag `v0.7.0` em andamento
+- **ultima_tag_verde:** `v0.6.0` (→ `v0.7.0` após merge do orquestrador)
+- **wu_em_andamento:** WU-6 concluindo (PR aberto)
+- **passo_atual:** WU-6 / S6 (PR → auto-merge → tag)
+- **branch:** `feat/m6-orchestrator`
+- **proxima_acao:** PoC entregue. Backlog de afinação/V1 (NÃO iniciar sem o dono):
+  1. Resolução de entidades: filtrar fornecedores (ex.: "AWS" vazou como prospect #1) — lista de exclusão de vendors.
+  2. Intent Worker real (hoje Intent é proxy por convergência de evidências).
+  3. Persona/Buying Committee (M2 hoje raramente extrai pessoas das SERPs).
+  4. Validar fórmula de score com dados reais; calibrar pesos.
+- **bloqueios:** NENHUM (PoC funcional; itens acima são evolução, não correção)
 
 ## Pré-condições antes de liberar autonomia plena
 - [x] `bootstrap` executado (venv + deps) e gate completo verde (ruff+mypy+pytest).
@@ -28,3 +32,4 @@
 | 2026-06-03 | WU-3 M3 Score (autônomo) | módulo puro; fórmula linear Fit/Intent/Confiança; hard filter; determinismo 1e-9 | `v0.4.0` |
 | 2026-06-03 | WU-4 M4 Ranking (autônomo) | módulo puro; ordenação p_score desc + tie-break estável; byte-idêntico | `v0.5.0` |
 | 2026-06-03 | WU-5 M5 XAI (autônomo) | módulo puro por regras; drivers +/− + sinais ausentes + degraded_mode | `v0.6.0` |
+| 2026-06-03 | WU-6 Orquestrador + Smoke (autônomo) | pipeline M1→M5 + CLI + persistência atômica; smoke E2E byte-idêntico; run real = 17 prospects | `v0.7.0` |

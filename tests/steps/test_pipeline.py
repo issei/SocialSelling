@@ -1,0 +1,98 @@
+"""Smoke E2E do orquestrador (pytest-bdd). Sem rede: clientes fake sobre fixtures."""
+
+from __future__ import annotations
+
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+import pytest
+from pytest_bdd import given, scenarios, then, when
+
+from socialselling.config import load_runtime
+from socialselling.contracts import ICPCriteria, RankedProspect
+from socialselling.core.cache import query_hash
+from socialselling.orchestrator import run_pipeline
+from socialselling.skills.gemini_client import RateLimitError as GeminiRateLimit
+from socialselling.skills.tavily_client import RateLimitError as TavilyRateLimit
+
+_ROOT = Path(__file__).resolve().parents[2]
+_TAVILY = _ROOT / "tests" / "fixtures" / "tavily"
+_GEMINI = _ROOT / "tests" / "fixtures" / "gemini"
+_NOW = datetime(2026, 1, 1, tzinfo=UTC)
+
+scenarios("../features/pipeline_smoke.feature")
+
+
+class _FakeTavily:
+    def search(self, query: str, max_results: int, search_depth: str) -> dict[str, Any]:
+        path = _TAVILY / f"{query_hash(query)}.json"
+        if not path.exists():
+            raise TavilyRateLimit("sem fixture")
+        data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        return data
+
+
+class _FakeGemini:
+    def generate_json(self, prompt: str) -> dict[str, Any]:
+        path = _GEMINI / f"{query_hash(prompt)}.json"
+        if not path.exists():
+            raise GeminiRateLimit("sem fixture")
+        data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        return data
+
+
+@pytest.fixture
+def ctx() -> dict[str, Any]:
+    return {}
+
+
+def _icp() -> ICPCriteria:
+    raw = json.loads((_ROOT / "config" / "icp_criteria.example.json").read_text("utf-8"))
+    return ICPCriteria.model_validate(raw)
+
+
+def _run(cache_root: Path) -> list[RankedProspect]:
+    cfg = load_runtime(_ROOT / "config" / "runtime.toml")
+    return run_pipeline(
+        _icp(),
+        tavily=_FakeTavily(),
+        gemini=_FakeGemini(),
+        cache_root=cache_root,
+        now=_NOW,
+        cfg=cfg,
+    )
+
+
+@given("um ICP de exemplo e fixtures gravadas")
+def _given(ctx: dict[str, Any]) -> None:
+    ctx["ready"] = True
+
+
+@when("eu executo o orquestrador M1 ate M5 duas vezes")
+def _when(ctx: dict[str, Any], tmp_path: Path) -> None:
+    ctx["run1"] = _run(tmp_path / "c1")
+    ctx["run2"] = _run(tmp_path / "c2")
+
+
+@then("sao produzidos prospects ranqueados")
+def _then_produced(ctx: dict[str, Any]) -> None:
+    assert len(ctx["run1"]) > 0
+
+
+@then("cada prospect tem rank crescente, score e explicacao")
+def _then_shape(ctx: dict[str, Any]) -> None:
+    run1: list[RankedProspect] = ctx["run1"]
+    for i, prospect in enumerate(run1, start=1):
+        assert prospect.rank == i
+        assert prospect.score.company_id == prospect.explanation.company_id
+    p_scores = [p.score.p_score for p in run1]
+    assert p_scores == sorted(p_scores, reverse=True)
+
+
+@then("a segunda execucao e byte-identica a primeira")
+def _then_identical(ctx: dict[str, Any]) -> None:
+    dump1 = json.dumps([p.model_dump() for p in ctx["run1"]], sort_keys=True)
+    dump2 = json.dumps([p.model_dump() for p in ctx["run2"]], sort_keys=True)
+    assert dump1 == dump2
