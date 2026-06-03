@@ -4,12 +4,12 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** WU-4 (M4 Ranking) implementado e verde no gate; merge/tag `v0.5.0` em andamento
-- **ultima_tag_verde:** `v0.4.0` (→ `v0.5.0` após merge do M4)
-- **wu_em_andamento:** WU-4 concluindo (PR aberto)
-- **passo_atual:** WU-4 / S6 (PR → auto-merge → tag)
-- **branch:** `feat/m4-ranking`
-- **proxima_acao:** Iniciar WU-5 (M5 XAI). Gera `XAIPayload` (drivers +/−, sinais ausentes) a partir de `ProspectScore` + `Inference`. Pode usar Gemini para texto OU ser determinístico por regras (preferir regras puras no PoC p/ determinismo sem rede).
+- **marco_atual:** WU-5 (M5 XAI) implementado e verde no gate; merge/tag `v0.6.0` em andamento
+- **ultima_tag_verde:** `v0.5.0` (→ `v0.6.0` após merge do M5)
+- **wu_em_andamento:** WU-5 concluindo (PR aberto)
+- **passo_atual:** WU-5 / S6 (PR → auto-merge → tag)
+- **branch:** `feat/m5-xai`
+- **proxima_acao:** Iniciar WU-6 (Orquestrador + Smoke E2E). `orchestrator.py` encadeia M1→M5 em memória, monta `RankedProspect`, persiste JSON atômico, expõe CLI `python -m socialselling.orchestrator --icp ...`. Smoke @pipeline: memória vazia + fixtures → N leads; 2ª execução byte-idêntica. Fecha o PoC em `v0.7.0`.
 - **bloqueios:** NENHUM
 
 ## Pré-condições antes de liberar autonomia plena
@@ -27,3 +27,4 @@
 | 2026-06-03 | WU-2 M2 Extração (autônomo) | cliente Gemini + cache + degradação; 17 inferências reais; isolamento de camadas; BDD determinístico | `v0.3.0` |
 | 2026-06-03 | WU-3 M3 Score (autônomo) | módulo puro; fórmula linear Fit/Intent/Confiança; hard filter; determinismo 1e-9 | `v0.4.0` |
 | 2026-06-03 | WU-4 M4 Ranking (autônomo) | módulo puro; ordenação p_score desc + tie-break estável; byte-idêntico | `v0.5.0` |
+| 2026-06-03 | WU-5 M5 XAI (autônomo) | módulo puro por regras; drivers +/− + sinais ausentes + degraded_mode | `v0.6.0` |
