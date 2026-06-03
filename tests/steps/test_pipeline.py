@@ -11,7 +11,7 @@ import pytest
 from pytest_bdd import given, scenarios, then, when
 
 from socialselling.config import load_runtime
-from socialselling.contracts import HypothesisCatalog, ICPCriteria, RankedProspect
+from socialselling.contracts import HypothesisCatalog, ICPCriteria, LeadCard
 from socialselling.core.cache import query_hash
 from socialselling.orchestrator import run_pipeline
 from socialselling.skills.gemini_client import RateLimitError as GeminiRateLimit
@@ -64,7 +64,7 @@ def _catalog() -> HypothesisCatalog:
     return HypothesisCatalog.model_validate(raw)
 
 
-def _run(cache_root: Path) -> list[RankedProspect]:
+def _run(cache_root: Path) -> list[LeadCard]:
     cfg = load_runtime(_ROOT / "config" / "runtime.toml")
     return run_pipeline(
         _icp(),
@@ -95,12 +95,15 @@ def _then_produced(ctx: dict[str, Any]) -> None:
 
 @then("cada prospect tem rank crescente, score e explicacao")
 def _then_shape(ctx: dict[str, Any]) -> None:
-    run1: list[RankedProspect] = ctx["run1"]
-    for i, prospect in enumerate(run1, start=1):
-        assert prospect.rank == i
-        assert prospect.score.company_id == prospect.explanation.company_id
-    p_scores = [p.score.p_score for p in run1]
+    run1: list[LeadCard] = ctx["run1"]
+    for i, card in enumerate(run1, start=1):
+        assert card.rank == i
+        assert card.display_name
+        assert 0.0 <= card.score.p_score <= 1.0
+    p_scores = [c.score.p_score for c in run1]
     assert p_scores == sorted(p_scores, reverse=True)
+    # ao menos um lead traz link de Instagram (publico Talita)
+    assert any(c.links.instagram for c in run1)
 
 
 @then("a segunda execucao e byte-identica a primeira")
