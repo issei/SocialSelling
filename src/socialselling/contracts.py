@@ -211,3 +211,40 @@ class RankedProspect(BaseModel):
     rank: int = Field(ge=1)
     score: ProspectScore
     explanation: XAIPayload
+
+
+# --------------------------------------------------------------------------- #
+# Camada de apresentacao — Lead Card (saida acionavel do pipeline)            #
+# --------------------------------------------------------------------------- #
+class LeadLinks(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    instagram: str | None = None
+    linkedin: str | None = None
+    website: str | None = None
+
+
+class LeadContact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: str | None = None
+    phone: str | None = None
+
+
+class LeadCard(BaseModel):
+    """Cartao acionavel de um lead: identidade, links (Instagram first), porque agora."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    rank: int = Field(ge=1)
+    display_name: str
+    company: str | None = None
+    role: str | None = None
+    sector: str | None = None
+    location: str | None = None
+    links: LeadLinks
+    contact: LeadContact
+    score: ProspectScore
+    why_now: list[str] = Field(default_factory=list)
+    gaps: list[str] = Field(default_factory=list)
+    sources: list[str] = Field(default_factory=list)

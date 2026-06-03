@@ -4,17 +4,17 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** 🎯 Motor de intenção COMPLETO (público Talita) — ICP+hipóteses; M2 extrai sinais; M3 intent das hipóteses + hard filter; M5 explica; BDD de objetivo. `v0.8.0`
-- **ultima_tag_verde:** `v0.8.0`
-- **wu_em_andamento:** — (motor de intenção entregue em 4 fatias: PRs #12,#13,#14,#15)
-- **passo_atual:** — (`main` verde em e0f0109, 21 testes)
+- **marco_atual:** 🟢 Busca aderente + Lead Card acionável (público Talita). Sondagem feita; run real = 29 leads com Instagram. `v0.9.0`
+- **ultima_tag_verde:** `v0.9.0`
+- **wu_em_andamento:** — (aderência entregue: PR #17 busca+contato `v0.8.1`; PR Lead Card `v0.9.0`)
+- **passo_atual:** — (`main` verde, 21 testes; CLI gera Lead Cards reais)
 - **branch:** `main`
-- **proxima_acao:** Backlog (NÃO iniciar sem o dono). PRIORIDADE = aderência da BUSCA ao público Talita:
-  1. **Sondagem empírica** (recomendado): rodar M1/M2 ao vivo com `icp_criteria.talita.json` e ver o que o Tavily acha de founders de serviços — decidir antes de codar (ver ADR-001 / L-024).
-  2. Adaptar `generate_queries` (M1) para PT-BR orientado a founder/dor (hoje é tech/inglês).
-  3. Calibrar priors das hipóteses e pesos do score com dados reais.
-  4. Resolução de entidades: filtrar fornecedores (legado do ICP cloud).
-- **bloqueios:** NENHUM (motor honra timing/desqualificadores; busca ainda afinada p/ tech — evolução, não correção)
+- **proxima_acao:** Backlog de CALIBRAÇÃO (NÃO iniciar sem o dono) — ver `docs/analysis/sondagem-talita.md`:
+  1. Precisão de persona: ainda entram homens/contas de empresa (run trouxe "Silvio Meira"). Desqualificador `perfil_nao_fundadora` ou re-rank por persona.
+  2. Pessoa vs empresa: muitos leads são a conta da firma sem nome da decisora.
+  3. Calibrar priors/pesos com feedback real de conversão.
+  4. (Opcional, fora do guardrail) enriquecimento de contato (email/telefone) visitando perfis.
+- **bloqueios:** NENHUM (formato e busca entregues; itens acima são precisão/calibração)
 
 ## Pré-condições antes de liberar autonomia plena
 - [x] `bootstrap` executado (venv + deps) e gate completo verde (ruff+mypy+pytest).
@@ -34,3 +34,4 @@
 | 2026-06-03 | WU-5 M5 XAI (autônomo) | módulo puro por regras; drivers +/− + sinais ausentes + degraded_mode | `v0.6.0` |
 | 2026-06-03 | WU-6 Orquestrador + Smoke (autônomo) | pipeline M1→M5 + CLI + persistência atômica; smoke E2E byte-idêntico; run real = 17 prospects | `v0.7.0` |
 | 2026-06-03 | Motor de intenção (público Talita) | ICP+hipóteses (#12); M2 extrai sinais (#13); M3 intent das hipóteses + hard filter (#14); M5 XAI + BDD de objetivo (#15) | `v0.7.1`→`v0.8.0` |
+| 2026-06-03 | Aderência da busca + Lead Card | sondagem empírica; busca PT-BR+Instagram (#17); contato no M2; LeadCard acionável. Run real = 29 leads c/ Instagram | `v0.8.1`→`v0.9.0` |
