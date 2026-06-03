@@ -22,6 +22,12 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-006 | Validacao | Provar "executavel-ready" rodando o toolchain de verdade**
   (parse de TOML/JSON + validacao de contratos) pega erros antes de qualquer modulo existir.
 
+## Versionamento / Operação
+- **L-007 | Rollback | Tags anotadas na main = pontos de restauração; `v0.1.0` e a fundação.**
+  Aplicar: rollback público via `git revert` (nunca `reset`/`--force` em main/tags). Refazer módulo → branch a partir da última tag verde.
+- **L-008 | Autonomia | Estado de progresso vive no git + `.ai/state/PROGRESS.md`, não na sessão.**
+  Aplicar: WUs curtas que terminam em checkpoint seguro; 1–2 passos por run; parar limpo (cota Pro = error budget).
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
