@@ -64,12 +64,12 @@ def run_pipeline(
     scores = run_m3(
         inferences,
         icp,
+        hypotheses,
         w_fit=cfg.scoring.w_fit,
         w_intent=cfg.scoring.w_intent,
         confidence_exponent=cfg.scoring.confidence_exponent,
         w_fit_tech=cfg.scoring.w_fit_tech,
         w_fit_industry=cfg.scoring.w_fit_industry,
-        intent_evidence_norm=cfg.scoring.intent_evidence_norm,
     )
     ranked_scores = run_m4(scores)
     by_company = {inf.company.company_id: inf for inf in inferences}

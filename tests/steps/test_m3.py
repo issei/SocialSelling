@@ -11,6 +11,7 @@ from pytest_bdd import given, scenarios, then, when
 
 from socialselling.contracts import (
     CompanyEntity,
+    HypothesisCatalog,
     ICPCriteria,
     Inference,
     ProspectScore,
@@ -27,7 +28,6 @@ _PARAMS: dict[str, Any] = {
     "confidence_exponent": 0.5,
     "w_fit_tech": 0.60,
     "w_fit_industry": 0.40,
-    "intent_evidence_norm": 5,
 }
 
 
@@ -36,13 +36,19 @@ def _icp() -> ICPCriteria:
     return ICPCriteria.model_validate(raw)
 
 
+def _catalog() -> HypothesisCatalog:
+    raw = json.loads((_ROOT / "config" / "hypotheses_catalog.json").read_text("utf-8"))
+    return HypothesisCatalog.model_validate(raw)
+
+
 def _inference(
     *,
     cid: str,
     technologies: list[str],
     industry: str | None,
-    derived_n: int,
     confidence: float,
+    intent_signals: list[str] | None = None,
+    disqualifiers: list[str] | None = None,
 ) -> Inference:
     return Inference(
         company=CompanyEntity(
@@ -53,8 +59,10 @@ def _inference(
             confidence=confidence,
         ),
         people=[],
-        derived_from=[f"ev{i}" for i in range(derived_n)],
+        derived_from=["ev1"],
         confidence=confidence,
+        intent_signals=intent_signals or [],
+        disqualifiers=disqualifiers or [],
     )
 
 
@@ -64,7 +72,7 @@ def ctx() -> dict[str, Any]:
 
 
 def _run(inferences: list[Inference]) -> list[ProspectScore]:
-    return run_m3(inferences, _icp(), **_PARAMS)
+    return run_m3(inferences, _icp(), _catalog(), **_PARAMS)
 
 
 @given("um ICP e inferencias sinteticas")
@@ -74,23 +82,50 @@ def _given_synthetic(ctx: dict[str, Any]) -> None:
             cid="c1",
             technologies=["aws", "kubernetes"],
             industry="saas",
-            derived_n=3,
             confidence=0.9,
+            intent_signals=["intencao_ia"],
         ),
-        _inference(cid="c2", technologies=["aws"], industry="varejo", derived_n=1, confidence=0.5),
+        _inference(cid="c2", technologies=["aws"], industry="varejo", confidence=0.5),
     ]
 
 
 @given("uma inferencia com tecnologia proibida pelo ICP")
 def _given_excluded(ctx: dict[str, Any]) -> None:
     ctx["inferences"] = [
+        _inference(cid="bad", technologies=["aws", "wordpress"], industry="saas", confidence=0.9)
+    ]
+
+
+@given("uma inferencia com desqualificador detectado")
+def _given_disqualified(ctx: dict[str, Any]) -> None:
+    ctx["inferences"] = [
         _inference(
-            cid="bad",
-            technologies=["aws", "wordpress"],
+            cid="dq",
+            technologies=["aws", "kubernetes"],
             industry="saas",
-            derived_n=5,
             confidence=0.9,
+            intent_signals=["intencao_ia"],
+            disqualifiers=["solo_sem_equipe"],
         )
+    ]
+
+
+@given("duas inferencias identicas exceto o sinal de intencao")
+def _given_intent_pair(ctx: dict[str, Any]) -> None:
+    ctx["inferences"] = [
+        _inference(
+            cid="com_sinal",
+            technologies=["aws", "kubernetes"],
+            industry="saas",
+            confidence=0.8,
+            intent_signals=["depende_de_mim"],
+        ),
+        _inference(
+            cid="sem_sinal",
+            technologies=["aws", "kubernetes"],
+            industry="saas",
+            confidence=0.8,
+        ),
     ]
 
 
@@ -101,15 +136,15 @@ def _given_conf(ctx: dict[str, Any]) -> None:
             cid="hi",
             technologies=["aws", "kubernetes"],
             industry="saas",
-            derived_n=3,
             confidence=0.9,
+            intent_signals=["intencao_ia"],
         ),
         _inference(
             cid="lo",
             technologies=["aws", "kubernetes"],
             industry="saas",
-            derived_n=3,
             confidence=0.4,
+            intent_signals=["intencao_ia"],
         ),
     ]
 
@@ -147,6 +182,13 @@ def _then_hard_filter(ctx: dict[str, Any]) -> None:
     score = ctx["run1"][0]
     assert score.hard_filter_passed is False
     assert score.p_score == 0.0
+
+
+@then("o prospect com sinal de intencao tem p_score estritamente maior")
+def _then_intent_higher(ctx: dict[str, Any]) -> None:
+    com_sinal, sem_sinal = ctx["run1"][0], ctx["run1"][1]
+    assert com_sinal.intent > sem_sinal.intent
+    assert com_sinal.p_score > sem_sinal.p_score
 
 
 @then("o prospect de maior confianca tem p_score maior ou igual")

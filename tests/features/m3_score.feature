@@ -1,6 +1,7 @@
 @M3
-Feature: M3 Score — scores deterministicos de prospect
+Feature: M3 Score — scores deterministicos guiados por fit, intencao e desqualificadores
   O M3 aplica a formula linear do PoC sobre inferencias, de forma pura e deterministica.
+  Intencao vem das hipoteses que disparam; desqualificador zera o lead.
 
   Scenario: Score deterministico e dentro de [0,1]
     Given um ICP e inferencias sinteticas
@@ -12,6 +13,16 @@ Feature: M3 Score — scores deterministicos de prospect
     Given uma inferencia com tecnologia proibida pelo ICP
     When eu calculo o score uma vez
     Then o lead tem hard_filter_passed falso e p_score zero
+
+  Scenario: Desqualificador detectado zera o lead
+    Given uma inferencia com desqualificador detectado
+    When eu calculo o score uma vez
+    Then o lead tem hard_filter_passed falso e p_score zero
+
+  Scenario: Sinal de intencao aumenta o p_score
+    Given duas inferencias identicas exceto o sinal de intencao
+    When eu calculo o score uma vez
+    Then o prospect com sinal de intencao tem p_score estritamente maior
 
   Scenario: Maior confianca nao reduz o p_score
     Given duas inferencias identicas exceto a confianca
