@@ -16,6 +16,22 @@ pip install -e ".[dev]"
 cp .env.example .env      # e preencha TAVILY_API_KEY / GEMINI_API_KEY
 ```
 
+## Rodar
+### Pela linha de comando (CLI)
+```bash
+py -m socialselling.orchestrator --icp config/icp_criteria.talita.json
+# saida: data/prospects_ranked.json + data/prospects_ranked.md (Lead Cards)
+```
+
+### Pela UI local (amigavel) — recomendado
+UI web local para ver/editar parametros, gerar o ICP com ajuda do Gemini, executar e
+ver os Lead Cards (Instagram clicavel). Roda so em `localhost` (ADR-002).
+```bash
+pip install -e ".[web]"          # ou ".[dev]" (ja inclui web)
+py -m socialselling.web          # abre http://127.0.0.1:8000
+```
+As chaves de API ficam no `.env` (nunca na UI).
+
 ## Quality gate (lint + tipos + testes)
 ```powershell
 ./scripts/gate.ps1        # Windows PowerShell
@@ -38,4 +54,6 @@ cp .env.example .env      # e preencha TAVILY_API_KEY / GEMINI_API_KEY
 Pipeline `M1 Busca -> M2 Extracao -> M3 Score -> M4 Ranking -> M5 XAI`. Sequenciamento em [docs/planning/roadmap-poc.md](docs/planning/roadmap-poc.md).
 
 ## Status
-Fase 0 (fundacao) concluida. Nenhum modulo de negocio implementado ainda.
+Pipeline M1–M5 + orquestrador completos; busca aderente ao publico-alvo (queries PT-BR +
+Instagram) e **Lead Cards** acionaveis; **UI local** (FastAPI) para operar tudo. Ver
+`.ai/state/PROGRESS.md`. Tags de restauracao ate `v0.11.x`.

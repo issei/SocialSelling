@@ -71,7 +71,8 @@ logs/     cognitive_trace.jsonl
 - Setup: `py -m venv .venv` → ativar → `pip install -e ".[dev]"` → `cp .env.example .env`
 - **Quality gate (lint+tipos+testes):** `./scripts/gate.ps1` (Win) ou `./scripts/gate.sh` (WSL)
 - Testes: `py -m pytest -q` · Lint: `py -m ruff check .` · Tipos: `py -m mypy`
-- Rodar pipeline (fase de dev): `py -m socialselling.orchestrator --icp config/icp_criteria.example.json`
+- Rodar pipeline (CLI): `py -m socialselling.orchestrator --icp config/icp_criteria.talita.json`
+- **UI local (ADR-002):** `py -m socialselling.web` → http://127.0.0.1:8000 (ver/editar params, assistente Gemini, executar, Lead Cards). Deps: `pip install -e ".[web]"`.
 
 **Para avançar um módulo M1–M5:** use a skill `sdd-modulo` (institucionaliza o SDD-to-Code Loop com gates).
 **Ao final de cada tarefa:** registre aprendizados em `docs/licoes-aprendidas.md` (auto-learning).
