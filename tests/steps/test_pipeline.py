@@ -26,7 +26,13 @@ scenarios("../features/pipeline_smoke.feature")
 
 
 class _FakeTavily:
-    def search(self, query: str, max_results: int, search_depth: str) -> dict[str, Any]:
+    def search(
+        self,
+        query: str,
+        max_results: int,
+        search_depth: str,
+        include_domains: list[str] | None = None,
+    ) -> dict[str, Any]:
         path = _TAVILY / f"{query_hash(query)}.json"
         if not path.exists():
             raise TavilyRateLimit("sem fixture")
@@ -49,7 +55,7 @@ def ctx() -> dict[str, Any]:
 
 
 def _icp() -> ICPCriteria:
-    raw = json.loads((_ROOT / "config" / "icp_criteria.example.json").read_text("utf-8"))
+    raw = json.loads((_ROOT / "config" / "icp_criteria.talita.json").read_text("utf-8"))
     return ICPCriteria.model_validate(raw)
 
 

@@ -24,8 +24,13 @@ class TavilyError(Exception):
 class SearchClient(Protocol):
     """Contrato mínimo de um cliente de busca (real ou fake)."""
 
-    def search(self, query: str, max_results: int, search_depth: str) -> dict[str, Any]:
-        ...
+    def search(
+        self,
+        query: str,
+        max_results: int,
+        search_depth: str,
+        include_domains: list[str] | None = None,
+    ) -> dict[str, Any]: ...
 
 
 class TavilyClient:
@@ -42,17 +47,23 @@ class TavilyClient:
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
 
-    def search(self, query: str, max_results: int, search_depth: str) -> dict[str, Any]:
-        payload = {
+    def search(
+        self,
+        query: str,
+        max_results: int,
+        search_depth: str,
+        include_domains: list[str] | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
             "api_key": self._api_key,
             "query": query,
             "max_results": max_results,
             "search_depth": search_depth,
         }
+        if include_domains:
+            payload["include_domains"] = include_domains
         try:
-            resp = httpx.post(
-                f"{self._base_url}/search", json=payload, timeout=self._timeout
-            )
+            resp = httpx.post(f"{self._base_url}/search", json=payload, timeout=self._timeout)
         except httpx.HTTPError as exc:  # timeout, conexão, etc.
             raise TavilyError(str(exc)) from exc
         if resp.status_code == 429:

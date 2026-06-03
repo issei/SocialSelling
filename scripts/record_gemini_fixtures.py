@@ -20,6 +20,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from socialselling.config import load_runtime  # noqa: E402
 from socialselling.contracts import HypothesisCatalog, ICPCriteria  # noqa: E402
 from socialselling.core.cache import JsonCache, query_hash  # noqa: E402
 from socialselling.modules.m1_busca import run_m1  # noqa: E402
@@ -35,7 +36,13 @@ NOW = datetime(2026, 1, 1, tzinfo=UTC)
 class _FixtureTavily:
     """Cliente Tavily de fixture (sem rede) para reconstruir as evidências do M1."""
 
-    def search(self, query: str, max_results: int, search_depth: str) -> dict[str, Any]:
+    def search(
+        self,
+        query: str,
+        max_results: int,
+        search_depth: str,
+        include_domains: list[str] | None = None,
+    ) -> dict[str, Any]:
         path = TAVILY_FIXTURES / f"{query_hash(query)}.json"
         data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
         return data
@@ -57,17 +64,20 @@ def main() -> int:
         print("GEMINI_API_KEY ausente no .env", file=sys.stderr)
         return 1
     icp = ICPCriteria.model_validate(
-        json.loads((ROOT / "config" / "icp_criteria.example.json").read_text("utf-8"))
+        json.loads((ROOT / "config" / "icp_criteria.talita.json").read_text("utf-8"))
     )
+    cfg = load_runtime(ROOT / "config" / "runtime.toml")
     evidences = run_m1(
         icp,
         client=_FixtureTavily(),
         cache=JsonCache(ROOT / "data" / "cache" / "_record_tmp"),
         now=NOW,
-        max_queries=3,
-        max_results=10,
-        search_depth="basic",
+        max_queries=cfg.tavily.max_queries,
+        max_results=cfg.tavily.max_results,
+        search_depth=cfg.tavily.search_depth,
         cache_ttl_hours=24,
+        persona_term=cfg.tavily.persona_term,
+        include_domains=cfg.tavily.include_domains,
     )
     catalog = HypothesisCatalog.model_validate(
         json.loads((ROOT / "config" / "hypotheses_catalog.json").read_text("utf-8"))

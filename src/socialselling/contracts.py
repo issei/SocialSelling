@@ -140,6 +140,13 @@ class CompanyEntity(BaseModel):
     industry: str | None = None
     technologies: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
+    # Contato/social para acionar o lead (preenchidos pelo M2 quando achaveis).
+    location: str | None = None
+    website: str | None = None
+    instagram_url: str | None = None
+    linkedin_url: str | None = None
+    email: str | None = None
+    phone: str | None = None
 
 
 class PersonEntity(BaseModel):

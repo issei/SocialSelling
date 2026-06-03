@@ -8,7 +8,7 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CacheCfg(BaseModel):
@@ -28,6 +28,8 @@ class TavilyCfg(BaseModel):
     max_queries: int
     max_results: int
     search_depth: str
+    persona_term: str = ""
+    include_domains: list[str] = Field(default_factory=list)
 
 
 class GeminiCfg(BaseModel):

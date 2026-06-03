@@ -18,15 +18,23 @@ from socialselling.skills.tavily_client import (
     TavilyError,
 )
 
+_COUNTRY_NAMES = {"BR": "Brasil"}
 
-def generate_queries(icp: ICPCriteria, max_queries: int) -> list[str]:
-    """Gera queries determinísticas a partir do ICP (firmográficos + tech obrigatória)."""
-    tech = " ".join(icp.technographics.mandatory)
+
+def generate_queries(icp: ICPCriteria, max_queries: int, persona_term: str = "") -> list[str]:
+    """Gera queries determinísticas (PT-BR, orientadas à persona) a partir do ICP.
+
+    Ex.: industries=[consultoria, advocacia], persona='fundadora', country=BR →
+    ['consultoria fundadora Brasil', 'advocacia fundadora Brasil']. O viés para
+    perfis sociais (Instagram/LinkedIn) é aplicado via `include_domains` no M1.
+    """
     country = icp.firmographics.geographies.country
+    country_name = _COUNTRY_NAMES.get(country.upper(), country)
+    persona = persona_term.strip()
     queries: list[str] = []
     for industry in icp.firmographics.industries[:max_queries]:
-        query = f"{industry} {tech} company {country}".strip()
-        queries.append(query)
+        parts = [industry.strip(), persona, country_name]
+        queries.append(" ".join(p for p in parts if p))
     return queries
 
 
@@ -77,14 +85,16 @@ def run_m1(
     max_results: int,
     search_depth: str,
     cache_ttl_hours: int,
+    persona_term: str = "",
+    include_domains: list[str] | None = None,
 ) -> list[ObservedEvidence]:
     """Executa o M1: gera queries, consulta Tavily (com cache T-24h) e mapeia evidências."""
     evidences: list[ObservedEvidence] = []
-    for query in generate_queries(icp, max_queries):
+    for query in generate_queries(icp, max_queries, persona_term):
         payload = cache.get(query, now, cache_ttl_hours)
         if payload is None:
             try:
-                payload = client.search(query, max_results, search_depth)
+                payload = client.search(query, max_results, search_depth, include_domains)
                 cache.put(query, payload, now)
             except (RateLimitError, TavilyError):
                 stale = cache.get_any(query)
