@@ -12,19 +12,19 @@ Uma inferencia jamais e tratada como evidencia observada.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
-class DataQualityFlag(str, Enum):
+class DataQualityFlag(StrEnum):
     """Flag de qualidade de dados por sensor (SDD v1.0 secao 1.4)."""
 
     OK = "OK"
     DEGRADED = "DEGRADED"
 
 
-class OperatingMode(str, Enum):
+class OperatingMode(StrEnum):
     """Modo operacional do ciclo sob falha de sensores."""
 
     NORMAL = "NORMAL"
