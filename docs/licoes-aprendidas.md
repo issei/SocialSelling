@@ -70,6 +70,36 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-026 | Async | `asyncio.gather` para fan-out resiliente exige `return_exceptions=True`** + tratar `isinstance(out, BaseException)` no laço (converter em erro estruturado). Com `False`, uma exceção crua de UM provedor derruba o lote inteiro. Pego na revisão crítica do SDD LangGraph (§1.2).
 - **L-027 | Triagem | Heurística barata de poda deve preferir FALSO-PROSSEGUIR a FALSO-PODAR.** `menos_de_2_anos` só marca com ano em contexto de fundação claro; ambíguo defere ao Gemini. Falso-negativo custa 1 chamada; falso-positivo perde um cliente (assimetria de custo).
 
+## Sensores externos / FinOps de crédito (Apollo)
+- **L-028 | Sensor | Sob tier gratuito, projetar a partir da ASSIMETRIA de custo dos endpoints.**
+  Apollo: People Search = 0 crédito (descoberta); Enrichment/Match = créditos escassos (~100/mês).
+  A descoberta grátis faz o grosso e alimenta a poda barata; o crédito pago fica reservado para
+  o passo de maior valor (revelar contato do TOP-N do ranking). Padrão "escada de enriquecimento
+  incremental": degrau N só roda para quem o degrau N−1 aprovou. Ver ADR-004 / SDD Apollo.
+- **L-029 | Estado | Orçamento que PERSISTE entre runs e reseta no mês ≠ orçamento de tokens (por-run).**
+  Créditos de vendor exigem um ledger frio em JSON atômico (`CreditLedger`, `try_spend`/`refund`/
+  reconciliação com a verdade do provedor em 402), período = `now.strftime("%Y-%m")` com relógio
+  INJETADO (reset reproduzível nos testes). Não é banco — é `atomic_write_text`, fiel ao ADR-000.
+- **L-030 | Cache | Em endpoint PAGO, cada cache-hit é 1 crédito economizado** → TTL por volatilidade
+  do dado (descoberta 24h; firmografia 30d; contato revelado 90d+), não um TTL único. Dado pago
+  nunca deve ser cobrado 2×. Chave = hash canônico do corpo (`sort_keys=True`), como L-017.
+- **L-031 | Integração | Sensor novo entra normalizando p/ o formato canônico do provedor**
+  (`{title,url,content,score}`) → M1/M2 não mudam; vira `ObservedEvidence` (camada 1), nunca
+  inferência. `enabled=false` default ⇒ pipeline byte-idêntico (invariante de paridade). Mesmo
+  contrato `AsyncSearchClient` do ADR-003 ⇒ plugue trivial no `parallel_scout`.
+
+## Oportunidades de tooling (revisão de fim de tarefa — auto-learning)
+- **Skill candidata `sdd-adr` (autoria de par ADR+SDD canônico):** o fluxo "pesquisar limites de
+  uma API externa → ADR (emenda ao ADR-000) + SDD no estilo da casa (seções 0–8) → lições → PR
+  auto-merge" já se repetiu (ADR-002/003/004). Vale institucionalizar como skill, análoga à
+  `sdd-modulo`, quando surgir o 5º sensor/decisão. **Ainda não criar** (n=3, padrão estável mas
+  barato de repetir à mão).
+- **Script planejado `scripts/record_apollo_fixtures.py`** (análogo a `record_tavily_fixtures.py`,
+  L-013): grava respostas reais dos 3 endpoints Apollo p/ o BDD; rede só nesse script. Será a
+  WU-A3 do SDD Apollo — valida a chave real UMA vez e fixa o orçamento de crédito gasto na gravação.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
+- **Apollo: acesso à API no tier gratuito é incerto** (fontes 2026 divergem). Confirmar com chave
+  real na WU-A3 ANTES de investir nas WUs seguintes (desenho degrada p/ Tavily em 403).
