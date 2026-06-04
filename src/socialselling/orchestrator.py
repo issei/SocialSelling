@@ -33,6 +33,7 @@ from socialselling.modules.m3_score import run_m3
 from socialselling.modules.m4_ranking import run_m4
 from socialselling.modules.m5_xai import run_m5
 from socialselling.signals import DISQUALIFIER_VOCAB, intent_vocab
+from socialselling.skills.apollo_client import ApolloClient, ApolloSearchClient
 from socialselling.skills.gemini_client import CognitionClient, GeminiClient
 from socialselling.skills.tavily_client import SearchClient, TavilyClient
 
@@ -48,8 +49,13 @@ def run_pipeline(
     cache_root: Path,
     now: datetime,
     cfg: RuntimeConfig,
+    apollo: ApolloSearchClient | None = None,
 ) -> list[LeadCard]:
-    """Executa M1→M5 e monta a lista ranqueada de Lead Cards acionaveis."""
+    """Executa M1→M5 e monta a lista ranqueada de Lead Cards acionaveis.
+
+    `apollo` (opt-in, ADR-004): quando fornecido, o M1 agrega a descoberta firmográfica
+    do Apollo (degrau 1, 0 crédito). Sem ele, comportamento byte-idêntico ao atual.
+    """
     i_vocab = intent_vocab(hypotheses)
     evidences = run_m1(
         icp,
@@ -62,6 +68,7 @@ def run_pipeline(
         cache_ttl_hours=cfg.cache.ttl_hours,
         persona_term=cfg.tavily.persona_term,
         include_domains=cfg.tavily.include_domains,
+        apollo_client=apollo,
     )
     inferences = run_m2(
         evidences,
@@ -211,6 +218,19 @@ def main(argv: list[str] | None = None) -> int:
     hypotheses = HypothesisCatalog.model_validate(
         json.loads(Path(args.hypotheses).read_text("utf-8"))
     )
+
+    # Sensor Apollo opt-in (ADR-004): só ativa com [apollo].enabled + chave presente.
+    apollo: ApolloSearchClient | None = None
+    if cfg.apollo.enabled:
+        apollo_key = env.get("APOLLO_API_KEY") or os.environ.get("APOLLO_API_KEY", "")
+        if apollo_key:
+            apollo = ApolloClient(apollo_key, base_url=cfg.apollo.base_url)
+        else:
+            print(
+                "AVISO: [apollo].enabled mas APOLLO_API_KEY ausente; descoberta Apollo off",
+                file=sys.stderr,
+            )
+
     cards = run_pipeline(
         icp,
         tavily=TavilyClient(tavily_key),
@@ -219,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
         cache_root=_ROOT / "data" / "cache",
         now=datetime.now(UTC),
         cfg=cfg,
+        apollo=apollo,
     )
     out_path = Path(args.out)
     persist_json(cards, out_path)
