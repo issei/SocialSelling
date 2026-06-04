@@ -4,13 +4,17 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** 📐 SDD **aprovado (v1.1)** da Orquestração Paralela + FinOps (LangGraph) — ADR-003 aceito. Pronto para implementar (WU-G1…G6). `v0.12.1` + launcher
-- **ultima_tag_verde:** `v0.12.1` (launcher); SDD em `docs/specs/orquestracao-paralela-finops-langgraph-sdd.md`
-- **proxima_acao (quando o dono mandar):** WU-G1 — `graph/schemas.py` (Pydantic extra=forbid) + extensão `config.py`/`runtime.toml [finops]/[retry]` + testes de contrato (sem rede). Depois G2 provedores async (Tavily/Brave/CSE) … G6 runner. Núcleo M3/M4 intocado.
-- **wu_em_andamento:** — (UI `v0.10–0.11.x`; persona `v0.12.0`; launcher `v0.12.1`; SDD LangGraph v1.1 aprovado)
-- **passo_atual:** — (`main` verde, 42 testes; UI sobe via `start.bat`; SDD pronto p/ código)
+- **marco_atual:** 🏗️ **Build de VOLUME iniciado** (modo bypass autorizado pelo dono). Prioridade = ADR-004 (Apollo) + ADR-005 (cognição batch) + ADR-006 (corpus acumulativo); LangGraph (ADR-003) é opcional/diferido. Roadmap: `docs/planning/escala-volume-leads.md`. **WU-A1 concluída** → `v0.13.0`.
+- **ultima_tag_verde:** `v0.13.0` (WU-A1: Apollo schemas + config [apollo]; 49 testes verdes)
+- **proxima_acao:** **WU-A2** — `core/credit_ledger.py` (ledger mensal atômico, `try_spend`/`refund`/reconciliação; relógio injetado) + testes determinísticos. Paralelizável com: ADR-005 `core/request_ledger.py` (orçamento RPD Gemini/dia) e ADR-006 `corpus/store.py` (upsert idempotente) — **arquivos disjuntos** ⇒ candidatos a fan-out de agentes especializados (sonnet) em worktree isolada, cada um com branch+PR+gate próprios.
+- **wu_em_andamento:** — (WU-A1 mergeada via PR #33)
+- **passo_atual:** — (`main` verde, 49 testes; `.env` com APOLLO_API_KEY preenchido; gate roda via `.venv\Scripts\python.exe -m …`)
 - **branch:** `main`
-- **bloqueios:** NENHUM
+- **bloqueios:** NENHUM (chave Apollo presente; fixtures reais só na WU-A3)
+
+### Plano de orquestração (modo bypass — green→auto-merge→tag)
+Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/corpus (paralelos) → A3 (fixtures, precisa chave✓) → A4 ladder+M1 → A5 org-enrich → ADR-005 batch+determinístico-primeiro → ADR-006 wiring corpus no orquestrador → C/D**. Cada WU: branch `feat/…` → contrato → BDD/testes (sem rede; APIs mockadas) → impl → gate (`ruff`+`mypy --strict`+`pytest`) → PR `--squash --auto` → tag `v0.13.x`/`v0.14.0`. Falha de gate = não merge (rollback via última tag).
+- **Modelos:** Opus (main) p/ orquestração e WUs de risco (ledgers, integração); sonnet p/ módulos puros isolados em paralelo; haiku p/ tarefas mecânicas. Autolearning: `docs/licoes-aprendidas.md` ao fim de cada WU.
 - **backlog de calibração (não bloqueia, ver `docs/analysis/sondagem-talita.md`):** calibrar pesos `[persona]`/priors com conversão real; pessoa-vs-empresa quando a conta da firma não traz a fundadora; (opcional, fora do guardrail) enriquecimento de contato.
 
 ## Pré-condições antes de liberar autonomia plena
@@ -35,3 +39,5 @@
 | 2026-06-03 | UI de operador local (FastAPI) | ADR-002; fundação web (#20); API params (#21); assistente Gemini (#22); executar/resultados (#23); front-end (#24); E2E+README | `v0.10.0`→`v0.11.x` |
 | 2026-06-03 | Precisão de persona | M2 classifica persona; M3 persona_fit (config [persona]); XAI explica. Run real: top-5 = fundadoras | `v0.12.0` |
 | 2026-06-03 | Launcher + SDD LangGraph | start.bat/start.sh (#27); SDD Orquestração Paralela+FinOps aprovado e endurecido v1.1 + ADR-003 (#28) | `v0.12.1` |
+| 2026-06-04 | Specs de volume + ADRs | SDD+ADR-004 Apollo (#31); roadmap escala-volume + ADR-005 (cognição) + ADR-006 (corpus) (#32) | — (docs) |
+| 2026-06-04 | WU-A1 Apollo schemas+config (bypass) | apollo/schemas.py + ApolloCfg + [apollo] runtime + testes de contrato; gate verde 49 testes (#33) | `v0.13.0` |
