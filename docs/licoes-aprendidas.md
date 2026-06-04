@@ -119,6 +119,11 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-037 | mypy+test | `mypy --strict` reprova `StrEnumMembro == "literal"`** (comparison-overlap) — usar `.value` no teste. E **kwargs inválidos em construtor Pydantic** (teste de `extra=forbid`) — usar `Model.model_validate({...})` com dict, senão o mypy acusa `call-arg`. Padrão para todos os testes de contrato.
 - **L-038 | Commit | Here-string do PowerShell `@'…'@` vaza o `@` para o SUBJECT do commit** (vira "@ feat: …"). Usar `git commit -F <arquivo>` (Write do arquivo de mensagem) em vez de `-m @'…'@`. Confirmar com `git log -1 --format=%s` antes do PR.
 
+## Orquestração de agentes (paralelismo)
+- **L-039 | Agentes | Agentes async em BACKGROUND TRAVAM em prompt de permissão** (não conseguem aprovar interativamente). Os 3 agentes do fan-out (credit/RPD/corpus ledgers) ESCREVERAM os arquivos, mas penduraram ao rodar o gate/`gh`/`git push` (sinal: `.claude/settings.local.json` modificado). **Padrão "harvest" que funcionou:** colher os arquivos das worktrees (`.claude/worktrees/agent-*/…`), rodar o gate no main loop e fazer commit/PR/merge eu mesmo. Mitigações futuras: (a) pré-conceder permissões; (b) agentes só ESCREVEM, o main loop faz gate+merge; (c) rodar em foreground.
+- **L-040 | Worktree | Worktree de agente NÃO tem `.venv`** (gitignored, não copiado). O gate dentro dela exige o venv do repo original + `PYTHONPATH=<worktree>\src`. Atrito real no Windows → reforça o padrão "agentes escrevem, main loop valida". Worktrees ficam `locked` enquanto o harness as rastreia; `git worktree remove -f -f` força, mas pode confundir o estado — deixar para o fim da sessão.
+- **L-041 | Diagnóstico | Para diagnosticar agente travado, inspecione o FILESYSTEM da worktree** (`git status`, `ls` dos arquivos-alvo) em vez de ler o `.output` (transcript JSONL estoura o contexto). Revela exatamente até onde o agente chegou.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
