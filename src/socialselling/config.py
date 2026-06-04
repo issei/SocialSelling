@@ -89,6 +89,26 @@ class CorpusCfg(BaseModel):
     path: str = "data/corpus/leads_corpus.json"
 
 
+class LearningCfg(BaseModel):
+    """Aprendizado por feedback like/dislike (ADR-007). Opt-in: `enabled`.
+
+    Default `enabled=False` => sem reajuste de pesos (paridade). Travas de
+    estabilidade do auto-apply: gate de amostra mínima, L2, shrinkage e clamp.
+    """
+
+    enabled: bool = False
+    feedback_path: str = "data/feedback.json"
+    min_likes: int = 3
+    min_dislikes: int = 3
+    l2: float = 0.1
+    epochs: int = 500
+    lr: float = 0.5
+    # Fração máxima de deslocamento rumo aos pesos aprendidos; `ref` = nº de votos
+    # para atingir essa confiança máxima (mais dados => mais peso ao aprendido).
+    shrinkage_max: float = 0.5
+    shrinkage_ref: int = 20
+
+
 class RuntimeBlock(BaseModel):
     max_leads_per_cycle: int
 
@@ -103,6 +123,7 @@ class RuntimeConfig(BaseModel):
     gemini: GeminiCfg
     apollo: ApolloCfg = ApolloCfg()
     corpus: CorpusCfg = CorpusCfg()
+    learning: LearningCfg = LearningCfg()
     runtime: RuntimeBlock
 
 

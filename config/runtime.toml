@@ -78,6 +78,21 @@ mobile_credits_cap = 5
 enabled = false
 path = "data/corpus/leads_corpus.json"
 
+[learning]
+# Aprendizado por feedback like/dislike (ADR-007). enabled=true faz a operadora
+# reajustar os pesos do score marcando leads. So atua no endpoint de feedback —
+# NAO altera a saida do pipeline (paridade do smoke preservada). Travas de auto-apply:
+# so reajusta com >= min_likes E >= min_dislikes; L2 + shrinkage + clamp estabilizam.
+enabled = true
+feedback_path = "data/feedback.json"
+min_likes = 3
+min_dislikes = 3
+l2 = 0.1
+epochs = 500
+lr = 0.5
+shrinkage_max = 0.5
+shrinkage_ref = 20
+
 [runtime]
 # Limite de leads por ciclo no PoC (controle de custo/latencia).
 # Com [corpus].enabled=true vira limite de EXIBICAO (nao de volume conhecido).

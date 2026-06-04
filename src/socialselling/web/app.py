@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,7 @@ from pydantic import ValidationError
 
 from socialselling.config import load_env, load_runtime
 from socialselling.contracts import HypothesisCatalog, LeadCard
+from socialselling.learning.feedback_store import FeedbackStore
 from socialselling.skills.gemini_client import (
     CognitionClient,
     GeminiClient,
@@ -25,6 +27,7 @@ from socialselling.skills.gemini_client import (
 )
 from socialselling.web.schemas import (
     AssistRequest,
+    FeedbackRequest,
     RunRequest,
     SaveIcpRequest,
     ScoringUpdate,
@@ -35,16 +38,19 @@ from socialselling.web.services import (
     InvalidName,
     MissingKeys,
     assist_icp,
+    feedback_labels,
     load_config,
     read_hypotheses,
     read_icp,
+    record_feedback,
     run_for_icp,
     save_hypotheses,
     save_icp,
     save_scoring,
 )
 
-_ENV_PATH = Path(__file__).resolve().parents[3] / ".env"
+_ROOT = Path(__file__).resolve().parents[3]
+_ENV_PATH = _ROOT / ".env"
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 PipelineRunner = Callable[[str], list[LeadCard]]
@@ -56,11 +62,17 @@ def create_app(
     runtime_path: Path = DEFAULT_RUNTIME,
     cognition_client: CognitionClient | None = None,
     pipeline_runner: PipelineRunner | None = None,
+    feedback_store: FeedbackStore | None = None,
 ) -> FastAPI:
-    """Cria o app FastAPI. Paths, Gemini e runner injetáveis para testes (FS/rede isolados)."""
+    """Cria o app FastAPI. Paths, Gemini, runner e store injetáveis (FS/rede isolados)."""
     app = FastAPI(title="SocialSelling — UI local", docs_url=None, redoc_url=None)
     runs: dict[str, dict[str, Any]] = {}
     counter = {"n": 0}
+    fb_store = (
+        feedback_store
+        if feedback_store is not None
+        else FeedbackStore(_ROOT / load_runtime(runtime_path).learning.feedback_path)
+    )
 
     def _runner(icp_name: str) -> list[LeadCard]:
         if pipeline_runner is not None:
@@ -153,6 +165,26 @@ def create_app(
         if run_id not in runs:
             raise HTTPException(status_code=404, detail=f"run nao encontrado: {run_id}")
         return runs[run_id]
+
+    @app.post("/api/feedback")
+    def api_feedback(req: FeedbackRequest) -> dict[str, Any]:
+        learned = record_feedback(
+            fb_store,
+            runtime_path,
+            company_id=req.company_id,
+            label=req.label,
+            features=req.features,
+            now=datetime.now(UTC),
+        )
+        return {
+            "ok": True,
+            "learned": learned.model_dump(),
+            "scoring": load_config(config_dir, runtime_path)["scoring"],
+        }
+
+    @app.get("/api/feedback")
+    def api_feedback_labels() -> dict[str, str]:
+        return feedback_labels(fb_store)
 
     return app
 

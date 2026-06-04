@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from socialselling.contracts import ICPCriteria
+from socialselling.learning.schemas import FeedbackFeatures
 
 
 class SaveIcpRequest(BaseModel):
@@ -24,6 +27,19 @@ class RunRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     icp_name: str = Field(min_length=1)
+
+
+class FeedbackRequest(BaseModel):
+    """Voto da operadora sobre um lead. `label="none"` desmarca (toggle off).
+
+    `features` são os componentes do score capturados do card no clique (ADR-007).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    company_id: str = Field(min_length=1)
+    label: Literal["like", "dislike", "none"]
+    features: FeedbackFeatures
 
 
 class ScoringUpdate(BaseModel):
