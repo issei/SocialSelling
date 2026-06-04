@@ -113,7 +113,7 @@
                   <th class="px-3 py-2.5 hidden md:table-cell">Evidência principal</th>
                   <th class="px-3 py-2.5 w-24 text-center">Sinal</th>
                   <th class="px-3 py-2.5 w-24">Canais</th>
-                  <th class="pr-4 pl-2 py-2.5 w-14 text-right">Ação</th>
+                  <th class="pr-4 pl-2 py-2.5 w-32 text-right">Ação</th>
                 </tr>
               </thead>
               <tbody id="leadsBody" class="text-xs divide-y divide-slate-700/60"></tbody>
@@ -175,6 +175,9 @@
     </aside>
   </div>
 
+  <!-- TOAST (feedback de aprendizado) -->
+  <div id="toast" style="display:none" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-lg text-sm font-medium shadow-lg"></div>
+
   <script>
     const SCORING_KEYS = ["w_fit","w_intent","confidence_exponent","w_fit_tech","w_fit_industry"];
     const $ = (id) => document.getElementById(id);
@@ -210,6 +213,7 @@
         sf.appendChild(wrap);
       }
       try { const hyp = await api("GET","/api/config/hypotheses"); $("hypJson").value = JSON.stringify(hyp, null, 2); } catch(_){}
+      try { FEEDBACK = await api("GET","/api/feedback") || {}; } catch(_){ FEEDBACK = {}; }
       setupTabs();
       await loadIcp();
     }
@@ -273,6 +277,67 @@
     let LEADS = [];            // dados do run (ordem do ranking)
     let RENDERED = [];         // ordem atual exibida (após sort)
     let SORT = { key: "rank", dir: 1 };
+    let FEEDBACK = {};         // company_id -> "like" | "dislike" (selos persistentes)
+    let CURRENT_LEAD = null;   // lead aberto no drawer
+
+    /* ---- feedback like/dislike → aprendizado (ADR-007) ---- */
+    let toastTimer = null;
+    function showToast(msg, ok) {
+      const t = $("toast"); if (!t) return;
+      t.textContent = msg;
+      t.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-lg text-sm font-medium shadow-lg " + (ok ? "bg-emerald-600 text-white" : "bg-rose-600 text-white");
+      t.style.display = "block";
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.style.display = "none"; }, 3800);
+    }
+    function refreshScoringInputs(scoring) {
+      if (!scoring) return;
+      document.querySelectorAll('#scoringFields input').forEach(inp => {
+        if (scoring[inp.dataset.k] != null) inp.value = scoring[inp.dataset.k];
+      });
+    }
+    function fbBtn(i, label, cid) {
+      const active = FEEDBACK[cid] === label;
+      const glyph = label === "like" ? "👍" : "👎";
+      const activeCls = label === "like" ? "bg-emerald-500/20 border-emerald-500/50" : "bg-rose-500/20 border-rose-500/50";
+      const idle = "bg-slate-700/40 border-slate-600/30 hover:bg-slate-700 opacity-60 hover:opacity-100";
+      const title = label === "like" ? "Curtir (bom lead)" : "Descurtir (lead ruim)";
+      return `<button onclick="event.stopPropagation(); fb(${i}, '${label}')" title="${title}" aria-label="${title}"
+        class="inline-grid place-items-center w-7 h-7 rounded border text-xs transition ${active ? activeCls : idle}">${glyph}</button>`;
+    }
+    function fb(i, label) {
+      const l = RENDERED[i]; if (!l) return;
+      const cid = l.score.company_id;
+      const effective = (FEEDBACK[cid] === label) ? "none" : label;  // re-clicar desmarca
+      sendFeedback(cid, effective, l.score);
+    }
+    async function sendFeedback(cid, label, score) {
+      const features = {
+        fit: score.fit, intent: score.intent, confidence: score.confidence,
+        persona_fit: score.persona_fit == null ? 1 : score.persona_fit
+      };
+      try {
+        const res = await api("POST", "/api/feedback", { company_id: cid, label, features });
+        if (label === "none") delete FEEDBACK[cid]; else FEEDBACK[cid] = label;
+        renderTable();
+        if (CURRENT_LEAD && CURRENT_LEAD.score.company_id === cid) openDrawer(CURRENT_LEAD);
+        const lw = res && res.learned;
+        if (lw && lw.applied) {
+          refreshScoringInputs(res.scoring);
+          showToast(`Pesos reajustados: w_fit ${lw.w_fit} · w_intent ${lw.w_intent} (${lw.n_likes + lw.n_dislikes} votos)`, true);
+        } else if (label === "none") {
+          showToast("Marca removida.", true);
+        } else if (lw) {
+          showToast(lw.reason || "Voto registrado.", true);
+        }
+      } catch (e) { showToast("Erro ao registrar voto: " + e.message, false); }
+    }
+    function fbDrawer(label) {
+      if (!CURRENT_LEAD) return;
+      const cid = CURRENT_LEAD.score.company_id;
+      const effective = (FEEDBACK[cid] === label) ? "none" : label;
+      sendFeedback(cid, effective, CURRENT_LEAD.score);
+    }
 
     const pct = (x) => Math.max(0, Math.min(100, Math.round((x||0)*100)));
     const scoreTone = (p) => p >= 0.6 ? "emerald" : (p >= 0.4 ? "amber" : "slate");
@@ -335,8 +400,12 @@
             ${channelIcon(site,"Site","bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-700","🌐")}
             ${(!ig&&!li&&!site)?'<span class="text-[10px] text-slate-600">—</span>':""}
           </div></td>
-          <td class="pr-4 pl-2 py-2.5 text-right">
-            <button class="bg-slate-700 group-hover:bg-indigo-600 group-hover:text-white border border-slate-600 group-hover:border-indigo-500 text-slate-300 px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wide transition">Ver</button>
+          <td class="pr-4 pl-2 py-2.5">
+            <div class="flex items-center justify-end gap-1">
+              ${fbBtn(i, "like", l.score.company_id)}
+              ${fbBtn(i, "dislike", l.score.company_id)}
+              <button class="bg-slate-700 group-hover:bg-indigo-600 group-hover:text-white border border-slate-600 group-hover:border-indigo-500 text-slate-300 px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wide transition">Ver</button>
+            </div>
           </td>
         </tr>`;
       }).join("");
@@ -403,6 +472,11 @@
     function buildDrawer(l) {
       const s = l.score;
       const tone = scoreTone(s.p_score);
+      const fbl = FEEDBACK[l.score.company_id];
+      const fbCls = (on, kind) => "px-3 py-1.5 rounded-lg border text-xs font-medium transition " + (
+        on ? (kind === "like" ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300"
+                              : "bg-rose-500/20 border-rose-500/50 text-rose-300")
+           : "bg-slate-700/40 border-slate-600/30 text-slate-300 hover:bg-slate-700");
       const ig = l.links && l.links.instagram, li = l.links && l.links.linkedin, site = l.links && l.links.website;
       const hasChannel = ig||li||site;
       const why = (l.why_now||[]).map(w=>`<li class="flex items-start gap-2 text-xs text-slate-300"><span class="text-emerald-400 shrink-0 mt-0.5">▸</span><span>${esc(w)}</span></li>`).join("");
@@ -421,6 +495,11 @@
           <p class="text-xs text-slate-400 truncate">${head||"—"}</p>
         </div>
         <button id="drawerClose" aria-label="Fechar" class="shrink-0 w-8 h-8 grid place-items-center rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-white transition">✕</button>
+      </div>
+      <div class="px-5 pt-4 pb-4 border-b border-slate-700/40 flex items-center gap-2 flex-wrap">
+        <span class="text-[10px] uppercase tracking-wider text-slate-500 mr-1">Feedback p/ IA:</span>
+        <button onclick="fbDrawer('like')" class="${fbCls(fbl === 'like', 'like')}">👍 Bom lead</button>
+        <button onclick="fbDrawer('dislike')" class="${fbCls(fbl === 'dislike', 'dislike')}">👎 Não é</button>
       </div>
       <div class="p-5 space-y-5">
         <!-- 01 resumo executivo -->
@@ -478,6 +557,7 @@
 
     function openDrawer(l) {
       if (!l) return;
+      CURRENT_LEAD = l;
       $("drawerBody").innerHTML = buildDrawer(l);
       $("drawerClose").onclick = closeDrawer;
       $("drawerWrap").classList.remove("drawer-hidden");

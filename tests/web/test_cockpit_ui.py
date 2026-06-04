@@ -61,6 +61,15 @@ def test_drawer_fechado_nao_bloqueia_cliques() -> None:
     assert rule is not None
 
 
+def test_feedback_like_dislike_presente() -> None:
+    # ADR-007: botões 👍/👎 por linha e no drawer, toast e integração com /api/feedback.
+    body = _body()
+    assert 'id="toast"' in body
+    for fn in ("fbBtn", "fb(", "sendFeedback", "fbDrawer", "FEEDBACK"):
+        assert fn in body, fn
+    assert "/api/feedback" in body
+
+
 def test_invariantes_antigos_preservados() -> None:
     # Não-regressão: os marcadores travados por test_pages/test_results_ui sobrevivem.
     body = _body()

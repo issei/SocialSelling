@@ -45,6 +45,12 @@ APIs externas **sempre mockadas** nos testes com fixtures gravadas. Asserções 
 - ❌ Abstrações especulativas "para o futuro". Implemente o mínimo da fatia atual.
 - ✅ Em dúvida sobre incluir algo: se não for necessário para o smoke test ponta-a-ponta, **difira**.
 
+> **Exceção consciente (ADR-007):** o aprendizado por feedback like/dislike usa um **modelo
+> treinado** (regressão logística) que reajusta `w_fit`/`w_intent` automaticamente. É uma exceção
+> deliberada ao "Bayesiano/ML difere para V1+", mantida no espírito do PoC: **Python puro** (sem
+> numpy/sklearn), **treino determinístico** (§3.2) e **travas** (gate de amostra, L2, shrinkage,
+> clamp). Opt-in por `[learning].enabled`. Ver ADR-007.
+
 ## 6. Estrutura de pastas (alvo do PoC)
 ```
 CLAUDE.md, pyproject.toml, .env.example, .gitignore, README.md

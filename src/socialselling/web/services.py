@@ -16,6 +16,9 @@ from typing import Any
 from socialselling.config import load_env, load_runtime
 from socialselling.contracts import HypothesisCatalog, ICPCriteria, LeadCard
 from socialselling.core.atomic import atomic_write_text
+from socialselling.learning.feedback_store import FeedbackStore
+from socialselling.learning.schemas import FeedbackFeatures, FeedbackLabel, LearnedWeights
+from socialselling.learning.tuner import retrain
 from socialselling.orchestrator import run_pipeline
 from socialselling.skills.gemini_client import CognitionClient, GeminiClient
 from socialselling.skills.tavily_client import TavilyClient
@@ -165,3 +168,49 @@ def save_scoring(runtime_path: Path, scoring: dict[str, float]) -> None:
                 text,
             )
     atomic_write_text(runtime_path, text)
+
+
+def record_feedback(
+    store: FeedbackStore,
+    runtime_path: Path,
+    *,
+    company_id: str,
+    label: str,
+    features: FeedbackFeatures,
+    now: datetime,
+) -> LearnedWeights:
+    """Registra o voto e, se o aprendizado estiver ligado e com amostra suficiente,
+    reajusta e GRAVA os pesos do score (auto-apply, ADR-007).
+
+    O feedback é sempre persistido; o reajuste só ocorre com `[learning].enabled`.
+    """
+    cfg = load_runtime(runtime_path)
+    if label == "none":
+        store.remove(company_id)
+    else:
+        store.upsert(company_id, FeedbackLabel(label), features, now)
+
+    likes, dislikes = store.counts()
+    if not cfg.learning.enabled:
+        return LearnedWeights(
+            w_fit=cfg.scoring.w_fit,
+            w_intent=cfg.scoring.w_intent,
+            n_likes=likes,
+            n_dislikes=dislikes,
+            applied=False,
+            reason="aprendizado desligado",
+        )
+
+    learned = retrain(
+        store,
+        {"w_fit": cfg.scoring.w_fit, "w_intent": cfg.scoring.w_intent},
+        cfg.learning,
+    )
+    if learned.applied:
+        save_scoring(runtime_path, {"w_fit": learned.w_fit, "w_intent": learned.w_intent})
+    return learned
+
+
+def feedback_labels(store: FeedbackStore) -> dict[str, str]:
+    """Mapa company_id -> 'like'|'dislike' para a UI pintar os selos ao carregar."""
+    return store.labels()
