@@ -44,6 +44,26 @@ max_retries = 3
 backoff_base_seconds = 2
 timeout_seconds = 120
 
+[apollo]
+# 2o sensor firmografico OPCIONAL (ADR-004). Opt-in: requer enabled=true + APOLLO_API_KEY.
+# Desligado (default) => pipeline byte-identico ao atual (invariante de paridade).
+enabled = false
+base_url = "https://api.apollo.io/api/v1"
+ledger_path = "data/apollo_credit_ledger.json"
+# Teto extra de quantos leads revelar contato (degrau 3), alem do limite de credito.
+reveal_top_n = 20
+# Cache por volatilidade do dado (economiza credito; SDD §2): firmografia 30d, contato 90d.
+org_enrich_ttl_hours = 720
+reveal_ttl_hours = 2160
+# Limite defensivo de req/min (backoff cobre o resto; limites por tier nao sao publicados).
+per_minute_limit = 50
+
+[apollo.caps]
+# Orcamento mensal do tier gratuito (premissa 2026, ver ADR-004 §0). Reconciliavel via 402.
+data_credits_cap = 100
+email_credits_cap = 100  # conservador (dominio pessoal); 10000 se dominio corporativo
+mobile_credits_cap = 5
+
 [runtime]
 # Limite de leads por ciclo no PoC (controle de custo/latencia).
 max_leads_per_cycle = 50
