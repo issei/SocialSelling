@@ -26,6 +26,11 @@ py -m socialselling.orchestrator --icp config/icp_criteria.talita.json
 ### Pela UI local (amigavel) — recomendado
 UI web local para ver/editar parametros, gerar o ICP com ajuda do Gemini, executar e
 ver os Lead Cards (Instagram clicavel). Roda so em `localhost` (ADR-002).
+
+**Mais simples (Windows):** dê **duplo-clique em `start.bat`** — na 1a vez ele cria o venv,
+instala tudo, gera o `.env` e abre o navegador. (WSL/Linux/macOS: `./start.sh`.)
+
+Manualmente:
 ```bash
 pip install -e ".[web]"          # ou ".[dev]" (ja inclui web)
 py -m socialselling.web          # abre http://127.0.0.1:8000
