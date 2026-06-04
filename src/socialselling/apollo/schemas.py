@@ -56,3 +56,13 @@ class ApolloRevealResult(BaseModel):
     email: str | None = None
     phone: str | None = None
     revealed: bool = False
+
+
+class ApolloOrgInfo(BaseModel):
+    """Firmografia do degrau 2 (org enrichment). Campos None => Apollo nao trouxe."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    industry: str | None = None
+    employee_count: int | None = Field(default=None, ge=0)
+    domain: str | None = None
