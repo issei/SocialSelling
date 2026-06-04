@@ -10,10 +10,37 @@ from __future__ import annotations
 
 from typing import Any
 
-from socialselling.apollo.schemas import ApolloPersonHit
+from socialselling.apollo.schemas import ApolloPersonHit, ApolloRevealResult
 
 # Marcador que a Apollo usa quando o e-mail NAO foi revelado (tier gratuito).
 _EMAIL_LOCKED_MARKER = "email_not_unlocked"
+
+
+def _real_email(value: Any) -> str | None:
+    if not isinstance(value, str) or "@" not in value or _EMAIL_LOCKED_MARKER in value:
+        return None
+    return value
+
+
+def parse_reveal(payload: dict[str, Any], *, apollo_id: str = "") -> ApolloRevealResult:
+    """Resposta de people/match -> ApolloRevealResult (degrau 3).
+
+    `revealed=False` quando a Apollo nao trouxe e-mail/telefone reais — incerteza
+    Open-World, NUNCA dado fabricado.
+    """
+    person = payload.get("person") or {}
+    email = _real_email(person.get("email"))
+    phone: str | None = None
+    phones = person.get("phone_numbers")
+    if isinstance(phones, list) and phones and isinstance(phones[0], dict):
+        raw = phones[0].get("raw_number") or phones[0].get("sanitized_number")
+        phone = str(raw) if raw else None
+    return ApolloRevealResult(
+        apollo_id=apollo_id or str(person.get("id") or ""),
+        email=email,
+        phone=phone,
+        revealed=bool(email or phone),
+    )
 
 
 def _coalesce_name(person: dict[str, Any]) -> str:
