@@ -7,16 +7,28 @@ falha de query sem cache vira `ObservedEvidence(missing_evidence=True)`.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from typing import Any
 
+from socialselling.apollo.ladder import icp_to_people_filters
+from socialselling.apollo.normalize import parse_people_search, to_canonical_results
 from socialselling.contracts import ICPCriteria, ObservedEvidence
 from socialselling.core.cache import JsonCache, query_hash
+from socialselling.skills.apollo_client import (
+    ApolloAuthError,
+    ApolloCreditError,
+    ApolloError,
+    ApolloRateLimitError,
+    ApolloSearchClient,
+)
 from socialselling.skills.tavily_client import (
     RateLimitError,
     SearchClient,
     TavilyError,
 )
+
+_APOLLO_ERRORS = (ApolloAuthError, ApolloCreditError, ApolloRateLimitError, ApolloError)
 
 _COUNTRY_NAMES = {"BR": "Brasil"}
 
@@ -75,6 +87,44 @@ def _missing(query: str, now: datetime) -> ObservedEvidence:
     )
 
 
+def _apollo_cache_key(filters: dict[str, Any]) -> str:
+    """Chave de cache estável para a descoberta Apollo (hash canônico dos filtros)."""
+    return "apollo:people:" + query_hash(json.dumps(filters, sort_keys=True))[:16]
+
+
+def run_apollo_discovery(
+    icp: ICPCriteria,
+    *,
+    apollo_client: ApolloSearchClient,
+    cache: JsonCache,
+    now: datetime,
+    persona_term: str = "",
+    per_page: int = 25,
+    cache_ttl_hours: int = 24,
+) -> list[ObservedEvidence]:
+    """Degrau 1 Apollo (0 crédito): People Search → evidências canônicas.
+
+    Open-World: qualquer falha do Apollo (403 sem-API / 429 / crédito / rede) faz o
+    provedor ficar AUSENTE (retorna []), nunca quebra o M1 — o Tavily cobre a descoberta.
+    Reusa o cache (T-24h) e o `_map_result` canônico → sem mudança em M2.
+    """
+    filters = icp_to_people_filters(icp, persona_term=persona_term)
+    key = _apollo_cache_key(filters)
+    payload = cache.get(key, now, cache_ttl_hours)
+    if payload is None:
+        try:
+            payload = apollo_client.people_search(filters, per_page=per_page)
+            cache.put(key, payload, now)
+        except _APOLLO_ERRORS:
+            stale = cache.get_any(key)
+            if stale is None:
+                return []  # provedor ausente; degrada para o Tavily, sem fabricar dado
+            payload = stale
+    hits = parse_people_search(payload)
+    canonical = to_canonical_results(hits)
+    return [_map_result(key, result, now) for result in canonical.get("results", [])]
+
+
 def run_m1(
     icp: ICPCriteria,
     *,
@@ -87,8 +137,15 @@ def run_m1(
     cache_ttl_hours: int,
     persona_term: str = "",
     include_domains: list[str] | None = None,
+    apollo_client: ApolloSearchClient | None = None,
+    apollo_per_page: int = 25,
 ) -> list[ObservedEvidence]:
-    """Executa o M1: gera queries, consulta Tavily (com cache T-24h) e mapeia evidências."""
+    """Executa o M1: gera queries, consulta Tavily (cache T-24h) e mapeia evidências.
+
+    Se `apollo_client` for fornecido (opt-in, ADR-004), agrega a descoberta firmográfica
+    do Apollo (degrau 1, 0 crédito) às evidências do Tavily. Sem ele, comportamento
+    byte-idêntico ao atual.
+    """
     evidences: list[ObservedEvidence] = []
     for query in generate_queries(icp, max_queries, persona_term):
         payload = cache.get(query, now, cache_ttl_hours)
@@ -108,4 +165,14 @@ def run_m1(
             continue
         for result in results:
             evidences.append(_map_result(query, result, now))
+    if apollo_client is not None:
+        evidences += run_apollo_discovery(
+            icp,
+            apollo_client=apollo_client,
+            cache=cache,
+            now=now,
+            persona_term=persona_term,
+            per_page=apollo_per_page,
+            cache_ttl_hours=cache_ttl_hours,
+        )
     return evidences
