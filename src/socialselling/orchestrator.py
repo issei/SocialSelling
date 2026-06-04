@@ -15,6 +15,7 @@ import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
+from socialselling.apollo.reveal import reveal_contacts
 from socialselling.config import RuntimeConfig, load_env, load_runtime
 from socialselling.contracts import (
     HypothesisCatalog,
@@ -27,6 +28,7 @@ from socialselling.contracts import (
     XAIPayload,
 )
 from socialselling.core.cache import JsonCache
+from socialselling.core.credit_ledger import CreditBudget
 from socialselling.core.request_ledger import RequestBudget
 from socialselling.corpus.integration import accumulate, ranked_view
 from socialselling.corpus.store import CorpusStore
@@ -115,7 +117,28 @@ def run_pipeline(
         explanation = run_m5(score, inference, icp, degraded_mode=degraded)
         cards.append(_to_lead_card(rank, score, inference, explanation, ev_url))
         rank += 1
-    return cards[: cfg.runtime.max_leads_per_cycle]
+    cards = cards[: cfg.runtime.max_leads_per_cycle]
+
+    # Degrau 3 (ADR-004): reveal de contato do top-N, sob orçamento de crédito.
+    # Só com Apollo presente (opt-in) e havendo cards; sem isso, inalterado (paridade).
+    if apollo is not None and cards:
+        budget = CreditBudget(
+            _ROOT / cfg.apollo.ledger_path,
+            now,
+            data_cap=cfg.apollo.caps.data_credits_cap,
+            email_cap=cfg.apollo.caps.email_credits_cap,
+            mobile_cap=cfg.apollo.caps.mobile_credits_cap,
+        )
+        cards = reveal_contacts(
+            cards,
+            apollo_client=apollo,
+            budget=budget,
+            cache=JsonCache(cache_root / "apollo_reveal"),
+            now=now,
+            reveal_ttl_hours=cfg.apollo.reveal_ttl_hours,
+            top_n_cap=cfg.apollo.reveal_top_n,
+        )
+    return cards
 
 
 def _to_lead_card(
