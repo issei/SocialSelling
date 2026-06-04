@@ -45,6 +45,30 @@ class GeminiCfg(BaseModel):
     model: str
 
 
+class ApolloCapsCfg(BaseModel):
+    """Orçamento mensal do tier gratuito Apollo (ADR-004). Reconciliável via 402."""
+
+    data_credits_cap: int = 100
+    email_credits_cap: int = 100
+    mobile_credits_cap: int = 5
+
+
+class ApolloCfg(BaseModel):
+    """Configuração do sensor Apollo (ADR-004). Opt-in: `enabled` + APOLLO_API_KEY.
+
+    Default `enabled=False` mantém o pipeline byte-idêntico ao atual (paridade).
+    """
+
+    enabled: bool = False
+    base_url: str = "https://api.apollo.io/api/v1"
+    ledger_path: str = "data/apollo_credit_ledger.json"
+    reveal_top_n: int = 20
+    org_enrich_ttl_hours: int = 720
+    reveal_ttl_hours: int = 2160
+    per_minute_limit: int = 50
+    caps: ApolloCapsCfg = ApolloCapsCfg()
+
+
 class RuntimeBlock(BaseModel):
     max_leads_per_cycle: int
 
@@ -57,6 +81,7 @@ class RuntimeConfig(BaseModel):
     persona: PersonaCfg = PersonaCfg()
     tavily: TavilyCfg
     gemini: GeminiCfg
+    apollo: ApolloCfg = ApolloCfg()
     runtime: RuntimeBlock
 
 
