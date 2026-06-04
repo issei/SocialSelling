@@ -1,6 +1,6 @@
 # ADR-003 — Camada de orquestração paralela (LangGraph) + FinOps
 
-- **Status:** Proposto (aguardando aprovação do dono) — 2026-06-03
+- **Status:** Aceito (aprovado pelo dono; SDD endurecido para v1.1 em revisão crítica) — 2026-06-03
 - **Emenda a:** ADR-000 §5 (guardrails). Complementa ADR-001 (intenção) e ADR-002 (UI).
 
 ## Contexto

@@ -1,9 +1,16 @@
 # SDD — Camada de Orquestração Paralela & FinOps (LangGraph)
 
-> **Status:** proposta para revisão. Escopo autorizado por **ADR-003** (emenda ao
-> ADR-000 §5). Spec-first: este documento precede o código. Aprovado, segue o
-> SDD-to-Code Loop do repositório (contrato → BDD+fixtures → implementação → gate
-> `ruff`+`mypy --strict`+`pytest` → PR).
+> **Status:** **APROVADA (v1.1 — endurecida por revisão crítica do dono, 2026-06-03)**.
+> Escopo autorizado por **ADR-003** (emenda ao ADR-000 §5). Spec-first: este documento
+> precede o código. Segue o SDD-to-Code Loop do repositório (contrato → BDD+fixtures →
+> implementação → gate `ruff`+`mypy --strict`+`pytest` → PR).
+>
+> **Histórico de revisão — v1.1 (endurecimentos da WU-G4):** (a) §1.2 `asyncio.gather`
+> com `return_exceptions=True` **+** conversão de exceção crua em `SensorError(SERVER)`
+> sem estourar o runtime; (b) §2.2 triagem **conservadora** de `menos_de_2_anos` com
+> guarda de **contexto de fundação** (prefere falso-prosseguir a falso-podar; ambíguo
+> ⇒ defere ao portão semântico); (c) §5 invariante explícito de estabilidade do
+> `evidence_id` (hashing com `sort_keys=True`).
 >
 > **Princípio reitor:** o grafo orquestra **I/O e controle**; o **scoring permanece
 > puro e determinístico** (`m3_score.run_m3`, `m4_ranking.run_m4` inalterados). Nada
@@ -137,10 +144,23 @@ async def parallel_scout(state: LeadState, *, clients: list[AsyncSearchClient],
             policy=policy, rng=rng,
         )
 
-    outcomes = await asyncio.gather(*[_probe(c) for c in clients], return_exceptions=False)
+    # return_exceptions=True é OBRIGATÓRIO: uma exceção crua de UM provedor (ex.: falha
+    # de DNS, erro interno de lib) NÃO pode derrubar a fila dos provedores saudáveis.
+    outcomes = await asyncio.gather(*[_probe(c) for c in clients], return_exceptions=True)
 
     evidence, healths, errors, missing = [], [], [], []
     for client, out in zip(clients, outcomes):
+        # Defesa em profundidade: with_retry (§3.3) já converte falhas CONHECIDAS em
+        # ProviderOutcome(ok=False). Aqui capturamos o INESPERADO que escapou do retry
+        # e o convertemos em SensorError(SERVER) — sem estourar o runtime local.
+        if isinstance(out, BaseException):
+            errors.append(SensorError(
+                provider=client.name, kind=SensorErrorKind.SERVER, status_code=None,
+                attempts=policy.max_attempts, message=repr(out), at=state["now"]))
+            missing.append(client.name)
+            healths.append(ProviderHealth(provider=client.name, ok=False,
+                                          results=0, attempts=policy.max_attempts))
+            continue
         if out.ok:
             mapped = [_map_result(plan.query, r, now) for r in out.payload.get("results", [])]
             evidence += mapped
@@ -315,7 +335,7 @@ Nem todo desqualificador é detectável sem IA. Particionamos o vocabulário:
 CHEAP_DETECTABLE = {            # heurística determinística sobre firmográficos cadastrais
     "fora_de_setor",           # indústria detectada ∉ icp.firmographics.industries
     "perfil_pessoal_sem_empresa",  # nenhuma entidade-empresa nos resultados
-    "menos_de_2_anos",         # ano de fundação no snippet e (now.year - ano) < 2
+    "menos_de_2_anos",         # SÓ com ano de fundação CONFIÁVEL (ver guarda abaixo)
 }
 SEMANTIC_ONLY = DISQUALIFIER_VOCAB_SET - CHEAP_DETECTABLE  # exige Gemini (deep_enrich)
 # solo_sem_equipe, multiplas_socias_sem_decisor, retracao_corte_custos
@@ -325,6 +345,43 @@ SEMANTIC_ONLY = DISQUALIFIER_VOCAB_SET - CHEAP_DETECTABLE  # exige Gemini (deep_
 barato; os semânticos continuam sendo detectados pelo M2 em `deep_enrich` (segundo
 portão, `post_extract_gate`). Há, portanto, **duas barreiras**: a barata (pré-Gemini)
 e a existente (pós-Gemini), ambas convergindo no mesmo veredito do `run_m3`.
+
+#### 2.2.1 Triagem conservadora do ano (`menos_de_2_anos`) — guarda anti-falso-positivo
+
+Snippets de busca trazem datas **truncadas/ambíguas** ("Fundada há 18 meses…",
+"© 2010", "evento 2025"). Uma extração ingênua (qualquer `YYYY`) produziria tanto
+**falso-negativo** (não lê a data → aprova p/ Gemini por engano) quanto, pior,
+**falso-positivo** (lê um ano avulso → **poda um lead bom**). **Política:** a triagem
+só marca `menos_de_2_anos` quando há `YYYY` num **contexto de fundação explícito**;
+qualquer ambiguidade **defere** ao portão semântico (lead segue — preferimos pagar
+Gemini a podar por engano).
+
+```python
+import re
+
+# Exige um SINAL de fundação adjacente ao ano — evita anos avulsos (copyright, eventos).
+_FOUNDING_YEAR_RE = re.compile(
+    r"(?:fundad[ao]|criad[ao]|desde|atuando\s+desde|opera(?:ndo)?\s+desde|"
+    r"founded|established|since)\D{0,12}((?:19|20)\d{2})",
+    re.IGNORECASE,
+)
+
+def founding_year(blob: str) -> int | None:
+    """Ano YYYY com contexto de fundação claro; None se ambíguo/ausente (⇒ defere)."""
+    anos = [int(m.group(1)) for m in _FOUNDING_YEAR_RE.finditer(blob)]
+    return min(anos) if anos else None
+
+def maybe_mark_age(blob: str, now_year: int) -> list[str]:
+    ano = founding_year(blob)
+    if ano is not None and 0 <= (now_year - ano) < 2:
+        return ["menos_de_2_anos"]     # data CONFIÁVEL e idade < 2 anos
+    return []                          # ambíguo/sem contexto ⇒ NÃO marca (defere ao M2)
+```
+
+> **Invariante de poda segura:** na dúvida, a triagem **nunca poda** — apenas o portão
+> semântico (Gemini) pode reprovar por idade quando a triagem barata não tem certeza.
+> Falso-negativo custa 1 chamada Gemini; falso-positivo perderia um cliente — a
+> assimetria de custo justifica a conservadoria.
 
 ### 2.3 FinOps Guard — economia em lote de 100 leads ruidosos
 
@@ -575,6 +632,15 @@ e `[retry]`; `load_runtime` ganha `RuntimeConfig.finops: FinOpsCfg` e
 4. **Não-determinação isolada:** `asyncio` (ordem), jitter (tempo) e concorrência só
    afetam *latência*. Testes injetam `now` fixo, `Random(seed)`, `asyncio.sleep`
    mockado e provedores de fixture → reexecução **byte-idêntica**.
+5. **Invariante de `evidence_id` (inalterabilidade do hash):** `_map_result` deriva o
+   ID de uma **string canônica** `f"{query}|{url}"` (concatenação determinística, não
+   de `dict`), e **qualquer** hashing de estrutura no sistema usa
+   `json.dumps(obj, sort_keys=True, ensure_ascii=False)` — exatamente como
+   `core.cache.JsonCache.put` e `query_hash`. Assim, variações de ordenação de chaves
+   em payloads de provedores diferentes (Tavily vs Brave vs CSE) **não** alteram o ID
+   nem a chave de cache, evitando duplicação espúria de evidência e *cache miss* no
+   motor cognitivo. **Teste anti-regressão:** o mesmo `(query, url)` vindo de provedores
+   distintos produz `evidence_id` idêntico → deduplica para 1.
 
 ---
 
@@ -587,8 +653,12 @@ canônica). `asyncio` testado com `pytest.mark.anyio`/`asyncio` e `sleep` patche
 | Suite | Cenário-chave | Asserção |
 |---|---|---|
 | `features/graph_scout.feature` | 3 provedores; 1 retorna 429 | evidência dos 2 ok; `SensorError(RATE_LIMIT)` registrado; `missing_evidence` contém o caído |
+| `graph_scout.feature` (**v1.1**) | 1 provedor lança **exceção crua** (ex.: DNS) via `gather` | os 2 saudáveis seguem; `SensorError(kind=SERVER)` registrado; **runtime NÃO estoura** |
 | `graph_poda.feature` | triagem detecta `fora_de_setor` | grafo vai a `terminate`/`__end__`; **`deep_enrich` NUNCA executa**; `gemini_calls==0`; `pruned_hard==1` |
+| `graph_poda.feature` (**v1.1**) | snippet com data ambígua ("há 18 meses", "© 2010") | `menos_de_2_anos` **NÃO** marcado; lead **segue** p/ `deep_enrich` (poda segura) |
+| `graph_poda.feature` (**v1.1**) | "fundada em 2025" (now=2026) | `menos_de_2_anos` marcado; poda rígida; `pruned_hard==1` |
 | `graph_poda.feature` | teto otimista < `tau_finops` | poda FinOps; `gate=="finops_ceiling"` |
+| `graph_scout.feature` (**v1.1**) | mesmo `(query,url)` vindo de Tavily **e** Brave | `evidence_id` idêntico → **deduplica para 1** (estabilidade do hash, §5) |
 | `graph_degradado.feature` | só 1 de 3 provedores ok | `operating_mode==DEGRADED_*`; `confidence` rebaixada por `degraded_factor`; `data_quality==DEGRADED` |
 | `graph_backoff` (unit) | 429 → 429 → ok, seed fixa | 3 tentativas; atrasos = sequência esperada; payload final correto |
 | `graph_finops` (unit) | lote 100 ruidosos (mock) | `FinOpsLedger`: `pruned_hard≈68`, `gemini_calls==2×completed` |
@@ -620,7 +690,8 @@ config/runtime.toml  # [finops] estendido (+max_gemini_calls, providers, concurr
 tests/graph/ + tests/features/graph_*.feature + tests/fixtures/{brave,google_cse}/
 ```
 
-- **WU-G0** — ADR-003 + este SDD (docs). *(este PR.)*
+- **WU-G0** — ADR-003 + este SDD (docs), **aprovado e endurecido para v1.1**
+  (correções §1.2/§2.2/§5 da revisão crítica). *(este PR.)*
 - **WU-G1** — `schemas.py` + extensão `config.py`/`runtime.toml [finops]/[retry]` + testes de contrato. *(sem rede.)*
 - **WU-G2** — `providers/` (Async Protocol + Tavily/Brave/CSE) + normalização canônica + fixtures gravadas (supervisionado) + testes de normalização.
 - **WU-G3** — `retry.py` + `finops.py` (ledger, degraded_factor, provisional_ceiling) + testes unitários determinísticos.
