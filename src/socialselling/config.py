@@ -42,7 +42,17 @@ class TavilyCfg(BaseModel):
 
 
 class GeminiCfg(BaseModel):
+    """Cognição Gemini. `batch_size`/RPD são a reforma cognitiva (ADR-005).
+
+    Defaults preservam paridade: `batch_size` alto => 1 lote (prompt idêntico ao atual);
+    `rpd_enabled=False` => sem orçamento de requisições.
+    """
+
     model: str
+    batch_size: int = 50
+    rpd_enabled: bool = False
+    rpd_cap: int = 1000
+    rpd_ledger_path: str = "data/gemini_request_ledger.json"
 
 
 class ApolloCapsCfg(BaseModel):

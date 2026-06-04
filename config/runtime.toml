@@ -43,6 +43,13 @@ model = "gemini-2.5-flash-lite"
 max_retries = 3
 backoff_base_seconds = 2
 timeout_seconds = 120
+# Reforma cognitiva (ADR-005). batch_size = nº max de evidências por chamada Gemini
+# (>= total do run => 1 lote = prompt idêntico ao atual, paridade). Para VOLUME, lotes
+# menores cabem no timeout (L-016) e elevam o teto. RPD = orçamento de requisições/dia.
+batch_size = 50
+rpd_enabled = false
+rpd_cap = 1000
+rpd_ledger_path = "data/gemini_request_ledger.json"
 
 [apollo]
 # 2o sensor firmografico OPCIONAL (ADR-004). Opt-in: requer enabled=true + APOLLO_API_KEY.

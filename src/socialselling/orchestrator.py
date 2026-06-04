@@ -27,6 +27,7 @@ from socialselling.contracts import (
     XAIPayload,
 )
 from socialselling.core.cache import JsonCache
+from socialselling.core.request_ledger import RequestBudget
 from socialselling.corpus.integration import accumulate, ranked_view
 from socialselling.corpus.store import CorpusStore
 from socialselling.modules.m1_busca import is_degraded, run_m1
@@ -72,6 +73,12 @@ def run_pipeline(
         include_domains=cfg.tavily.include_domains,
         apollo_client=apollo,
     )
+    # Orçamento de requisições Gemini/dia (RPD, ADR-005). Opt-in; desligado => sem gating.
+    request_budget: RequestBudget | None = None
+    if cfg.gemini.rpd_enabled:
+        request_budget = RequestBudget(
+            _ROOT / cfg.gemini.rpd_ledger_path, now, rpd_cap=cfg.gemini.rpd_cap
+        )
     inferences = run_m2(
         evidences,
         client=gemini,
@@ -80,6 +87,8 @@ def run_pipeline(
         cache_ttl_hours=cfg.cache.ttl_hours,
         intent_vocab=i_vocab,
         disqualifier_vocab=DISQUALIFIER_VOCAB,
+        batch_size=cfg.gemini.batch_size,
+        request_budget=request_budget,
     )
     scores = run_m3(
         inferences,
