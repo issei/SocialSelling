@@ -10,7 +10,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from socialselling.apollo.schemas import ApolloPersonHit, ApolloRevealResult
+from socialselling.apollo.schemas import (
+    ApolloOrgInfo,
+    ApolloPersonHit,
+    ApolloRevealResult,
+)
 
 # Marcador que a Apollo usa quando o e-mail NAO foi revelado (tier gratuito).
 _EMAIL_LOCKED_MARKER = "email_not_unlocked"
@@ -118,3 +122,14 @@ def person_hit_to_canonical(hit: ApolloPersonHit) -> dict[str, Any]:
 def to_canonical_results(hits: list[ApolloPersonHit]) -> dict[str, Any]:
     """Lista de hits -> payload canonico Tavily (`{"results": [...]}`) p/ o M1 mapear."""
     return {"results": [person_hit_to_canonical(h) for h in hits]}
+
+
+def parse_org_enrich(payload: dict[str, Any]) -> ApolloOrgInfo:
+    """Resposta de organizations/enrich -> ApolloOrgInfo (degrau 2). Defensivo."""
+    org = payload.get("organization") or {}
+    employees = org.get("estimated_num_employees")
+    return ApolloOrgInfo(
+        industry=org.get("industry"),
+        employee_count=int(employees) if isinstance(employees, int) else None,
+        domain=org.get("primary_domain") or org.get("website_url"),
+    )

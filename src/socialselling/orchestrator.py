@@ -15,6 +15,7 @@ import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
+from socialselling.apollo.enrich import enrich_organizations
 from socialselling.apollo.reveal import reveal_contacts
 from socialselling.config import RuntimeConfig, load_env, load_runtime
 from socialselling.contracts import (
@@ -92,6 +93,25 @@ def run_pipeline(
         batch_size=cfg.gemini.batch_size,
         request_budget=request_budget,
     )
+
+    # Degrau 2 (ADR-004): org-enrich CONDICIONAL (só firmografia faltante), sob crédito.
+    # Só com Apollo presente e havendo inferências; senão inalterado (paridade).
+    if apollo is not None and inferences:
+        inferences = enrich_organizations(
+            inferences,
+            apollo_client=apollo,
+            budget=CreditBudget(
+                _ROOT / cfg.apollo.ledger_path,
+                now,
+                data_cap=cfg.apollo.caps.data_credits_cap,
+                email_cap=cfg.apollo.caps.email_credits_cap,
+                mobile_cap=cfg.apollo.caps.mobile_credits_cap,
+            ),
+            cache=JsonCache(cache_root / "apollo_org"),
+            now=now,
+            ttl_hours=cfg.apollo.org_enrich_ttl_hours,
+        )
+
     scores = run_m3(
         inferences,
         icp,
