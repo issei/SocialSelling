@@ -81,6 +81,7 @@ def run_pipeline(
         confidence_exponent=cfg.scoring.confidence_exponent,
         w_fit_tech=cfg.scoring.w_fit_tech,
         w_fit_industry=cfg.scoring.w_fit_industry,
+        persona_weights=cfg.persona.model_dump(),
     )
     ranked_scores = run_m4(scores)
     by_company = {inf.company.company_id: inf for inf in inferences}
@@ -170,7 +171,8 @@ def render_report(cards: list[LeadCard]) -> str:
         s = card.score
         lines.append(
             f"   {meta + ' · ' if meta else ''}P={s.p_score:.3f} "
-            f"(fit {s.fit:.2f} · intent {s.intent:.2f} · conf {s.confidence:.2f})"
+            f"(fit {s.fit:.2f} · intent {s.intent:.2f} · conf {s.confidence:.2f} "
+            f"· persona {s.persona_fit:.2f})"
         )
         if card.links.instagram:
             lines.append(f"   📸 Instagram: {card.links.instagram}")

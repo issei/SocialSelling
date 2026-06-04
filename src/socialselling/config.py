@@ -24,6 +24,15 @@ class ScoringCfg(BaseModel):
     intent_evidence_norm: int
 
 
+class PersonaCfg(BaseModel):
+    """Multiplicadores de aderência de persona (M3)."""
+
+    fundadora: float = 1.0
+    indefinido: float = 0.5
+    empresa: float = 0.35
+    fundador: float = 0.0
+
+
 class TavilyCfg(BaseModel):
     max_queries: int
     max_results: int
@@ -45,6 +54,7 @@ class RuntimeConfig(BaseModel):
 
     cache: CacheCfg
     scoring: ScoringCfg
+    persona: PersonaCfg = PersonaCfg()
     tavily: TavilyCfg
     gemini: GeminiCfg
     runtime: RuntimeBlock

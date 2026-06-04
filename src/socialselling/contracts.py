@@ -170,6 +170,8 @@ class Inference(BaseModel):
     # desqualificadores detectados (vocabulario fixo). Usados pelo M3 (intent + hard filter).
     intent_signals: list[str] = Field(default_factory=list)
     disqualifiers: list[str] = Field(default_factory=list)
+    # Persona classificada pelo M2: fundadora | fundador | empresa | indefinido.
+    persona: str | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -182,6 +184,7 @@ class ProspectScore(BaseModel):
     fit: float = Field(ge=0.0, le=1.0)
     intent: float = Field(ge=0.0, le=1.0)
     confidence: float = Field(ge=0.0, le=1.0)
+    persona_fit: float = Field(ge=0.0, le=1.0, default=1.0)
     p_score: float = Field(ge=0.0)
     hard_filter_passed: bool = True
 

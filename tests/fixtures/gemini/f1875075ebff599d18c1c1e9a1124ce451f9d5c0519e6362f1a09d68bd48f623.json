@@ -23,13 +23,14 @@
           "confidence": 0.9,
           "normalized_name": "Cris Oliveira",
           "role_title": "Advogada, mentora e fundadora",
-          "seniority": "Founder"
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundadora"
     },
     {
       "company": {
-        "confidence": 0.8,
+        "confidence": 0.9,
         "email": null,
         "industry": "Advocacia",
         "instagram_url": "https://www.instagram.com/reel/DYzzXowN9N7",
@@ -39,7 +40,7 @@
         "phone": null,
         "website": null
       },
-      "confidence": 0.8,
+      "confidence": 0.9,
       "derived_from": [
         "0a9f2bb662da2b0a"
       ],
@@ -49,14 +50,15 @@
         {
           "confidence": 0.9,
           "normalized_name": "Alderito Assis",
-          "role_title": "Advogado, fundador e CEO",
-          "seniority": "CEO"
+          "role_title": "fundador e CEO",
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundador"
     },
     {
       "company": {
-        "confidence": 0.8,
+        "confidence": 0.9,
         "email": null,
         "industry": "Consultoria",
         "instagram_url": "https://www.instagram.com/reel/DV9m-lXj1QT",
@@ -66,19 +68,20 @@
         "phone": null,
         "website": null
       },
-      "confidence": 0.8,
+      "confidence": 0.9,
       "derived_from": [
         "0de181fafc363fc7"
       ],
       "disqualifiers": [],
       "intent_signals": [],
-      "people": []
+      "people": [],
+      "persona": "empresa"
     },
     {
       "company": {
         "confidence": 0.9,
         "email": null,
-        "industry": "Consultoria",
+        "industry": null,
         "instagram_url": "https://www.instagram.com/reel/Cq6ayfugvG8",
         "linkedin_url": null,
         "location": "Brasil e exterior",
@@ -96,14 +99,15 @@
         {
           "confidence": 0.9,
           "normalized_name": "Rosa Bernhoeft",
-          "role_title": "Fundadora",
-          "seniority": "Founder"
+          "role_title": "fundadora",
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundadora"
     },
     {
       "company": {
-        "confidence": 0.8,
+        "confidence": 0.9,
         "email": null,
         "industry": "Engenharia",
         "instagram_url": "https://www.instagram.com/p/DT5PJQAj6Rk",
@@ -113,7 +117,7 @@
         "phone": null,
         "website": null
       },
-      "confidence": 0.8,
+      "confidence": 0.9,
       "derived_from": [
         "195dacd5422509c4"
       ],
@@ -124,9 +128,10 @@
           "confidence": 0.9,
           "normalized_name": "Francis Bogossian",
           "role_title": "Presidente",
-          "seniority": "President"
+          "seniority": "president"
         }
-      ]
+      ],
+      "persona": "indefinido"
     },
     {
       "company": {
@@ -151,13 +156,42 @@
           "confidence": 0.9,
           "normalized_name": "Cláudia Viotti",
           "role_title": "Sócia fundadora",
-          "seniority": "Founder"
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundadora"
     },
     {
       "company": {
-        "confidence": 0.8,
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Engenharia",
+        "instagram_url": "https://www.instagram.com/p/DW87SNMDUwY",
+        "linkedin_url": null,
+        "location": "Brasil",
+        "normalized_name": "Engenharia no Brasil",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "216310abb9110d0e"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": [
+        {
+          "confidence": 0.9,
+          "normalized_name": "Enedina Alves Marques",
+          "role_title": "primeira engenheira negra",
+          "seniority": "engineer"
+        }
+      ],
+      "persona": "indefinido"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
         "email": null,
         "industry": "Advocacia",
         "instagram_url": "https://www.instagram.com/p/DF0DAMauMi1",
@@ -167,7 +201,7 @@
         "phone": null,
         "website": null
       },
-      "confidence": 0.8,
+      "confidence": 0.9,
       "derived_from": [
         "259e7d4580ae78f3"
       ],
@@ -178,204 +212,105 @@
           "confidence": 0.9,
           "normalized_name": "Eduardo Brasil",
           "role_title": "Fundador",
-          "seniority": "Founder"
+          "seniority": "founder"
         }
-      ]
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Consultoria Empresarial",
-        "instagram_url": "https://www.instagram.com/p/DSgYOT0DIYu",
-        "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "ABCO | Associação Brasileira de Consultores",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "6500f205a8b08eb6"
       ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Advocacia",
-        "instagram_url": "https://www.instagram.com/p/DRAjlRskr4K",
-        "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "DD&L",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "6586de36d0745376"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": [
-        {
-          "confidence": 0.9,
-          "normalized_name": "Átila Denys",
-          "role_title": "Sócio-fundador",
-          "seniority": "Founder"
-        }
-      ]
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Engenharia",
-        "instagram_url": "https://www.instagram.com/p/DGDFJBnp3CT",
-        "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "Paraguacu Engenharia",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "69325e3decc4583c"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Engenharia",
-        "instagram_url": "https://www.instagram.com/reel/DLIlDXNvHvL",
-        "linkedin_url": null,
-        "location": "Londrina",
-        "normalized_name": "Vectra",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "793a9230476ddd38"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": [
-        {
-          "confidence": 0.9,
-          "normalized_name": "Manoel",
-          "role_title": "Fundador",
-          "seniority": "Founder"
-        }
-      ]
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Consultoria",
-        "instagram_url": "https://www.instagram.com/p/DYxMIawukUJ",
-        "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "JM Consultoria",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "85ca8c8f66757879"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": [
-        {
-          "confidence": 0.9,
-          "normalized_name": "Jarbas",
-          "role_title": "Fundador",
-          "seniority": "Founder"
-        }
-      ]
-    },
-    {
-      "company": {
-        "confidence": 0.9,
-        "email": null,
-        "industry": "Direito",
-        "instagram_url": "https://www.instagram.com/p/DYzoR1HuXdn?hl=ar",
-        "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "evelynribeiroadvocacia",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.9,
-      "derived_from": [
-        "8b6334bb37f88a02"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": [
-        {
-          "confidence": 0.9,
-          "normalized_name": "Evelyn Ribeiro",
-          "role_title": "Empresária do direito, fundadora",
-          "seniority": "Founder"
-        }
-      ]
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Engenharia",
-        "instagram_url": "https://www.instagram.com/brasilengenharia",
-        "linkedin_url": null,
-        "location": "São Paulo, SP",
-        "normalized_name": "Brasil Engenharia",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "928b587dc9a040c5"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": []
+      "persona": "fundador"
     },
     {
       "company": {
         "confidence": 0.9,
         "email": null,
         "industry": "Consultoria",
-        "instagram_url": "https://www.instagram.com/p/DYaTCoSIEVF?__d=1%2B",
+        "instagram_url": "https://www.instagram.com/p/DYpNrRkCboP",
         "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "XSFERA",
+        "location": "Brasil e América Latina",
+        "normalized_name": "AICI Brasil",
         "phone": null,
         "website": null
       },
       "confidence": 0.9,
       "derived_from": [
-        "93650d3174adb47a"
+        "26d2a036142abf27"
       ],
       "disqualifiers": [],
       "intent_signals": [],
+      "people": [],
+      "persona": "empresa"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Consultoria",
+        "instagram_url": "https://www.instagram.com/p/DJ7mugOJ1bu",
+        "linkedin_url": null,
+        "location": "Brasil",
+        "normalized_name": "Maturi",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "385b0396b36b37bd"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": [],
+      "persona": "empresa"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Engenharia",
+        "instagram_url": "https://www.instagram.com/reel/DWcalL2kSEs",
+        "linkedin_url": null,
+        "location": "Brasil",
+        "normalized_name": "Engenharia que transforma o Brasil",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "3e07dc909d8859d7"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [
+        "quero_modernizar"
+      ],
       "people": [
         {
           "confidence": 0.9,
-          "normalized_name": "Fiárrud",
-          "role_title": "Fundador e CEO",
-          "seniority": "CEO"
+          "normalized_name": "Silvio Meira",
+          "role_title": null,
+          "seniority": "innovator"
         }
-      ]
+      ],
+      "persona": "indefinido"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Consultoria",
+        "instagram_url": "https://www.instagram.com/p/DUG_wU-j6Qe",
+        "linkedin_url": null,
+        "location": null,
+        "normalized_name": "Fundo Brasil",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "5874ce58b660dd06"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [
+        "contratacao_senior"
+      ],
+      "people": [],
+      "persona": "empresa"
     },
     {
       "company": {
@@ -384,7 +319,7 @@
         "industry": "Advocacia",
         "instagram_url": "https://www.instagram.com/p/DWT6RplFLXg",
         "linkedin_url": null,
-        "location": "Brasil",
+        "location": null,
         "normalized_name": "Cláudia Seixas Sociedade de Advogados",
         "phone": null,
         "website": null
@@ -399,14 +334,36 @@
         {
           "confidence": 0.9,
           "normalized_name": "Cláudia Seixas",
-          "role_title": "Fundadora",
-          "seniority": "Founder"
+          "role_title": "fundadora",
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundadora"
     },
     {
       "company": {
-        "confidence": 0.8,
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Consultoria Empresarial",
+        "instagram_url": "https://www.instagram.com/p/DSgYOT0DIYu",
+        "linkedin_url": null,
+        "location": "Brasil",
+        "normalized_name": "ABCO | Associação Brasileira de Consultores",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "6500f205a8b08eb6"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": [],
+      "persona": "empresa"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
         "email": null,
         "industry": "Advocacia",
         "instagram_url": "https://www.instagram.com/p/DRAjlRskr4K",
@@ -416,7 +373,7 @@
         "phone": null,
         "website": null
       },
-      "confidence": 0.8,
+      "confidence": 0.9,
       "derived_from": [
         "6586de36d0745376"
       ],
@@ -426,51 +383,212 @@
         {
           "confidence": 0.9,
           "normalized_name": "Átila Denys",
-          "role_title": "Fundador",
-          "seniority": "Founder"
+          "role_title": "sócio-fundador",
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundador"
     },
     {
       "company": {
         "confidence": 0.9,
         "email": null,
-        "industry": "Consultoria",
-        "instagram_url": "https://www.instagram.com/reel/DOWqvThEki3",
+        "industry": "Engenharia",
+        "instagram_url": "https://www.instagram.com/p/DGDFJBnp3CT",
         "linkedin_url": null,
         "location": "Brasil",
-        "normalized_name": "ALBA Consultoria",
+        "normalized_name": "Paraguacu Engenharia",
         "phone": null,
         "website": null
       },
       "confidence": 0.9,
       "derived_from": [
-        "e8a7d5c16d72ee00"
+        "69325e3decc4583c"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": [],
+      "persona": "empresa"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Engenharia",
+        "instagram_url": "https://www.instagram.com/reel/DLIlDXNvHvL",
+        "linkedin_url": null,
+        "location": "Londrina",
+        "normalized_name": "Vectra",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "793a9230476ddd38"
       ],
       "disqualifiers": [],
       "intent_signals": [],
       "people": [
         {
           "confidence": 0.9,
-          "normalized_name": "Rosa",
-          "role_title": "Fundadora",
-          "seniority": "Founder"
+          "normalized_name": "Manoel",
+          "role_title": "fundador",
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundador"
     },
     {
       "company": {
-        "confidence": 0.8,
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Consultoria",
+        "instagram_url": "https://www.instagram.com/p/DYxMIawukUJ",
+        "linkedin_url": null,
+        "location": null,
+        "normalized_name": "JM Consultoria",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "85ca8c8f66757879"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [
+        "mentoria_gestao"
+      ],
+      "people": [
+        {
+          "confidence": 0.9,
+          "normalized_name": "Jarbas",
+          "role_title": "fundador",
+          "seniority": "founder"
+        }
+      ],
+      "persona": "fundador"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Advocacia",
+        "instagram_url": "https://www.instagram.com/p/DYzoR1HuXdn?hl=ar",
+        "linkedin_url": null,
+        "location": null,
+        "normalized_name": "evelynribeiroadvocacia",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "8b6334bb37f88a02"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": [
+        {
+          "confidence": 0.9,
+          "normalized_name": "Evelyn Ribeiro",
+          "role_title": "fundadora",
+          "seniority": "founder"
+        }
+      ],
+      "persona": "fundadora"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Engenharia",
+        "instagram_url": "https://www.instagram.com/brasilengenharia",
+        "linkedin_url": null,
+        "location": "São Paulo, SP",
+        "normalized_name": "Brasil Engenharia",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "928b587dc9a040c5"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [
+        "expansao",
+        "intencao_ia"
+      ],
+      "people": [],
+      "persona": "empresa"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Consultoria",
+        "instagram_url": "https://www.instagram.com/p/DYaTCoSIEVF?__d=1%2B",
+        "linkedin_url": null,
+        "location": "Brasil",
+        "normalized_name": "XSferabr",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "93650d3174adb47a"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": [
+        {
+          "confidence": 0.9,
+          "normalized_name": "Fiárrud",
+          "role_title": "fundador e CEO",
+          "seniority": "founder"
+        }
+      ],
+      "persona": "fundador"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Direito",
+        "instagram_url": "https://www.instagram.com/p/DQUl8oWkUhn",
+        "linkedin_url": null,
+        "location": null,
+        "normalized_name": "ESCOLA de Direito",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "b65ca824c4bd59a3"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": [
+        {
+          "confidence": 0.9,
+          "normalized_name": "Professor de Direito",
+          "role_title": "fundador de ESCOLA",
+          "seniority": "founder"
+        }
+      ],
+      "persona": "indefinido"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
         "email": null,
         "industry": "Consultoria",
         "instagram_url": "https://www.instagram.com/p/DIg8zKNxNZ8",
         "linkedin_url": null,
-        "location": "Brasil",
+        "location": null,
         "normalized_name": "Trope",
         "phone": null,
         "website": null
       },
-      "confidence": 0.8,
+      "confidence": 0.9,
       "derived_from": [
         "caaaa05cbe590949"
       ],
@@ -481,15 +599,16 @@
           "confidence": 0.9,
           "normalized_name": "Luiz Menezes",
           "role_title": "CEO e fundador",
-          "seniority": "CEO"
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundador"
     },
     {
       "company": {
         "confidence": 0.9,
         "email": null,
-        "industry": "Advocacia",
+        "industry": "Advocacia Previdenciária",
         "instagram_url": "https://www.instagram.com/p/DYPpJBeFiHt",
         "linkedin_url": null,
         "location": "Brasil e Exterior",
@@ -507,24 +626,53 @@
         {
           "confidence": 0.9,
           "normalized_name": "Eduardo Koetz",
-          "role_title": "Fundador e CEO",
-          "seniority": "CEO"
+          "role_title": "fundador e CEO",
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundador"
     },
     {
       "company": {
-        "confidence": 0.8,
+        "confidence": 0.9,
+        "email": null,
+        "industry": null,
+        "instagram_url": "https://www.instagram.com/reel/DOWqvThEki3",
+        "linkedin_url": null,
+        "location": "Brasil",
+        "normalized_name": "ALBA Consultoria",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "e8a7d5c16d72ee00"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": [
+        {
+          "confidence": 0.9,
+          "normalized_name": "Rosa",
+          "role_title": "fundadora",
+          "seniority": "founder"
+        }
+      ],
+      "persona": "fundadora"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
         "email": null,
         "industry": "Engenharia",
         "instagram_url": "https://www.instagram.com/p/DW9BaTpgFLC",
         "linkedin_url": null,
         "location": "Brasil",
-        "normalized_name": "Engenharia",
+        "normalized_name": "Engenharia no Brasil",
         "phone": null,
         "website": null
       },
-      "confidence": 0.8,
+      "confidence": 0.9,
       "derived_from": [
         "e48cc27871b0efd9"
       ],
@@ -534,16 +682,38 @@
         {
           "confidence": 0.9,
           "normalized_name": "Flávia Roxin",
-          "role_title": "Fundadora e diretora financeira",
-          "seniority": "Founder"
+          "role_title": "fundadora e diretora financeira",
+          "seniority": "founder"
         }
-      ]
+      ],
+      "persona": "fundadora"
     },
     {
       "company": {
-        "confidence": 0.7,
+        "confidence": 0.9,
         "email": null,
-        "industry": null,
+        "industry": "Engenharia",
+        "instagram_url": "https://www.instagram.com/reel/DJHELgHxIpi",
+        "linkedin_url": null,
+        "location": "Rio de Janeiro",
+        "normalized_name": "Palácio Tiradentes",
+        "phone": null,
+        "website": null
+      },
+      "confidence": 0.9,
+      "derived_from": [
+        "e82cecabeb635106"
+      ],
+      "disqualifiers": [],
+      "intent_signals": [],
+      "people": [],
+      "persona": "empresa"
+    },
+    {
+      "company": {
+        "confidence": 0.9,
+        "email": null,
+        "industry": "Engenharia, Agronomia e Geociências",
         "instagram_url": "https://www.instagram.com/p/DRSFjWaDsLa",
         "linkedin_url": null,
         "location": "Brasil",
@@ -551,169 +721,14 @@
         "phone": null,
         "website": null
       },
-      "confidence": 0.7,
+      "confidence": 0.9,
       "derived_from": [
         "0145ba34801bc619"
       ],
       "disqualifiers": [],
       "intent_signals": [],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Consultoria",
-        "instagram_url": "https://www.instagram.com/p/DJ7mugOJ1bu",
-        "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "Maturi",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "385b0396b36b37bd"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Consultoria",
-        "instagram_url": "https://www.instagram.com/p/DUG_wU-j6Qe",
-        "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "Fundo Brasil",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "5874ce58b660dd06"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [
-        "contratacao_senior"
-      ],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Engenharia",
-        "instagram_url": "https://www.instagram.com/reel/DWcalL2kSEs",
-        "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "Engenharia",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "3e07dc909d8859d7"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": [
-        {
-          "confidence": 0.8,
-          "normalized_name": "Silvio Meira",
-          "role_title": null,
-          "seniority": null
-        }
-      ]
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Engenharia",
-        "instagram_url": "https://www.instagram.com/p/DW9BSLDlizS",
-        "linkedin_url": null,
-        "location": "Brasil",
-        "normalized_name": "Engenharia",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "64cc3dcabc900f7f"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Engenharia",
-        "instagram_url": "https://www.instagram.com/reel/DJHELgHxIpi",
-        "linkedin_url": null,
-        "location": "Rio e Brasil",
-        "normalized_name": "Engenharia",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "e82cecabeb635106"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": []
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Engenharia",
-        "instagram_url": "https://www.instagram.com/p/DW87SNMDUwY",
-        "linkedin_url": null,
-        "location": "Brasil e Paraná",
-        "normalized_name": "Engenharia",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "216310abb9110d0e"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": [
-        {
-          "confidence": 0.9,
-          "normalized_name": "Enedina Alves Marques",
-          "role_title": "Engenheira",
-          "seniority": null
-        }
-      ]
-    },
-    {
-      "company": {
-        "confidence": 0.8,
-        "email": null,
-        "industry": "Consultoria",
-        "instagram_url": "https://www.instagram.com/p/DYpNrRkCboP",
-        "linkedin_url": null,
-        "location": "Brasil e América Latina",
-        "normalized_name": "Vozes AICI Brasil",
-        "phone": null,
-        "website": null
-      },
-      "confidence": 0.8,
-      "derived_from": [
-        "26d2a036142abf27"
-      ],
-      "disqualifiers": [],
-      "intent_signals": [],
-      "people": []
+      "people": [],
+      "persona": "empresa"
     }
   ]
 }

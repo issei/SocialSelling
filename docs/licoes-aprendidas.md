@@ -63,6 +63,9 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-023 | Score | Intent = Σ priors das hipóteses que disparam** (surface_signals ∩ intent_signals), não contagem de evidências. Ausência de sinal ⇒ intent 0 (Open-World). Desqualificador detectado zera o lead. Ver ADR-001. (Substitui L-019.)
 - **L-024 | Aderência | O motor de BUSCA (M1/Tavily) ainda é afinado p/ empresas tech em inglês.** Para founders de serviços (Talita), a query generation e a extração precisam de outra rodada — provável sondagem empírica antes de codar. Priors das hipóteses são chutes a calibrar.
 
+## Precisão de persona
+- **L-025 | Ranking | `persona_fit` (multiplicador) resolve o falso-positivo de topo.** M2 classifica a persona (fundadora/fundador/empresa/indefinido); M3 multiplica o score por pesos de `[persona]` (homem→0 cai fora; empresa↓; fundadora cheio). Antes "Silvio Meira" era #1; depois o top-5 virou todo de fundadoras. Config-driven e transparente (XAI mostra "Persona alvo: fundadora").
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.

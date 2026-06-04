@@ -21,6 +21,14 @@ w_fit_tech = 0.60
 w_fit_industry = 0.40
 intent_evidence_norm = 5
 
+[persona]
+# Multiplicador de aderencia de persona (publico = fundadoras mulheres de servicos).
+# Homem -> 0 (cai fora do topo); conta de empresa -> penalizada; fundadora -> cheio.
+fundadora = 1.0
+indefinido = 0.5
+empresa = 0.35
+fundador = 0.0
+
 [tavily]
 max_queries = 3
 max_results = 10
