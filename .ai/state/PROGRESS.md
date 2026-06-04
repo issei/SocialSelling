@@ -4,8 +4,8 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **Specs de VOLUME implementadas e testadas** (ADR-004 Apollo, ADR-005 cognição, ADR-006 corpus). Tudo opt-in (`enabled=false` => paridade byte-idêntica), mockado, gate verde. Roadmap: `docs/planning/escala-volume-leads.md`. `v0.15.3`.
-- **ultima_tag_verde:** `v0.15.3` (escada Apollo completa: degraus 1/2/3; 120 testes verdes)
+- **marco_atual:** ✅ Specs de VOLUME (ADR-004/005/006) implementadas + **overview HTML** (`docs/overview.html`) + **UI de resultados redesenhada** (tabela de leads + drawer de detalhes enriquecidos, SDD `lead-results-table-ux`). Tudo opt-in/paridade, gate verde. `v0.16.0`.
+- **ultima_tag_verde:** `v0.16.0` (UI: tabela de leads + drawer; 123 testes verdes)
 - **proxima_acao:** **(opcional)** gravar fixtures Apollo reais supervisionado (`scripts/record_apollo_fixtures.py`, só People Search é grátis) + ligar `[apollo].enabled`/`[corpus].enabled`/`[gemini].rpd_enabled` num run real e calibrar (mapeamento ICP→filtros é heurístico, L-024). **Refinamentos diferidos (V1+):** determinístico-primeiro (ADR-005), process-only-new (ADR-006), LangGraph (ADR-003, motor opcional) — ver §status no roadmap.
 - **wu_em_andamento:** — (todas as WUs de volume mergeadas; PRs #33/#35/#37→#46)
 - **passo_atual:** — (`main` verde, 120 testes; `.env` com APOLLO_API_KEY; gate via `.venv\Scripts\python.exe -m …`)
@@ -52,3 +52,4 @@ Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/co
 | 2026-06-04 | Fundação ledgers+corpus (fan-out de agentes) | 3 agentes sonnet em paralelo escreveram credit_ledger/request_ledger/corpus; travaram em prompt de permissão; colhidos+gateados+mergeados pelo main loop (#35); gate verde 73 testes. Licoes L-039/40/41 | `v0.14.0` |
 | 2026-06-04 | Descoberta Apollo fim-a-fim (foreground) | WU-A3 cliente REST + normalize (#37); WU-A4 ladder puro (#38); WU-A4b plug no M1 (#39); WU-A4c wiring no orquestrador (#40). Tudo opt-in, mockado, paridade preservada; 100 testes verdes | `v0.14.1`→`v0.14.4` |
 | 2026-06-04 | Specs de volume completas (foreground) | ADR-006 corpus no orquestrador (#42); ADR-005 batch+RPD no M2 (#43); ADR-004 degrau 3 reveal+credito (#44); degrau 2 org-enrich (#45); script de fixtures (#46). Escada Apollo completa; 120 testes verdes | `v0.15.0`→`v0.15.3` |
+| 2026-06-04 | Overview + UI redesenhada | overview HTML do projeto (#48); SDD UX + lista de leads em TABELA + drawer de detalhes enriquecidos (#49). Backend inalterado; 123 testes verdes. Licoes L-046/47/48 | `v0.15.4`,`v0.16.0` |

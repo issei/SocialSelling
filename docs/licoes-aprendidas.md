@@ -110,6 +110,11 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-044 | Side-effect | Construir um ledger (escrita atômica) dentro do `run_pipeline` poluía `data/` real nos testes.** Guardar a construção com `if apollo is not None and cards:`/`and inferences:` evita escrever quando não há nada a fazer — e some o efeito colateral. Ledgers ficam gitignored, mas evitar a escrita à toa é mais limpo.
 - **L-045 | Escopo | "Terminar todas as specs" ≠ implementar cada sub-feature.** Determinístico-primeiro (ADR-005) e process-only-new (ADR-006) foram DIFERIDOS conscientemente (alto risco de redesenho do M2 / entidade só emerge pós-M2; cache+corpus já dão o FinOps). Documentar o diferido com razão é entrega honesta; rushar refino arriscado por completude não é.
 
+## UI / UX
+- **L-046 | Tailwind CDN | Classes de cor montadas em JS (`bg-${tone}-500`) podem não ser geradas** pelo Play CDN se ele não as vir como literais. **Safelist:** um `<div class="hidden ...">` com todas as classes dinâmicas garante a geração — sem flash de estilo. Também: sempre `esc()` (escape HTML) em dados de Gemini/Apollo antes de injetar via innerHTML (anti-injeção).
+- **L-047 | UX | Lista de leads = padrão "scan-then-focus":** tabela densa e ordenável para VARRER/comparar (score com barra, ícones de canal com `stopPropagation`), + drawer slide-over para FOCAR num lead e ver o enriquecido (contato, firmografia, por-que-agora, lacunas, fontes). Mudança estritamente de apresentação: contrato `/api/run` e IDs do JS preservados → testes de não-regressão garantem isso.
+- **L-048 | Verificação | Sem navegador Chrome conectado (extensão não pareada) + computer-use offline = não dá screenshot automático.** Verificação de runtime possível: subir o servidor e `Invoke-WebRequest` confere HTTP 200 + presença da estrutura nova. Cuidado: escapar aspas no PowerShell (`\"` em regex vira falso-negativo). Tests via FastAPI TestClient cobrem o contrato.
+
 ## Oportunidades de tooling (revisão de fim de tarefa — auto-learning)
 - **Skill candidata `sdd-adr` (autoria de par ADR+SDD canônico):** o fluxo "pesquisar limites de
   uma API externa → ADR (emenda ao ADR-000) + SDD no estilo da casa (seções 0–8) → lições → PR
