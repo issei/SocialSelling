@@ -66,6 +66,10 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 ## Precisão de persona
 - **L-025 | Ranking | `persona_fit` (multiplicador) resolve o falso-positivo de topo.** M2 classifica a persona (fundadora/fundador/empresa/indefinido); M3 multiplica o score por pesos de `[persona]` (homem→0 cai fora; empresa↓; fundadora cheio). Antes "Silvio Meira" era #1; depois o top-5 virou todo de fundadoras. Config-driven e transparente (XAI mostra "Persona alvo: fundadora").
 
+## Orquestração / async
+- **L-026 | Async | `asyncio.gather` para fan-out resiliente exige `return_exceptions=True`** + tratar `isinstance(out, BaseException)` no laço (converter em erro estruturado). Com `False`, uma exceção crua de UM provedor derruba o lote inteiro. Pego na revisão crítica do SDD LangGraph (§1.2).
+- **L-027 | Triagem | Heurística barata de poda deve preferir FALSO-PROSSEGUIR a FALSO-PODAR.** `menos_de_2_anos` só marca com ano em contexto de fundação claro; ambíguo defere ao Gemini. Falso-negativo custa 1 chamada; falso-positivo perde um cliente (assimetria de custo).
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.

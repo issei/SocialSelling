@@ -4,17 +4,14 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** 🎯 Precisão de persona — homem→0, conta de empresa↓, fundadora cheio. Top-5 real virou todo de fundadoras. `v0.12.0`
-- **ultima_tag_verde:** `v0.11.1` (→ `v0.12.0` após merge da persona)
-- **wu_em_andamento:** — (aderência entregue: PR #17 busca+contato `v0.8.1`; PR Lead Card `v0.9.0`)
-- **passo_atual:** — (`main` verde, 21 testes; CLI gera Lead Cards reais)
+- **marco_atual:** 📐 SDD **aprovado (v1.1)** da Orquestração Paralela + FinOps (LangGraph) — ADR-003 aceito. Pronto para implementar (WU-G1…G6). `v0.12.1` + launcher
+- **ultima_tag_verde:** `v0.12.1` (launcher); SDD em `docs/specs/orquestracao-paralela-finops-langgraph-sdd.md`
+- **proxima_acao (quando o dono mandar):** WU-G1 — `graph/schemas.py` (Pydantic extra=forbid) + extensão `config.py`/`runtime.toml [finops]/[retry]` + testes de contrato (sem rede). Depois G2 provedores async (Tavily/Brave/CSE) … G6 runner. Núcleo M3/M4 intocado.
+- **wu_em_andamento:** — (UI `v0.10–0.11.x`; persona `v0.12.0`; launcher `v0.12.1`; SDD LangGraph v1.1 aprovado)
+- **passo_atual:** — (`main` verde, 42 testes; UI sobe via `start.bat`; SDD pronto p/ código)
 - **branch:** `main`
-- **proxima_acao:** Backlog de CALIBRAÇÃO (NÃO iniciar sem o dono) — ver `docs/analysis/sondagem-talita.md`:
-  1. Precisão de persona: ainda entram homens/contas de empresa (run trouxe "Silvio Meira"). Desqualificador `perfil_nao_fundadora` ou re-rank por persona.
-  2. Pessoa vs empresa: muitos leads são a conta da firma sem nome da decisora.
-  3. Calibrar priors/pesos com feedback real de conversão.
-  4. (Opcional, fora do guardrail) enriquecimento de contato (email/telefone) visitando perfis.
-- **bloqueios:** NENHUM (formato e busca entregues; itens acima são precisão/calibração)
+- **bloqueios:** NENHUM
+- **backlog de calibração (não bloqueia, ver `docs/analysis/sondagem-talita.md`):** calibrar pesos `[persona]`/priors com conversão real; pessoa-vs-empresa quando a conta da firma não traz a fundadora; (opcional, fora do guardrail) enriquecimento de contato.
 
 ## Pré-condições antes de liberar autonomia plena
 - [x] `bootstrap` executado (venv + deps) e gate completo verde (ruff+mypy+pytest).
@@ -37,3 +34,4 @@
 | 2026-06-03 | Aderência da busca + Lead Card | sondagem empírica; busca PT-BR+Instagram (#17); contato no M2; LeadCard acionável. Run real = 29 leads c/ Instagram | `v0.8.1`→`v0.9.0` |
 | 2026-06-03 | UI de operador local (FastAPI) | ADR-002; fundação web (#20); API params (#21); assistente Gemini (#22); executar/resultados (#23); front-end (#24); E2E+README | `v0.10.0`→`v0.11.x` |
 | 2026-06-03 | Precisão de persona | M2 classifica persona; M3 persona_fit (config [persona]); XAI explica. Run real: top-5 = fundadoras | `v0.12.0` |
+| 2026-06-03 | Launcher + SDD LangGraph | start.bat/start.sh (#27); SDD Orquestração Paralela+FinOps aprovado e endurecido v1.1 + ADR-003 (#28) | `v0.12.1` |
