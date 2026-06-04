@@ -17,6 +17,7 @@ from socialselling.contracts import (
     PersonEntity,
 )
 from socialselling.core.cache import JsonCache, query_hash
+from socialselling.core.request_ledger import RequestBudget
 from socialselling.skills.gemini_client import (
     CognitionClient,
     GeminiError,
@@ -186,20 +187,36 @@ def run_m2(
     cache_ttl_hours: int,
     intent_vocab: list[str],
     disqualifier_vocab: list[str],
+    batch_size: int = 50,
+    request_budget: RequestBudget | None = None,
 ) -> list[Inference]:
-    """Executa o M2: monta o prompt, consulta Gemini (com cache T-24h) e mapeia inferências."""
+    """Executa o M2 em LOTES (ADR-005): chunking determinístico, 1 chamada Gemini por lote.
+
+    Com `batch_size` >= nº de evidências, é 1 lote (prompt idêntico ao atual → paridade).
+    `request_budget` (RPD, opt-in) só é debitado em cache MISS (chamada real); esgotado,
+    o lote é PULADO (degrada, sem erro) e fica para uma onda futura — ondas resumíveis.
+    Determinismo: evidências ordenadas por evidence_id antes do chunking.
+    """
     observed = [ev for ev in evidences if not ev.missing_evidence]
     if not observed:
         return []
-    prompt = build_prompt(observed, intent_vocab, disqualifier_vocab)
-    payload = cache.get(prompt, now, cache_ttl_hours)
-    if payload is None:
-        try:
-            payload = client.generate_json(prompt)
-            cache.put(prompt, payload, now)
-        except (RateLimitError, GeminiError):
-            stale = cache.get_any(prompt)
-            if stale is None:
-                return []
-            payload = stale
-    return _parse_inferences(payload, observed, intent_vocab, disqualifier_vocab)
+    ordered = sorted(observed, key=lambda e: e.evidence_id)
+    out: list[Inference] = []
+    for start in range(0, len(ordered), max(1, batch_size)):
+        chunk = ordered[start : start + max(1, batch_size)]
+        prompt = build_prompt(chunk, intent_vocab, disqualifier_vocab)
+        payload = cache.get(prompt, now, cache_ttl_hours)
+        if payload is None:
+            # RPD: só consome orçamento quando vai REALMENTE chamar (cache miss).
+            if request_budget is not None and not request_budget.try_consume(1):
+                continue  # orçamento do dia esgotado → pula lote (onda futura)
+            try:
+                payload = client.generate_json(prompt)
+                cache.put(prompt, payload, now)
+            except (RateLimitError, GeminiError):
+                stale = cache.get_any(prompt)
+                if stale is None:
+                    continue
+                payload = stale
+        out += _parse_inferences(payload, chunk, intent_vocab, disqualifier_vocab)
+    return out
