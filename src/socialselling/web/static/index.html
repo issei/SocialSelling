@@ -5,11 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SocialSelling — UI local</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}
+    .tabular{font-variant-numeric:tabular-nums}
+    #leadDrawer{transition:transform .28s cubic-bezier(.4,0,.2,1)}
+    #leadOverlay{transition:opacity .28s ease}
+    .drawer-hidden #leadDrawer{transform:translateX(100%)}
+    .drawer-hidden #leadOverlay{opacity:0;pointer-events:none}
+  </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
-  <header class="bg-white border-b">
-    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-      <h1 class="text-xl font-bold">SocialSelling <span class="text-slate-400 font-normal">— Operador local</span></h1>
+  <!-- safelist: garante que as classes de cor montadas em JS (score) sejam geradas pelo Tailwind CDN -->
+  <div class="hidden bg-emerald-500 bg-amber-500 bg-slate-500 text-emerald-600 text-amber-600 text-slate-600"></div>
+  <header class="bg-white/90 backdrop-blur border-b sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-bold flex items-center gap-2">
+        <span class="inline-grid place-items-center w-7 h-7 rounded-lg bg-indigo-600 text-white text-sm">S</span>
+        SocialSelling <span class="text-slate-400 font-normal">— Operador local</span>
+      </h1>
       <nav class="text-sm space-x-4">
         <a href="#parametros" class="text-indigo-600 hover:underline">Parâmetros</a>
         <a href="#assistente" class="text-indigo-600 hover:underline">Assistente</a>
@@ -18,7 +33,7 @@
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-6 py-8 space-y-10">
+  <main class="max-w-6xl mx-auto px-6 py-8 space-y-10">
 
     <!-- ASSISTENTE -->
     <section id="assistente" class="bg-white rounded-xl shadow-sm border p-6 space-y-3">
@@ -65,20 +80,55 @@
 
     <!-- RESULTADOS -->
     <section id="resultados" class="bg-white rounded-xl shadow-sm border p-6 space-y-4">
-      <h2 class="text-lg font-semibold">🚀 Executar &amp; Resultados</h2>
-      <div class="flex flex-wrap items-center gap-2">
-        <select id="runIcp" class="border rounded-lg p-2 text-sm"></select>
-        <button id="btnRun" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">Executar</button>
-        <span id="runStatus" class="text-sm"></span>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold">🚀 Executar &amp; Resultados</h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="runIcp" class="border rounded-lg p-2 text-sm"></select>
+          <button id="btnRun" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">Executar</button>
+          <span id="runStatus" class="text-sm"></span>
+        </div>
       </div>
-      <div id="cards" class="grid md:grid-cols-2 gap-4"></div>
+
+      <!-- TABELA DE LEADS -->
+      <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <table id="leadsTable" class="w-full text-left">
+          <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 select-none">
+            <tr>
+              <th class="px-3 py-2.5 w-10">#</th>
+              <th class="px-3 py-2.5 cursor-pointer hover:text-slate-800" data-sort="display_name">Lead <span class="sort-ind"></span></th>
+              <th class="px-3 py-2.5 hidden md:table-cell cursor-pointer hover:text-slate-800" data-sort="company">Empresa <span class="sort-ind"></span></th>
+              <th class="px-3 py-2.5 hidden lg:table-cell">Setor · Local</th>
+              <th class="px-3 py-2.5 w-44 cursor-pointer hover:text-slate-800" data-sort="p_score">Score <span class="sort-ind"></span></th>
+              <th class="px-3 py-2.5">Canais</th>
+              <th class="px-3 py-2.5 w-8"></th>
+            </tr>
+          </thead>
+          <tbody id="leadsBody" class="text-sm"></tbody>
+        </table>
+        <div id="leadsEmpty" class="px-6 py-14 text-center text-slate-400">
+          <div class="text-3xl mb-2">🗂️</div>
+          <p class="font-medium text-slate-500">Nenhum lead ainda</p>
+          <p class="text-sm">Escolha um ICP e clique em <span class="font-medium text-indigo-600">Executar</span> para ver o ranking.</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400">Clique numa linha para ver os detalhes enriquecidos. <span id="leadsCount"></span></p>
     </section>
   </main>
+
+  <!-- DRAWER DE DETALHES -->
+  <div id="drawerWrap" class="drawer-hidden">
+    <div id="leadOverlay" class="fixed inset-0 bg-slate-900/40 z-40"></div>
+    <aside id="leadDrawer" role="dialog" aria-modal="true" aria-label="Detalhes do lead"
+           class="fixed top-0 right-0 z-50 h-full w-full max-w-md bg-white shadow-2xl overflow-y-auto">
+      <div id="drawerBody"></div>
+    </aside>
+  </div>
 
   <script>
     const SCORING_KEYS = ["w_fit","w_intent","confidence_exponent","w_fit_tech","w_fit_industry"];
     const $ = (id) => document.getElementById(id);
     const setStatus = (id, msg, ok) => { const e=$(id); e.textContent=msg; e.className="text-sm "+(ok?"text-emerald-600":"text-rose-600"); };
+    const esc = (s) => String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
     async function api(method, url, body) {
       const opt = { method, headers: { "Content-Type": "application/json" } };
@@ -156,40 +206,224 @@
       finally { $("btnAssist").disabled=false; }
     }
 
-    function card(l) {
-      const ig = l.links && l.links.instagram;
-      const li = l.links && l.links.linkedin;
-      const site = l.links && l.links.website;
-      const head = `#${l.rank} · ${l.display_name}` + (l.role && l.company ? ` — ${l.role} @ ${l.company}` : (l.company && l.company!==l.display_name ? ` — ${l.company}` : ""));
-      const meta = [l.sector, l.location].filter(Boolean).join(" · ");
-      const why = (l.why_now||[]).map(w=>`<li>${w}</li>`).join("");
-      const gaps = (l.gaps||[]).map(g=>`<li class="text-amber-600">⚠ ${g}</li>`).join("");
-      const s = l.score;
-      return `<div class="border rounded-xl p-4 space-y-2">
-        <div class="font-semibold">${head}</div>
-        <div class="text-xs text-slate-500">${meta}${meta?" · ":""}P=${s.p_score.toFixed(3)} (fit ${s.fit.toFixed(2)} · intent ${s.intent.toFixed(2)} · conf ${s.confidence.toFixed(2)} · persona ${(s.persona_fit ?? 1).toFixed(2)})</div>
-        <div class="text-sm space-x-3">
-          ${ig?`<a class="text-pink-600 hover:underline" target="_blank" rel="noopener" href="${ig}">📸 Instagram</a>`:""}
-          ${li?`<a class="text-blue-700 hover:underline" target="_blank" rel="noopener" href="${li}">🔗 LinkedIn</a>`:""}
-          ${site?`<a class="text-slate-600 hover:underline" target="_blank" rel="noopener" href="${site}">🌐 Site</a>`:""}
+    /* ====================== RESULTADOS: tabela + drawer ====================== */
+    let LEADS = [];            // dados do run (ordem do ranking)
+    let RENDERED = [];         // ordem atual exibida (após sort)
+    let SORT = { key: "rank", dir: 1 };
+
+    const pct = (x) => Math.max(0, Math.min(100, Math.round((x||0)*100)));
+    const scoreTone = (p) => p >= 0.6 ? "emerald" : (p >= 0.4 ? "amber" : "slate");
+    const domainOf = (u) => { try { return new URL(u).hostname.replace(/^www\./,""); } catch(_) { return u; } };
+
+    function channelIcon(href, label, cls, glyph) {
+      if (!href) return "";
+      return `<a href="${esc(href)}" target="_blank" rel="noopener" title="${label}" aria-label="${label}"
+        onclick="event.stopPropagation()"
+        class="inline-grid place-items-center w-8 h-8 rounded-lg ${cls} transition">${glyph}</a>`;
+    }
+
+    function scoreBar(p) {
+      const tone = scoreTone(p);
+      return `<div class="flex items-center gap-2">
+        <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div class="h-full bg-${tone}-500" style="width:${pct(p)}%"></div>
         </div>
-        ${why?`<ul class="text-sm list-disc list-inside text-emerald-700">${why}</ul>`:""}
-        ${gaps?`<ul class="text-xs list-disc list-inside">${gaps}</ul>`:""}
-        <div class="text-xs text-slate-400">${(l.sources||[]).length} fonte(s)</div>
+        <span class="text-sm font-semibold tabular text-${tone}-600 w-10 text-right">${(p||0).toFixed(2)}</span>
       </div>`;
+    }
+
+    function renderTable() {
+      const arr = LEADS.slice();
+      const { key, dir } = SORT;
+      arr.sort((a,b) => {
+        const va = key==="p_score" ? a.score.p_score : (key==="rank" ? a.rank : (a[key]||"").toString().toLowerCase());
+        const vb = key==="p_score" ? b.score.p_score : (key==="rank" ? b.rank : (b[key]||"").toString().toLowerCase());
+        return (va < vb ? -1 : va > vb ? 1 : 0) * dir;
+      });
+      RENDERED = arr;
+      $("leadsEmpty").style.display = arr.length ? "none" : "block";
+      $("leadsBody").innerHTML = arr.map((l, i) => {
+        const ig = l.links && l.links.instagram, li = l.links && l.links.linkedin, site = l.links && l.links.website;
+        const enriched = (l.contact && (l.contact.email || l.contact.phone));
+        const dot = enriched ? `<span title="Contato enriquecido" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>` : "";
+        const meta = [l.sector, l.location].filter(Boolean).map(esc).join(" · ");
+        return `<tr class="lead-row group cursor-pointer hover:bg-indigo-50/60 border-t border-slate-100" data-i="${i}">
+          <td class="px-3 py-3 text-slate-400 tabular">${l.rank}</td>
+          <td class="px-3 py-3">
+            <div class="font-semibold text-slate-800 flex items-center gap-2">${esc(l.display_name)} ${dot}</div>
+            <div class="text-xs text-slate-500">${esc(l.role||"")}</div>
+          </td>
+          <td class="px-3 py-3 text-slate-600 hidden md:table-cell">${esc(l.company||"—")}</td>
+          <td class="px-3 py-3 text-xs text-slate-500 hidden lg:table-cell">${meta||"—"}</td>
+          <td class="px-3 py-3">${scoreBar(l.score.p_score)}</td>
+          <td class="px-3 py-3"><div class="flex items-center gap-1.5">
+            ${channelIcon(ig,"Instagram","bg-pink-50 text-pink-600 hover:bg-pink-100","📸")}
+            ${channelIcon(li,"LinkedIn","bg-blue-50 text-blue-700 hover:bg-blue-100","in")}
+            ${channelIcon(site,"Site","bg-slate-100 text-slate-600 hover:bg-slate-200","🌐")}
+            ${(!ig&&!li&&!site)?'<span class="text-xs text-slate-300">—</span>':""}
+          </div></td>
+          <td class="px-3 py-3 text-slate-300 group-hover:text-indigo-500 text-lg leading-none">›</td>
+        </tr>`;
+      }).join("");
+      document.querySelectorAll(".lead-row").forEach(row => {
+        row.addEventListener("click", () => openDrawer(RENDERED[parseInt(row.dataset.i,10)]));
+      });
+      updateSortIndicators();
+    }
+
+    function updateSortIndicators() {
+      document.querySelectorAll("th[data-sort]").forEach(th => {
+        const ind = th.querySelector(".sort-ind");
+        ind.textContent = (th.dataset.sort === SORT.key) ? (SORT.dir>0 ? "▲" : "▼") : "";
+        th.classList.toggle("text-slate-800", th.dataset.sort === SORT.key);
+      });
+    }
+
+    function bar(label, v) {
+      const tone = scoreTone(v);
+      return `<div>
+        <div class="flex justify-between text-xs mb-1"><span class="text-slate-500">${label}</span><span class="font-semibold tabular text-${tone}-600">${(v||0).toFixed(2)}</span></div>
+        <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-${tone}-500" style="width:${pct(v)}%"></div></div>
+      </div>`;
+    }
+
+    function bigChannel(href, label, cls, glyph) {
+      if (!href) return "";
+      return `<a href="${esc(href)}" target="_blank" rel="noopener"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl border ${cls} transition">
+        <span class="text-lg">${glyph}</span>
+        <span class="min-w-0"><span class="block text-sm font-medium">${label}</span><span class="block text-xs opacity-70 truncate">${esc(domainOf(href))}</span></span>
+      </a>`;
+    }
+
+    function copyRow(label, value) {
+      if (!value) return `<div class="flex items-center justify-between py-1.5"><span class="text-sm text-slate-500">${label}</span><span class="text-sm text-slate-300">não revelado</span></div>`;
+      return `<div class="flex items-center justify-between gap-2 py-1.5">
+        <span class="text-sm text-slate-500">${label}</span>
+        <span class="flex items-center gap-2 min-w-0">
+          <span class="text-sm font-medium text-slate-800 truncate">${esc(value)}</span>
+          <button onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(value)}')" title="Copiar" class="text-xs px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600">copiar</button>
+        </span>
+      </div>`;
+    }
+
+    function buildDrawer(l) {
+      const s = l.score;
+      const ig = l.links && l.links.instagram, li = l.links && l.links.linkedin, site = l.links && l.links.website;
+      const hasChannel = ig||li||site;
+      const why = (l.why_now||[]).map(w=>`<li class="flex gap-2"><span class="text-emerald-500 mt-0.5">▸</span><span>${esc(w)}</span></li>`).join("");
+      const gaps = (l.gaps||[]).map(g=>`<li class="flex gap-2"><span class="text-amber-500 mt-0.5">⚠</span><span>${esc(g)}</span></li>`).join("");
+      const sources = (l.sources||[]).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener" class="block text-xs text-indigo-600 hover:underline truncate">${esc(domainOf(u))}</a>`).join("");
+      const head = (l.role && l.company) ? `${esc(l.role)} · ${esc(l.company)}` : esc(l.company||"");
+      return `
+      <div class="sticky top-0 bg-white border-b px-5 py-4 flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold tabular px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">#${l.rank}</span>
+            <h3 class="font-bold text-slate-900 truncate">${esc(l.display_name)}</h3>
+          </div>
+          <p class="text-sm text-slate-500 truncate">${head||"—"}</p>
+        </div>
+        <button id="drawerClose" aria-label="Fechar" class="shrink-0 w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-500">✕</button>
+      </div>
+      <div class="p-5 space-y-6">
+        <!-- score -->
+        <div class="rounded-xl border border-slate-200 p-4">
+          <div class="flex items-end justify-between mb-3">
+            <span class="text-xs uppercase tracking-wide text-slate-400">Prioridade (P-score)</span>
+            <span class="text-2xl font-extrabold tabular text-${scoreTone(s.p_score)}-600">${s.p_score.toFixed(3)}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            ${bar("Fit", s.fit)}${bar("Intent", s.intent)}${bar("Confiança", s.confidence)}${bar("Persona", s.persona_fit==null?1:s.persona_fit)}
+          </div>
+          ${s.hard_filter_passed===false?`<p class="mt-3 text-xs text-rose-600">⚠ Reprovado no hard filter (desqualificador rígido).</p>`:""}
+        </div>
+
+        <!-- contato enriquecido -->
+        <div>
+          <h4 class="text-xs uppercase tracking-wide text-slate-400 mb-1.5">Contato <span class="text-emerald-500 normal-case">· enriquecido</span></h4>
+          <div class="rounded-xl border border-slate-200 px-4 divide-y divide-slate-100">
+            ${copyRow("E-mail", l.contact && l.contact.email)}
+            ${copyRow("Telefone", l.contact && l.contact.phone)}
+          </div>
+        </div>
+
+        <!-- canais -->
+        ${hasChannel?`<div>
+          <h4 class="text-xs uppercase tracking-wide text-slate-400 mb-1.5">Canais</h4>
+          <div class="grid gap-2">
+            ${bigChannel(ig,"Instagram","border-pink-200 bg-pink-50 text-pink-700 hover:bg-pink-100","📸")}
+            ${bigChannel(li,"LinkedIn","border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100","🔗")}
+            ${bigChannel(site,"Website","border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100","🌐")}
+          </div>
+        </div>`:""}
+
+        <!-- firmografia -->
+        ${(l.sector||l.location)?`<div>
+          <h4 class="text-xs uppercase tracking-wide text-slate-400 mb-1.5">Firmografia</h4>
+          <div class="flex flex-wrap gap-2">
+            ${l.sector?`<span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">🏷️ ${esc(l.sector)}</span>`:""}
+            ${l.location?`<span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">📍 ${esc(l.location)}</span>`:""}
+          </div>
+        </div>`:""}
+
+        <!-- por que agora -->
+        ${why?`<div>
+          <h4 class="text-xs uppercase tracking-wide text-slate-400 mb-1.5">Por que agora</h4>
+          <ul class="text-sm text-slate-700 space-y-1.5">${why}</ul>
+        </div>`:""}
+
+        <!-- lacunas -->
+        ${gaps?`<div>
+          <h4 class="text-xs uppercase tracking-wide text-slate-400 mb-1.5">Lacunas / sinais ausentes</h4>
+          <ul class="text-sm text-slate-700 space-y-1.5">${gaps}</ul>
+        </div>`:""}
+
+        <!-- fontes -->
+        ${sources?`<div>
+          <h4 class="text-xs uppercase tracking-wide text-slate-400 mb-1.5">Fontes (${(l.sources||[]).length})</h4>
+          <div class="space-y-0.5">${sources}</div>
+        </div>`:""}
+      </div>`;
+    }
+
+    function openDrawer(l) {
+      if (!l) return;
+      $("drawerBody").innerHTML = buildDrawer(l);
+      $("drawerClose").onclick = closeDrawer;
+      document.getElementById("drawerWrap").classList.remove("drawer-hidden");
+    }
+    function closeDrawer() {
+      document.getElementById("drawerWrap").classList.add("drawer-hidden");
     }
 
     async function run() {
       const icp_name = $("runIcp").value;
       setStatus("runStatus","Executando (pode levar alguns segundos)...",true);
-      $("btnRun").disabled=true; $("cards").innerHTML="";
+      $("btnRun").disabled=true; LEADS=[]; renderTable(); $("leadsCount").textContent="";
       try {
         const res = await api("POST","/api/run",{icp_name});
+        LEADS = res.leads || [];
+        SORT = { key:"rank", dir:1 };
+        renderTable();
+        const withContact = LEADS.filter(l=>l.contact&&(l.contact.email||l.contact.phone)).length;
         setStatus("runStatus", res.count + " leads.", true);
-        $("cards").innerHTML = (res.leads||[]).map(card).join("");
+        $("leadsCount").textContent = LEADS.length ? `${LEADS.length} leads · ${withContact} com contato enriquecido.` : "";
       } catch(e){ setStatus("runStatus","Erro: "+e.message,false); }
       finally { $("btnRun").disabled=false; }
     }
+
+    // sort ao clicar nos cabeçalhos
+    document.querySelectorAll("th[data-sort]").forEach(th => {
+      th.addEventListener("click", () => {
+        const k = th.dataset.sort;
+        if (SORT.key === k) SORT.dir *= -1; else SORT = { key:k, dir: k==="p_score"?-1:1 };
+        renderTable();
+      });
+    });
+    // fechar drawer: overlay + Esc
+    $("leadOverlay").addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
 
     $("btnLoadIcp").onclick=loadIcp;
     $("btnSaveIcp").onclick=saveIcp;
