@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialSelling — Overview do Projeto & Modelo de Boas Práticas</title>
+  <meta name="description" content="Overview do projeto SocialSelling: arquitetura, especificações (ADRs/SDDs), boas práticas de desenvolvimento (SDD-to-Code Loop, gates, determinismo, Open-World) e processo de auto-aprendizagem." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',900:'#312e81' },
+            ink: { 900:'#0b1020', 800:'#11162a', 700:'#1b2238', 600:'#2a3350' },
+          },
+          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui','sans-serif'], mono: ['ui-monospace','SFMono-Regular','Menlo','monospace'] },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:'Inter',sans-serif}
+    .nav-link.active{color:#c7d2fe;border-color:#6366f1}
+    .card-grad{background:radial-gradient(1200px 400px at 0% 0%, rgba(99,102,241,.10), transparent 60%)}
+    ::selection{background:#4338ca;color:#fff}
+    .tag{font-variant-numeric:tabular-nums}
+  </style>
+</head>
+<body class="bg-ink-900 text-slate-300 antialiased">
+
+  <!-- ░░ TOP BAR ░░ -->
+  <header class="sticky top-0 z-40 backdrop-blur bg-ink-900/80 border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <a href="#topo" class="flex items-center gap-2 font-semibold text-white">
+        <span class="inline-grid place-items-center w-7 h-7 rounded-lg bg-brand-600 text-white text-sm font-bold">S</span>
+        SocialSelling <span class="hidden sm:inline text-slate-500 font-normal">· Overview</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-5 text-sm">
+        <a href="#arquitetura" class="hover:text-white transition">Arquitetura</a>
+        <a href="#decisoes" class="hover:text-white transition">Decisões</a>
+        <a href="#praticas" class="hover:text-white transition">Práticas</a>
+        <a href="#volume" class="hover:text-white transition">Volume</a>
+        <a href="#aprendizagem" class="hover:text-white transition">Auto-aprendizagem</a>
+        <a href="https://github.com/issei/SocialSelling" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <div id="topo" class="max-w-7xl mx-auto px-4 sm:px-6 lg:flex lg:gap-10">
+
+    <!-- ░░ SIDEBAR ░░ -->
+    <aside class="hidden lg:block w-56 shrink-0 py-10">
+      <div class="sticky top-20 space-y-1 text-sm">
+        <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Conteúdo</p>
+        <a href="#visao" class="block px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white">1 · Visão & escopo</a>
+        <a href="#arquitetura" class="block px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white">2 · Arquitetura</a>
+        <a href="#camadas" class="block px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white">3 · Camadas & regras</a>
+        <a href="#decisoes" class="block px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white">4 · Decisões (ADRs)</a>
+        <a href="#specs" class="block px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white">5 · Especificações (SDDs)</a>
+        <a href="#praticas" class="block px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white">6 · Boas práticas</a>
+        <a href="#volume" class="block px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white">7 · Estratégia de volume</a>
+        <a href="#aprendizagem" class="block px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white">8 · Auto-aprendizagem</a>
+        <a href="#versoes" class="block px-3 py-1.5 rounded-lg hover:bg-white/5 hover:text-white">9 · Mapa de versões</a>
+      </div>
+    </aside>
+
+    <!-- ░░ MAIN ░░ -->
+    <main class="min-w-0 flex-1 py-10 lg:py-14">
+
+      <!-- HERO -->
+      <section class="card-grad rounded-3xl border border-white/10 p-8 sm:p-12">
+        <div class="flex flex-wrap items-center gap-2 mb-5 text-xs">
+          <span class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">main verde · 120 testes</span>
+          <span class="px-2.5 py-1 rounded-full bg-brand-500/15 text-brand-200 border border-brand-500/20">v0.15.4</span>
+          <span class="px-2.5 py-1 rounded-full bg-white/5 text-slate-300 border border-white/10">PoC local · database-less</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
+          Busca de clientes mais eficiente<br class="hidden sm:block"> e automática com IA.
+        </h1>
+        <p class="mt-5 text-lg text-slate-400 max-w-2xl">
+          O SocialSelling responde a uma única pergunta — <strong class="text-slate-200">“Quem devo abordar primeiro?”</strong> —
+          produzindo um <strong class="text-slate-200">ranking explicável</strong> de prospects. Este documento é o overview
+          do projeto e, ao mesmo tempo, um <strong class="text-brand-200">modelo das boas práticas</strong> de desenvolvimento
+          e implementação adotadas até aqui.
+        </p>
+        <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="rounded-2xl bg-white/5 border border-white/10 p-4">
+            <div class="text-2xl font-bold text-white tag">7</div><div class="text-xs text-slate-400 mt-1">ADRs (decisões)</div>
+          </div>
+          <div class="rounded-2xl bg-white/5 border border-white/10 p-4">
+            <div class="text-2xl font-bold text-white tag">120</div><div class="text-xs text-slate-400 mt-1">testes determinísticos</div>
+          </div>
+          <div class="rounded-2xl bg-white/5 border border-white/10 p-4">
+            <div class="text-2xl font-bold text-white tag">45</div><div class="text-xs text-slate-400 mt-1">lições registradas</div>
+          </div>
+          <div class="rounded-2xl bg-white/5 border border-white/10 p-4">
+            <div class="text-2xl font-bold text-white tag">0</div><div class="text-xs text-slate-400 mt-1">custo de infra (só tokens)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 1 · VISÃO -->
+      <section id="visao" class="mt-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-brand-400">1</span> Visão & escopo</h2>
+        <p class="mt-4 text-slate-400 max-w-3xl">
+          O produto torna a prospecção <em>eficiente e automática</em>: dado um <span class="text-slate-200 font-medium">ICP</span>
+          (Ideal Customer Profile), o sistema descobre candidatos, infere dados estruturados, pontua o fit/intent/confiança e
+          entrega <span class="text-slate-200 font-medium">Lead Cards</span> ranqueados com justificativa (XAI).
+        </p>
+        <div class="mt-6 grid sm:grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+            <h3 class="font-semibold text-emerald-300">No escopo</h3>
+            <ul class="mt-3 space-y-1.5 text-sm text-slate-300 list-disc list-inside">
+              <li>Ranking explicável de prospects (fit · intent · confiança)</li>
+              <li>Descoberta + enriquecimento incremental de leads</li>
+              <li>Justificativa estruturada (drivers +/− e sinais ausentes)</li>
+            </ul>
+          </div>
+          <div class="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5">
+            <h3 class="font-semibold text-rose-300">Fora do escopo (guardrails)</h3>
+            <ul class="mt-3 space-y-1.5 text-sm text-slate-300 list-disc list-inside">
+              <li>CRM, automação de outreach/mensageria, cadências</li>
+              <li>Banco de dados, Redis, Celery, Docker, AWS/Terraform</li>
+              <li>Scraping de Instagram/LinkedIn</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 · ARQUITETURA -->
+      <section id="arquitetura" class="mt-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-brand-400">2</span> Arquitetura do PoC</h2>
+        <p class="mt-4 text-slate-400 max-w-3xl">
+          <strong class="text-slate-200">Um único processo Python 3.11+</strong>, sem servidor obrigatório, sem banco, sem fila.
+          Persistência em <strong class="text-slate-200">JSON atômico</strong> (write-temp + <code class="text-brand-200">os.replace</code>).
+          O único custo variável são os tokens de duas APIs de cognição/busca.
+        </p>
+
+        <!-- Pipeline -->
+        <div class="mt-7 rounded-2xl border border-white/10 bg-ink-800 p-6">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Pipeline determinístico (módulos, não agentes de runtime)</p>
+          <div class="flex flex-col sm:flex-row items-stretch gap-2 text-center">
+            <div class="flex-1 rounded-xl bg-brand-600/15 border border-brand-500/30 p-3">
+              <div class="text-white font-semibold text-sm">M1 · Busca</div><div class="text-xs text-slate-400 mt-1">Tavily + Apollo</div>
+            </div>
+            <div class="self-center text-slate-600">→</div>
+            <div class="flex-1 rounded-xl bg-brand-600/15 border border-brand-500/30 p-3">
+              <div class="text-white font-semibold text-sm">M2 · Extração</div><div class="text-xs text-slate-400 mt-1">Gemini (lotes)</div>
+            </div>
+            <div class="self-center text-slate-600">→</div>
+            <div class="flex-1 rounded-xl bg-brand-600/15 border border-brand-500/30 p-3">
+              <div class="text-white font-semibold text-sm">M3 · Score</div><div class="text-xs text-slate-400 mt-1">linear · puro</div>
+            </div>
+            <div class="self-center text-slate-600">→</div>
+            <div class="flex-1 rounded-xl bg-brand-600/15 border border-brand-500/30 p-3">
+              <div class="text-white font-semibold text-sm">M4 · Ranking</div><div class="text-xs text-slate-400 mt-1">tie-break estável</div>
+            </div>
+            <div class="self-center text-slate-600">→</div>
+            <div class="flex-1 rounded-xl bg-brand-600/15 border border-brand-500/30 p-3">
+              <div class="text-white font-semibold text-sm">M5 · XAI</div><div class="text-xs text-slate-400 mt-1">explicação</div>
+            </div>
+          </div>
+          <p class="mt-4 text-xs text-slate-500">M3 e M4 são <strong class="text-slate-300">funções puras</strong>: mesma entrada → saída byte-idêntica. O orquestrador injeta clientes, cache, relógio e config.</p>
+        </div>
+
+        <!-- Sensores -->
+        <div class="mt-5 grid sm:grid-cols-3 gap-4">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-semibold text-white">Tavily</h3>
+            <p class="text-sm text-slate-400 mt-1">Busca aberta (M1). Snippets sociais e sinais de intenção.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-semibold text-white">Gemini</h3>
+            <p class="text-sm text-slate-400 mt-1">Cognição (M2). Extrai entidades estruturadas + persona/intenção.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-semibold text-white">Apollo.io <span class="text-xs text-emerald-300 align-middle">novo</span></h3>
+            <p class="text-sm text-slate-400 mt-1">Firmografia B2B (ADR-004). Descoberta grátis + enriquecimento por crédito.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 · CAMADAS & REGRAS -->
+      <section id="camadas" class="mt-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-brand-400">3</span> Camadas semânticas & regras invioláveis</h2>
+        <p class="mt-4 text-slate-400 max-w-3xl">A correção do sistema repousa sobre quatro invariantes. Elas valem para <em>todo</em> código novo — inclusive os sensores e a camada de volume.</p>
+
+        <div class="mt-6 flex flex-col sm:flex-row gap-2 items-stretch text-center text-sm">
+          <div class="flex-1 rounded-xl border border-white/10 bg-white/5 p-4">
+            <div class="text-white font-semibold">Observed Evidence</div><div class="text-xs text-slate-500 mt-1">camada 1 · o que foi visto</div>
+          </div>
+          <div class="self-center text-slate-600">≠</div>
+          <div class="flex-1 rounded-xl border border-white/10 bg-white/5 p-4">
+            <div class="text-white font-semibold">Inferences</div><div class="text-xs text-slate-500 mt-1">camada 2 · o que foi deduzido</div>
+          </div>
+          <div class="self-center text-slate-600">≠</div>
+          <div class="flex-1 rounded-xl border border-white/10 bg-white/5 p-4">
+            <div class="text-white font-semibold">Evaluated Hypotheses</div><div class="text-xs text-slate-500 mt-1">camada 3 · score & XAI</div>
+          </div>
+        </div>
+
+        <div class="mt-6 grid sm:grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <h3 class="font-semibold text-white">① Isolamento de camadas</h3>
+            <p class="text-sm text-slate-400 mt-1">Uma inferência jamais é tratada como evidência. Sem referências mutáveis compartilhadas. Apollo vira <code class="text-brand-200">ObservedEvidence</code>, nunca inferência.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <h3 class="font-semibold text-white">② Determinismo byte-idêntico</h3>
+            <p class="text-sm text-slate-400 mt-1">Mesma memória → mesma saída. Relógio e RNG <strong class="text-slate-300">injetados</strong>; IDs por hash estável; tie-break estável.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <h3 class="font-semibold text-white">③ Open-World</h3>
+            <p class="text-sm text-slate-400 mt-1">Ausência de sinal = <strong class="text-slate-300">incerteza</strong> (↑u), nunca falso. <code class="text-brand-200">Missing Evidence</code> é explícito; falhas degradam, não quebram.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <h3 class="font-semibold text-white">④ Persistência atômica</h3>
+            <p class="text-sm text-slate-400 mt-1">Toda escrita é write-temp + <code class="text-brand-200">os.replace</code>. Nunca um arquivo meio-escrito — vale para cache, corpus e ledgers.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 · DECISÕES (ADRs) -->
+      <section id="decisoes" class="mt-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-brand-400">4</span> Decisões arquiteturais (ADRs)</h2>
+        <p class="mt-4 text-slate-400 max-w-3xl">Cada decisão consciente vira um ADR versionado e referenciável. A fonte da verdade é o <strong class="text-slate-200">ADR-000</strong>; os demais são emendas explícitas.</p>
+
+        <div class="mt-6 grid sm:grid-cols-2 gap-4">
+          <!-- ADR cards -->
+          <a href="decisions/ADR-000-escopo-canonico.md" class="group rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 hover:bg-brand-600/5 p-5 transition">
+            <div class="flex items-center justify-between"><span class="text-xs font-mono text-brand-300">ADR-000</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">canônico</span></div>
+            <h3 class="mt-2 font-semibold text-white group-hover:text-brand-200">Escopo canônico do PoC local</h3>
+            <p class="text-sm text-slate-400 mt-1">Fixa SDD v1.0 como espinha; database-less; Tavily+Gemini; M1–M5 como pipeline.</p>
+          </a>
+          <a href="decisions/ADR-001-camada-intencao-hipoteses.md" class="group rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 hover:bg-brand-600/5 p-5 transition">
+            <div class="flex items-center justify-between"><span class="text-xs font-mono text-brand-300">ADR-001</span></div>
+            <h3 class="mt-2 font-semibold text-white group-hover:text-brand-200">Camada de intenção: hipóteses</h3>
+            <p class="text-sm text-slate-400 mt-1">Intent = Σ priors das hipóteses ativadas; desqualificadores zeram o lead (hard filter).</p>
+          </a>
+          <a href="decisions/ADR-002-ui-operador-local.md" class="group rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 hover:bg-brand-600/5 p-5 transition">
+            <div class="flex items-center justify-between"><span class="text-xs font-mono text-brand-300">ADR-002</span></div>
+            <h3 class="mt-2 font-semibold text-white group-hover:text-brand-200">UI de operador local (FastAPI)</h3>
+            <p class="text-sm text-slate-400 mt-1">Superfície opcional para ver/editar params, assistente Gemini e Lead Cards.</p>
+          </a>
+          <a href="decisions/ADR-003-orquestracao-langgraph.md" class="group rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 hover:bg-brand-600/5 p-5 transition">
+            <div class="flex items-center justify-between"><span class="text-xs font-mono text-brand-300">ADR-003</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300">diferido</span></div>
+            <h3 class="mt-2 font-semibold text-white group-hover:text-brand-200">Orquestração paralela (LangGraph) + FinOps</h3>
+            <p class="text-sm text-slate-400 mt-1">Motor async opcional para colheita multi-provedor e poda precoce. Diferido por design.</p>
+          </a>
+          <a href="decisions/ADR-004-sensor-apollo.md" class="group rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 hover:bg-brand-600/5 p-5 transition">
+            <div class="flex items-center justify-between"><span class="text-xs font-mono text-brand-300">ADR-004</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">implementado</span></div>
+            <h3 class="mt-2 font-semibold text-white group-hover:text-brand-200">Apollo.io como 2º sensor firmográfico</h3>
+            <p class="text-sm text-slate-400 mt-1">Escada de enriquecimento incremental: descoberta grátis → org-enrich → reveal por crédito.</p>
+          </a>
+          <a href="decisions/ADR-005-reforma-cognitiva-batch.md" class="group rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 hover:bg-brand-600/5 p-5 transition">
+            <div class="flex items-center justify-between"><span class="text-xs font-mono text-brand-300">ADR-005</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">core</span></div>
+            <h3 class="mt-2 font-semibold text-white group-hover:text-brand-200">Reforma cognitiva: lotes + orçamento RPD</h3>
+            <p class="text-sm text-slate-400 mt-1">Extração em lotes eleva o teto Gemini; orçamento de requisições/dia + ondas resumíveis.</p>
+          </a>
+          <a href="decisions/ADR-006-corpus-acumulativo.md" class="group rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 hover:bg-brand-600/5 p-5 transition sm:col-span-2">
+            <div class="flex items-center justify-between"><span class="text-xs font-mono text-brand-300">ADR-006</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">core</span></div>
+            <h3 class="mt-2 font-semibold text-white group-hover:text-brand-200">Corpus de leads acumulativo</h3>
+            <p class="text-sm text-slate-400 mt-1">Runs deixam de sobrescrever e passam a <strong class="text-slate-300">acumular</strong> (upsert idempotente por entity_id). É a maior alavanca de volume: o esforço de cada dia persiste.</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- 5 · SPECS -->
+      <section id="specs" class="mt-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-brand-400">5</span> Especificações de desenvolvimento (SDDs)</h2>
+        <p class="mt-4 text-slate-400 max-w-3xl">Cada ADR não-trivial vem acompanhado de uma SDD (Spec-Driven Development): contratos, cenários, plano de testes e WUs. <strong class="text-slate-200">Spec-first</strong> — o documento precede o código.</p>
+        <div class="mt-6 grid sm:grid-cols-2 gap-4">
+          <a href="specs/apollo-busca-enriquecimento-incremental-sdd.md" class="rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 p-5 transition">
+            <h3 class="font-semibold text-white">SDD · Apollo (busca + enriquecimento incremental)</h3>
+            <p class="text-sm text-slate-400 mt-1">Escada de crédito, ledger mensal, cache por volatilidade, degradação Open-World.</p>
+          </a>
+          <a href="specs/orquestracao-paralela-finops-langgraph-sdd.md" class="rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 p-5 transition">
+            <h3 class="font-semibold text-white">SDD · Orquestração paralela + FinOps (LangGraph)</h3>
+            <p class="text-sm text-slate-400 mt-1">Colheita concorrente, poda precoce, modos degradados. Motor opcional.</p>
+          </a>
+          <a href="specs/operator-cockpit-ui-sdd.md" class="rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 p-5 transition">
+            <h3 class="font-semibold text-white">SDD · Operator Cockpit (UI)</h3>
+            <p class="text-sm text-slate-400 mt-1">Data grid de alta densidade para o operador.</p>
+          </a>
+          <a href="planning/escala-volume-leads.md" class="rounded-2xl border border-white/10 bg-white/5 hover:border-brand-500/40 p-5 transition">
+            <h3 class="font-semibold text-white">Roadmap · Escala de volume de leads</h3>
+            <p class="text-sm text-slate-400 mt-1">Teoria das restrições, os 4 pilares e o status de implementação.</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- 6 · BOAS PRÁTICAS -->
+      <section id="praticas" class="mt-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-brand-400">6</span> Boas práticas de desenvolvimento</h2>
+        <p class="mt-4 text-slate-400 max-w-3xl">É aqui que o projeto pretende ser <strong class="text-brand-200">modelo</strong>: a complexidade vive no <em>processo de construção</em>, não no sistema. O PoC permanece enxuto; a disciplina é total.</p>
+
+        <!-- SDD-to-Code Loop -->
+        <div class="mt-7 rounded-2xl border border-white/10 bg-ink-800 p-6">
+          <h3 class="font-semibold text-white">SDD-to-Code Loop (obrigatório por módulo)</h3>
+          <ol class="mt-4 grid sm:grid-cols-5 gap-2 text-center text-sm">
+            <li class="rounded-xl bg-white/5 border border-white/10 p-3"><span class="block text-brand-300 font-bold">1</span>Contrato Pydantic</li>
+            <li class="rounded-xl bg-white/5 border border-white/10 p-3"><span class="block text-brand-300 font-bold">2</span>BDD + fixtures</li>
+            <li class="rounded-xl bg-white/5 border border-white/10 p-3"><span class="block text-brand-300 font-bold">3</span>Implementação mínima</li>
+            <li class="rounded-xl bg-white/5 border border-white/10 p-3"><span class="block text-brand-300 font-bold">4</span>Gate verde</li>
+            <li class="rounded-xl bg-white/5 border border-white/10 p-3"><span class="block text-brand-300 font-bold">5</span>PR + auto-merge</li>
+          </ol>
+        </div>
+
+        <div class="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-semibold text-white">Quality Gate inegociável</h3>
+            <p class="text-sm text-slate-400 mt-1"><code class="text-brand-200">ruff</code> + <code class="text-brand-200">mypy --strict</code> + <code class="text-brand-200">pytest</code> 100% verde e determinístico. Flakiness = falha.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-semibold text-white">Git: branch → PR → auto-merge</h3>
+            <p class="text-sm text-slate-400 mt-1"><strong class="text-slate-300">Nunca</strong> commit direto na main. CI obrigatório; merge só com gate verde. Squash + delete-branch.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-semibold text-white">Tags = pontos de restauração</h3>
+            <p class="text-sm text-slate-400 mt-1">Cada WU verde recebe uma tag anotada. Rollback público via <code class="text-brand-200">git revert</code>, nunca reset/force.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-semibold text-white">APIs sempre mockadas</h3>
+            <p class="text-sm text-slate-400 mt-1">Testes nunca tocam rede: fixtures gravadas + fakes. Tolerância numérica <code class="text-brand-200">1e-9</code>.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-semibold text-white">Opt-in = paridade</h3>
+            <p class="text-sm text-slate-400 mt-1">Toda feature nova entra desligada por padrão → o baseline permanece byte-idêntico (smoke E2E).</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-semibold text-white">FinOps por ledger atômico</h3>
+            <p class="text-sm text-slate-400 mt-1">Orçamentos de crédito (mensal) e de requisições (diário) persistidos; <code class="text-brand-200">try_spend</code>/<code class="text-brand-200">refund</code>/reconciliação.</p>
+          </div>
+        </div>
+
+        <div class="mt-5 rounded-2xl border border-white/10 bg-ink-800 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Comando de gate (Windows)</p>
+          <pre class="text-sm text-slate-300 overflow-x-auto"><code>.venv\Scripts\python.exe -m ruff check .   # lint
+.venv\Scripts\python.exe -m mypy           # tipos (strict)
+.venv\Scripts\python.exe -m pytest -q       # 120 testes determinísticos</code></pre>
+        </div>
+      </section>
+
+      <!-- 7 · VOLUME -->
+      <section id="volume" class="mt-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-brand-400">7</span> Estratégia de volume (rodando local)</h2>
+        <p class="mt-4 text-slate-400 max-w-3xl">
+          Objetivo: buscar <strong class="text-slate-200">muito mais leads</strong> sem sair do local/database-less. Aplicou-se
+          <strong class="text-slate-200">Teoria das Restrições</strong> ao funil — ampliar descoberta sem elevar o teto cognitivo só
+          faz bater no muro mais rápido. Daí os quatro pilares.
+        </p>
+        <div class="mt-6 overflow-x-auto rounded-2xl border border-white/10">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-white/5 text-slate-300">
+              <tr><th class="px-4 py-3 font-semibold">Pilar</th><th class="px-4 py-3 font-semibold">O que faz</th><th class="px-4 py-3 font-semibold">Estado</th></tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <tr><td class="px-4 py-3 text-white font-medium">A · Teto cognitivo</td><td class="px-4 py-3 text-slate-400">Extração em lotes + orçamento RPD + ondas resumíveis (ADR-005)</td><td class="px-4 py-3"><span class="text-emerald-300">✅ core</span></td></tr>
+              <tr><td class="px-4 py-3 text-white font-medium">B · Corpus acumulativo</td><td class="px-4 py-3 text-slate-400">Runs acumulam; upsert idempotente; ranking sobre o corpus inteiro (ADR-006)</td><td class="px-4 py-3"><span class="text-emerald-300">✅ core</span></td></tr>
+              <tr><td class="px-4 py-3 text-white font-medium">Apollo · Descoberta</td><td class="px-4 py-3 text-slate-400">People Search grátis + org-enrich + reveal por crédito (ADR-004)</td><td class="px-4 py-3"><span class="text-emerald-300">✅ completo</span></td></tr>
+              <tr><td class="px-4 py-3 text-white font-medium">C · Estado escalável</td><td class="px-4 py-3 text-slate-400">JSON monolítico → NDJSON/shards (sem banco)</td><td class="px-4 py-3"><span class="text-amber-300">⏸ diferido</span></td></tr>
+              <tr><td class="px-4 py-3 text-white font-medium">D · Entity resolution</td><td class="px-4 py-3 text-slate-400">Domínio canônico + exclusão de vendors + dedup cross-provider</td><td class="px-4 py-3"><span class="text-amber-300">⏸ diferido</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 text-sm text-slate-500">Tudo opt-in (<code class="text-brand-200">[apollo].enabled</code> · <code class="text-brand-200">[corpus].enabled</code> · <code class="text-brand-200">[gemini].rpd_enabled</code>). Diferidos com razão documentada — não há refino arriscado por completude.</p>
+      </section>
+
+      <!-- 8 · AUTO-APRENDIZAGEM -->
+      <section id="aprendizagem" class="mt-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-brand-400">8</span> Processo de auto-aprendizagem</h2>
+        <p class="mt-4 text-slate-400 max-w-3xl">
+          Ao final de cada tarefa, os aprendizados são destilados em <a href="licoes-aprendidas.md" class="text-brand-300 hover:underline">docs/licoes-aprendidas.md</a>
+          (formato <code class="text-brand-200">L-NNN | Categoria | Lição | Como aplicar</code>) e em memória persistente. Hoje são
+          <strong class="text-slate-200">45 lições</strong> que retroalimentam decisões futuras — o projeto fica mais inteligente a cada ciclo.
+        </p>
+        <div class="mt-6 grid sm:grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <span class="text-xs font-mono text-brand-300">L-012 · Determinismo</span>
+            <p class="text-sm text-slate-300 mt-1.5">Injetar relógio e derivar IDs por hash estável — nunca UUID aleatório nem <code class="text-brand-200">datetime.now()</code> interno. Garante reexecução byte-idêntica.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <span class="text-xs font-mono text-brand-300">L-026 · Async resiliente</span>
+            <p class="text-sm text-slate-300 mt-1.5">Fan-out com <code class="text-brand-200">asyncio.gather(return_exceptions=True)</code> + tratar exceção crua: um provedor não derruba o lote.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <span class="text-xs font-mono text-brand-300">L-039 · Orquestração de agentes</span>
+            <p class="text-sm text-slate-300 mt-1.5">Agentes em background travam em prompt de permissão → padrão <em>harvest</em>: agentes escrevem, o main loop valida e mergeia.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <span class="text-xs font-mono text-brand-300">L-042 · Paridade por opt-in</span>
+            <p class="text-sm text-slate-300 mt-1.5">Feature nova com default desligado mantém o smoke E2E byte-idêntico — evoluir sem regressão.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <span class="text-xs font-mono text-brand-300">L-027 · Poda conservadora</span>
+            <p class="text-sm text-slate-300 mt-1.5">Heurística barata prefere falso-prosseguir a falso-podar: perder um cliente custa mais que 1 chamada Gemini.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-ink-800 p-5">
+            <span class="text-xs font-mono text-brand-300">L-045 · Escopo honesto</span>
+            <p class="text-sm text-slate-300 mt-1.5">“Terminar todas as specs” ≠ implementar cada sub-feature. Diferir refino arriscado <em>com razão documentada</em> é entrega honesta.</p>
+          </div>
+        </div>
+        <a href="licoes-aprendidas.md" class="inline-flex items-center gap-1.5 mt-5 text-sm text-brand-300 hover:underline">Ver as 45 lições completas →</a>
+      </section>
+
+      <!-- 9 · VERSÕES -->
+      <section id="versoes" class="mt-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><span class="text-brand-400">9</span> Mapa de versões (pontos de restauração)</h2>
+        <div class="mt-6 space-y-3">
+          <div class="flex gap-4 items-start"><span class="font-mono text-xs text-brand-300 w-20 shrink-0 pt-0.5">v0.1.1</span><p class="text-sm text-slate-400">Fundação CI-verde: toolchain, contratos, planejamento.</p></div>
+          <div class="flex gap-4 items-start"><span class="font-mono text-xs text-brand-300 w-20 shrink-0 pt-0.5">v0.7.0</span><p class="text-sm text-slate-400">PoC funcional: pipeline M1→M5 + smoke E2E byte-idêntico.</p></div>
+          <div class="flex gap-4 items-start"><span class="font-mono text-xs text-brand-300 w-20 shrink-0 pt-0.5">v0.8–0.12</span><p class="text-sm text-slate-400">Motor de intenção (hipóteses), Lead Card acionável, UI de operador, precisão de persona.</p></div>
+          <div class="flex gap-4 items-start"><span class="font-mono text-xs text-brand-300 w-20 shrink-0 pt-0.5">v0.13–0.14</span><p class="text-sm text-slate-400">Fundação de volume: schemas Apollo, ledgers de crédito/RPD, corpus; descoberta Apollo fim-a-fim.</p></div>
+          <div class="flex gap-4 items-start"><span class="font-mono text-xs text-emerald-300 w-20 shrink-0 pt-0.5">v0.15.4</span><p class="text-sm text-slate-300"><strong>Specs de volume completas:</strong> escada Apollo (1/2/3), batch+RPD, corpus acumulativo. 120 testes verdes.</p></div>
+        </div>
+        <div class="mt-6 rounded-2xl border border-white/10 bg-ink-800 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Como ligar o volume (run real)</p>
+          <pre class="text-sm text-slate-300 overflow-x-auto"><code># 1) runtime.toml
+[apollo].enabled = true   [corpus].enabled = true   [gemini].rpd_enabled = true
+# 2) gravar fixtures (supervisionado — só People Search é grátis)
+.venv\Scripts\python.exe scripts\record_apollo_fixtures.py
+# 3) rodar o pipeline
+.venv\Scripts\python.exe -m socialselling.orchestrator --icp config\icp_criteria.talita.json</code></pre>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="mt-16 pt-8 border-t border-white/10 text-sm text-slate-500">
+        <p>SocialSelling · overview gerado a partir das especificações vivas do repositório. Fonte da verdade: <a href="decisions/ADR-000-escopo-canonico.md" class="text-brand-400 hover:underline">ADR-000</a> · memória operacional: <a href="../CLAUDE.md" class="text-brand-400 hover:underline">CLAUDE.md</a>.</p>
+        <p class="mt-2">Documento explicativo e modelo de boas práticas — atualize-o quando uma decisão ou prática mudar.</p>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- scrollspy + active nav -->
+  <script>
+    const links = [...document.querySelectorAll('aside a[href^="#"]')];
+    const map = links.map(a => ({a, sec: document.querySelector(a.getAttribute('href'))})).filter(x => x.sec);
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = '#' + e.target.id;
+          links.forEach(a => a.classList.toggle('bg-white/5', a.getAttribute('href') === id));
+          links.forEach(a => a.classList.toggle('text-white', a.getAttribute('href') === id));
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    map.forEach(({sec}) => obs.observe(sec));
+  </script>
+</body>
+</html>
