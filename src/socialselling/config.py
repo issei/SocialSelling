@@ -69,6 +69,16 @@ class ApolloCfg(BaseModel):
     caps: ApolloCapsCfg = ApolloCapsCfg()
 
 
+class CorpusCfg(BaseModel):
+    """Corpus de leads acumulativo (ADR-006). Opt-in: `enabled`.
+
+    Default `enabled=False` => run stateless atual (sobrescreve), paridade preservada.
+    """
+
+    enabled: bool = False
+    path: str = "data/corpus/leads_corpus.json"
+
+
 class RuntimeBlock(BaseModel):
     max_leads_per_cycle: int
 
@@ -82,6 +92,7 @@ class RuntimeConfig(BaseModel):
     tavily: TavilyCfg
     gemini: GeminiCfg
     apollo: ApolloCfg = ApolloCfg()
+    corpus: CorpusCfg = CorpusCfg()
     runtime: RuntimeBlock
 
 

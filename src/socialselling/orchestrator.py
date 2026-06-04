@@ -27,6 +27,8 @@ from socialselling.contracts import (
     XAIPayload,
 )
 from socialselling.core.cache import JsonCache
+from socialselling.corpus.integration import accumulate, ranked_view
+from socialselling.corpus.store import CorpusStore
 from socialselling.modules.m1_busca import is_degraded, run_m1
 from socialselling.modules.m2_extracao import run_m2
 from socialselling.modules.m3_score import run_m3
@@ -231,16 +233,26 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
 
+    now = datetime.now(UTC)
     cards = run_pipeline(
         icp,
         tavily=TavilyClient(tavily_key),
         gemini=GeminiClient(gemini_key, model=cfg.gemini.model),
         hypotheses=hypotheses,
         cache_root=_ROOT / "data" / "cache",
-        now=datetime.now(UTC),
+        now=now,
         cfg=cfg,
         apollo=apollo,
     )
+
+    # Corpus acumulativo (ADR-006): runs acumulam entre si; saída = corpus inteiro
+    # re-ranqueado. Opt-in; desligado => comportamento stateless atual (sobrescreve).
+    if cfg.corpus.enabled:
+        store = CorpusStore(_ROOT / cfg.corpus.path)
+        accumulate(store, cards, now)
+        cards = ranked_view(store, max_display=cfg.runtime.max_leads_per_cycle)
+        print(f"corpus: {len(store)} leads conhecidos (acumulado)", file=sys.stderr)
+
     out_path = Path(args.out)
     persist_json(cards, out_path)
     _atomic_write(out_path.with_suffix(".md"), render_report(cards))

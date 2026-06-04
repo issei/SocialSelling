@@ -64,6 +64,14 @@ data_credits_cap = 100
 email_credits_cap = 100  # conservador (dominio pessoal); 10000 se dominio corporativo
 mobile_credits_cap = 5
 
+[corpus]
+# Corpus de leads ACUMULATIVO (ADR-006). Opt-in: enabled=true faz os runs acumularem
+# entre si (upsert idempotente por entity_id) em vez de sobrescrever. Default desligado
+# => run stateless atual (paridade). Ranking passa a ser sobre o corpus inteiro.
+enabled = false
+path = "data/corpus/leads_corpus.json"
+
 [runtime]
 # Limite de leads por ciclo no PoC (controle de custo/latencia).
+# Com [corpus].enabled=true vira limite de EXIBICAO (nao de volume conhecido).
 max_leads_per_cycle = 50
