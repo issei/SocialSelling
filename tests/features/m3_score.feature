@@ -24,6 +24,16 @@ Feature: M3 Score — scores deterministicos guiados por fit, intencao e desqual
     When eu calculo o score uma vez
     Then o prospect com sinal de intencao tem p_score estritamente maior
 
+  Scenario: Homem (persona fundador) e zerado
+    Given uma inferencia de persona fundador
+    When eu calculo o score uma vez
+    Then o lead tem persona_fit zero e p_score zero
+
+  Scenario: Conta de empresa e penalizada ante a fundadora
+    Given uma fundadora e uma conta de empresa identicas no resto
+    When eu calculo o score uma vez
+    Then a fundadora tem p_score maior que a conta de empresa
+
   Scenario: Maior confianca nao reduz o p_score
     Given duas inferencias identicas exceto a confianca
     When eu calculo o score uma vez

@@ -62,9 +62,7 @@ def test_fluxo_assistente_salvar_executar(tmp_path: Path) -> None:
     assert icp["icp_id"]
 
     # 2) Salvar o ICP gerado
-    saved = client.post(
-        "/api/config/icp", json={"name": "icp_criteria.e2e.json", "icp": icp}
-    )
+    saved = client.post("/api/config/icp", json={"name": "icp_criteria.e2e.json", "icp": icp})
     assert saved.status_code == 200
     assert (cfg_dir / "icp_criteria.e2e.json").exists()
 

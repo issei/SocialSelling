@@ -91,6 +91,22 @@ def run_m5(
             )
         )
 
+    persona = inference.persona or "indefinido"
+    if persona == "fundadora":
+        positive.append(Driver(driver="PERSONA", impact="x1.00", text="Persona alvo: fundadora."))
+    elif score.persona_fit <= 0.0:
+        negative.append(
+            Driver(
+                driver="PERSONA",
+                impact="x0",
+                text=f"Persona fora do alvo ({persona}) — fora do público de fundadoras.",
+            )
+        )
+    else:
+        missing.append(
+            f"persona '{persona}' fora do ideal (fundadora) — peso {score.persona_fit:.2f}"
+        )
+
     return XAIPayload(
         company_id=score.company_id,
         final_p_score=score.p_score,

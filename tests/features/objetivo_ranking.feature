@@ -10,3 +10,4 @@ Feature: Objetivo de negocio — quem deve aparecer no topo (publico Talita)
     And o lead solo desqualificado tem p_score zero e hard filter reprovado
     And o lead com sinal de intencao supera o de fit puro
     And o lead fora de setor fica abaixo da Mayara
+    And o lead masculino e zerado e fica abaixo da Mayara

@@ -32,6 +32,12 @@ _PARAMS: dict[str, Any] = {
     "confidence_exponent": 0.5,
     "w_fit_tech": 0.60,
     "w_fit_industry": 0.40,
+    "persona_weights": {
+        "fundadora": 1.0,
+        "indefinido": 0.5,
+        "empresa": 0.35,
+        "fundador": 0.0,
+    },
 }
 
 
@@ -51,6 +57,7 @@ def _arquetipo(
     industry: str,
     intent_signals: list[str],
     disqualifiers: list[str],
+    persona: str = "fundadora",
 ) -> Inference:
     return Inference(
         company=CompanyEntity(
@@ -65,6 +72,7 @@ def _arquetipo(
         confidence=0.8,
         intent_signals=intent_signals,
         disqualifiers=disqualifiers,
+        persona=persona,
     )
 
 
@@ -94,6 +102,13 @@ def _given_arquetipos(ctx: dict[str, Any]) -> None:
             disqualifiers=["solo_sem_equipe"],
         ),
         _arquetipo("fora_setor", industry="varejo", intent_signals=["expansao"], disqualifiers=[]),
+        _arquetipo(
+            "homem",
+            industry="advocacia",
+            intent_signals=["depende_de_mim", "contratacao_senior"],
+            disqualifiers=[],
+            persona="fundador",
+        ),
     ]
 
 
@@ -128,3 +143,12 @@ def _then_intent_beats_fit(ctx: dict[str, Any]) -> None:
 def _then_fora_setor_below(ctx: dict[str, Any]) -> None:
     order = [s.company_id for s in ctx["ranked"]]
     assert order.index("fora_setor") > order.index("mayara")
+
+
+@then("o lead masculino e zerado e fica abaixo da Mayara")
+def _then_homem_zerado(ctx: dict[str, Any]) -> None:
+    homem = _by_id(ctx["scores"], "homem")
+    assert homem.persona_fit == 0.0
+    assert homem.p_score == 0.0
+    order = [s.company_id for s in ctx["ranked"]]
+    assert order.index("homem") > order.index("mayara")

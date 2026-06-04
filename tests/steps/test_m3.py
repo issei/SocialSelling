@@ -28,6 +28,12 @@ _PARAMS: dict[str, Any] = {
     "confidence_exponent": 0.5,
     "w_fit_tech": 0.60,
     "w_fit_industry": 0.40,
+    "persona_weights": {
+        "fundadora": 1.0,
+        "indefinido": 0.5,
+        "empresa": 0.35,
+        "fundador": 0.0,
+    },
 }
 
 
@@ -49,6 +55,7 @@ def _inference(
     confidence: float,
     intent_signals: list[str] | None = None,
     disqualifiers: list[str] | None = None,
+    persona: str = "fundadora",
 ) -> Inference:
     return Inference(
         company=CompanyEntity(
@@ -63,6 +70,7 @@ def _inference(
         confidence=confidence,
         intent_signals=intent_signals or [],
         disqualifiers=disqualifiers or [],
+        persona=persona,
     )
 
 
@@ -125,6 +133,42 @@ def _given_intent_pair(ctx: dict[str, Any]) -> None:
             technologies=["aws", "kubernetes"],
             industry="saas",
             confidence=0.8,
+        ),
+    ]
+
+
+@given("uma inferencia de persona fundador")
+def _given_persona_homem(ctx: dict[str, Any]) -> None:
+    ctx["inferences"] = [
+        _inference(
+            cid="homem",
+            technologies=["aws", "kubernetes"],
+            industry="saas",
+            confidence=0.9,
+            intent_signals=["intencao_ia"],
+            persona="fundador",
+        )
+    ]
+
+
+@given("uma fundadora e uma conta de empresa identicas no resto")
+def _given_persona_pair(ctx: dict[str, Any]) -> None:
+    ctx["inferences"] = [
+        _inference(
+            cid="fundadora",
+            technologies=["aws", "kubernetes"],
+            industry="saas",
+            confidence=0.8,
+            intent_signals=["intencao_ia"],
+            persona="fundadora",
+        ),
+        _inference(
+            cid="empresa",
+            technologies=["aws", "kubernetes"],
+            industry="saas",
+            confidence=0.8,
+            intent_signals=["intencao_ia"],
+            persona="empresa",
         ),
     ]
 
@@ -195,3 +239,16 @@ def _then_intent_higher(ctx: dict[str, Any]) -> None:
 def _then_conf_order(ctx: dict[str, Any]) -> None:
     hi, lo = ctx["run1"][0], ctx["run1"][1]
     assert hi.p_score >= lo.p_score
+
+
+@then("o lead tem persona_fit zero e p_score zero")
+def _then_persona_zero(ctx: dict[str, Any]) -> None:
+    score = ctx["run1"][0]
+    assert score.persona_fit == 0.0
+    assert score.p_score == 0.0
+
+
+@then("a fundadora tem p_score maior que a conta de empresa")
+def _then_fundadora_maior(ctx: dict[str, Any]) -> None:
+    fundadora, empresa = ctx["run1"][0], ctx["run1"][1]
+    assert fundadora.p_score > empresa.p_score

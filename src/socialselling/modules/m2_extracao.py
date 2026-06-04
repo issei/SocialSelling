@@ -32,14 +32,20 @@ _PROMPT_HEADER = (
     '"linkedin_url":str|null,"email":str|null,"phone":str|null,"confidence":number},'
     '"people":[{"normalized_name":str,"role_title":str|null,"seniority":str|null,'
     '"confidence":number}],"derived_from":[evidence_id],"intent_signals":[token],'
-    '"disqualifiers":[token],"confidence":number}]}\n'
+    '"disqualifiers":[token],"persona":str,"confidence":number}]}\n'
     "Regras: confidence entre 0 e 1; derived_from lista os evidence_id usados; "
     "instagram_url SO se for um link de instagram.com; linkedin_url SO se for "
     "linkedin.com; email/phone apenas se EXPLICITOS no texto. Preencha so o que "
     "estiver EVIDENTE, use null quando nao houver — NUNCA invente.\n"
     "intent_signals e disqualifiers: liste APENAS tokens dos vocabularios abaixo que "
-    "estiverem EVIDENTES no texto; se nenhum, use lista vazia.\n\n"
+    "estiverem EVIDENTES no texto; se nenhum, use lista vazia.\n"
+    'persona: classifique o LEAD em exatamente um de: "fundadora" (pessoa, mulher, '
+    'fundadora/socia/CEO), "fundador" (pessoa, homem), "empresa" (conta/perfil de '
+    'empresa ou marca, sem pessoa fundadora identificavel), "indefinido" (nao da para '
+    "inferir). Use o nome e o conteudo para inferir o genero.\n\n"
 )
+
+_PERSONA_VALUES = {"fundadora", "fundador", "empresa", "indefinido"}
 
 
 def build_prompt(
@@ -154,6 +160,9 @@ def _parse_inferences(
                 )
             )
         derived = [eid for eid in item.get("derived_from", []) if eid in valid_ids]
+        persona = str(item.get("persona", "")).strip().lower()
+        if persona not in _PERSONA_VALUES:
+            persona = "indefinido"
         out.append(
             Inference(
                 company=company,
@@ -162,6 +171,7 @@ def _parse_inferences(
                 confidence=_clamp01(float(item.get("confidence", 0.5))),
                 intent_signals=_filter_vocab(item.get("intent_signals"), intent_vocab),
                 disqualifiers=_filter_vocab(item.get("disqualifiers"), disqualifier_vocab),
+                persona=persona,
             )
         )
     return out

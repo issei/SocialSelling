@@ -61,10 +61,18 @@ def _intent_from_hypotheses(inference: Inference, catalog: HypothesisCatalog) ->
     return min(1.0, total)
 
 
+def _persona_fit(inference: Inference, persona_weights: dict[str, float]) -> float:
+    """Multiplicador de aderência da persona (homem→0, empresa↓, fundadora cheio)."""
+    persona = inference.persona or "indefinido"
+    default = persona_weights.get("indefinido", 0.5)
+    return persona_weights.get(persona, default)
+
+
 def _score_one(
     inference: Inference,
     icp: ICPCriteria,
     catalog: HypothesisCatalog,
+    persona_weights: dict[str, float],
     *,
     w_fit: float,
     w_intent: float,
@@ -78,8 +86,10 @@ def _score_one(
     )
     intent = _intent_from_hypotheses(inference, catalog)
     confidence = inference.confidence
+    persona_fit = _persona_fit(inference, persona_weights)
     if hard_ok:
-        p_score = (w_fit * fit + w_intent * intent) * (confidence**confidence_exponent)
+        base = (w_fit * fit + w_intent * intent) * (confidence**confidence_exponent)
+        p_score = base * persona_fit
     else:
         p_score = 0.0
     return ProspectScore(
@@ -87,6 +97,7 @@ def _score_one(
         fit=round(fit, 9),
         intent=round(intent, 9),
         confidence=round(confidence, 9),
+        persona_fit=round(persona_fit, 9),
         p_score=round(p_score, 9),
         hard_filter_passed=hard_ok,
     )
@@ -102,6 +113,7 @@ def run_m3(
     confidence_exponent: float,
     w_fit_tech: float,
     w_fit_industry: float,
+    persona_weights: dict[str, float],
 ) -> list[ProspectScore]:
     """Calcula o ProspectScore de cada inferência (ordem de entrada preservada)."""
     return [
@@ -109,6 +121,7 @@ def run_m3(
             inf,
             icp,
             catalog,
+            persona_weights,
             w_fit=w_fit,
             w_intent=w_intent,
             confidence_exponent=confidence_exponent,
