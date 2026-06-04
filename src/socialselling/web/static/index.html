@@ -14,6 +14,8 @@
     #leadOverlay{transition:opacity .28s ease}
     .drawer-hidden #leadDrawer{transform:translateX(100%)}
     .drawer-hidden #leadOverlay{opacity:0;pointer-events:none}
+    /* #drawerWrap e fixed inset-0 z-50 (tela cheia): fechado NAO pode capturar cliques */
+    #drawerWrap.drawer-hidden{pointer-events:none}
     /* scrollbar discreta no tema dark */
     ::-webkit-scrollbar{width:10px;height:10px}
     ::-webkit-scrollbar-thumb{background:#334155;border-radius:6px}

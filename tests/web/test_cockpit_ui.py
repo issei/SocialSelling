@@ -7,6 +7,8 @@ dos contratos/ids antigos. FastAPI TestClient, sem rede. Ver plano cockpit v2.
 
 from __future__ import annotations
 
+import re
+
 from fastapi.testclient import TestClient
 
 from socialselling.web.app import create_app
@@ -48,6 +50,15 @@ def test_discovery_puro_sem_outreach() -> None:
     lowered = body.lower()
     assert "conversation blueprint" not in lowered
     assert "copiar mensagem" not in lowered
+
+
+def test_drawer_fechado_nao_bloqueia_cliques() -> None:
+    # Regressão: #drawerWrap é `fixed inset-0 z-50` (cobre a tela inteira). Fechado, precisa
+    # de pointer-events:none — senão engole TODOS os cliques da página (sem erro visível).
+    body = _body()
+    assert "#drawerWrap.drawer-hidden" in body
+    rule = re.search(r"#drawerWrap\.drawer-hidden\s*\{[^}]*pointer-events:\s*none", body)
+    assert rule is not None
 
 
 def test_invariantes_antigos_preservados() -> None:
