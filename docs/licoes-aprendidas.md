@@ -88,6 +88,22 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   inferência. `enabled=false` default ⇒ pipeline byte-idêntico (invariante de paridade). Mesmo
   contrato `AsyncSearchClient` do ADR-003 ⇒ plugue trivial no `parallel_scout`.
 
+## Estratégia de escala (volume de leads local)
+- **L-032 | Restrição | Teoria das Restrições no funil: ampliar DESCOBERTA sem elevar o TETO**
+  cognitivo só faz bater no muro mais rápido. Apollo (ADR-004) joga mais lead na entrada, mas o
+  M2 faz 1 chamada Gemini/lead (teto = RPD do tier grátis) e o `run_pipeline` **sobrescreve** +
+  corta em `max_leads=50`. Poda (ADR-003) reduz desperdício, NÃO eleva teto. Ver `docs/planning/escala-volume-leads.md`.
+- **L-033 | Cognição | Quota do tier grátis Gemini é por REQUISIÇÃO (RPD), não por token** →
+  a alavanca de volume é extração em LOTE (N entidades/chamada) + determinístico-primeiro
+  (Apollo já dá firmografia → Gemini só p/ resíduo interpretativo) + orçamento RPD diário +
+  ondas resumíveis (volume vira função do tempo). ADR-005.
+- **L-034 | Acumulação | Maior ganho de volume real = corpus que ACUMULA entre runs** (upsert
+  idempotente por entity_id canônico), não run stateless que sobrescreve. O corpus É o cache
+  durável das extrações → protege quota entre runs; `max_leads` vira limite de exibição. ADR-006.
+- **L-035 | Sequência | NÃO soltar Apollo (ADR-004) sozinho — emparelhar com ADR-005 (teto).**
+  Largura sem teto estoura a quota no 1º run real. Depois: ADR-006 (corpus) → ADR-007 (NDJSON/
+  shard) + ADR-008 (entity resolution, resolve L-020 no volume).
+
 ## Oportunidades de tooling (revisão de fim de tarefa — auto-learning)
 - **Skill candidata `sdd-adr` (autoria de par ADR+SDD canônico):** o fluxo "pesquisar limites de
   uma API externa → ADR (emenda ao ADR-000) + SDD no estilo da casa (seções 0–8) → lições → PR
