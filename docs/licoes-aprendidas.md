@@ -104,6 +104,12 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   Largura sem teto estoura a quota no 1º run real. Depois: ADR-006 (corpus) → ADR-007 (NDJSON/
   shard) + ADR-008 (entity resolution, resolve L-020 no volume).
 
+## Build de volume — execução e fechamento
+- **L-042 | Paridade | Toda feature de volume entrou OPT-IN com default desligado** (`[apollo]`/`[corpus]`/`[gemini].rpd` enabled=false) → o smoke E2E permanece byte-idêntico (invariante de paridade). Padrão de ouro p/ evoluir sem regressão: cada integração nova só altera o caminho quando explicitamente ligada; sem ela, `run_pipeline` é o mesmo.
+- **L-043 | Batch | M2 já fazia 1 chamada Gemini por RUN (não por lead)** — o teto real é o tamanho do prompt (~30 evidências, L-016). Chunking determinístico (ordena por evidence_id, lotes de `batch_size`) eleva o teto p/ volume; `batch_size >= total` => 1 lote = prompt IDÊNTICO (paridade). RPD ledger só debita em cache MISS; esgotado => pula lote (onda futura).
+- **L-044 | Side-effect | Construir um ledger (escrita atômica) dentro do `run_pipeline` poluía `data/` real nos testes.** Guardar a construção com `if apollo is not None and cards:`/`and inferences:` evita escrever quando não há nada a fazer — e some o efeito colateral. Ledgers ficam gitignored, mas evitar a escrita à toa é mais limpo.
+- **L-045 | Escopo | "Terminar todas as specs" ≠ implementar cada sub-feature.** Determinístico-primeiro (ADR-005) e process-only-new (ADR-006) foram DIFERIDOS conscientemente (alto risco de redesenho do M2 / entidade só emerge pós-M2; cache+corpus já dão o FinOps). Documentar o diferido com razão é entrega honesta; rushar refino arriscado por completude não é.
+
 ## Oportunidades de tooling (revisão de fim de tarefa — auto-learning)
 - **Skill candidata `sdd-adr` (autoria de par ADR+SDD canônico):** o fluxo "pesquisar limites de
   uma API externa → ADR (emenda ao ADR-000) + SDD no estilo da casa (seções 0–8) → lições → PR

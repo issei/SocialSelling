@@ -78,6 +78,18 @@ capaz de **avaliar ≥ 500 entidades distintas** acumuladas em ≤ 5 ondas resum
 da quota gratuita Gemini/dia**, com ranking determinístico sobre o corpus inteiro e **sem**
 vendor no top-20. (Hoje: 50 por run, sobrescrito, com vazamento de vendor.)
 
+## 5b. Status de implementação (2026-06-04)
+
+| Pilar | Estado | Onde |
+|---|---|---|
+| **A — teto cognitivo** | ✅ batch + orçamento RPD + ondas resumíveis (`run_m2` chunking, `RequestBudget`). Determinístico-primeiro **diferido V1+** (exigiria redesenho do M2; cache-por-prompt + corpus já capturam a maior parte do ganho). | `m2_extracao.py`, `core/request_ledger.py`, `v0.15.1` |
+| **B — corpus acumulativo** | ✅ acumular entre runs + upsert idempotente + projeção ranqueada (`CorpusStore`, `corpus/integration.py`). Process-only-new **diferido V1+** (entidade só emerge pós-M2; cache Gemini + corpus já dão o FinOps). | `corpus/`, `v0.14.0`/`v0.15.0` |
+| **A↔ Apollo (ADR-004)** | ✅ escada completa: descoberta (degrau 1), org-enrich (degrau 2), reveal (degrau 3), ledger de crédito mensal, cache por volatilidade, degradação Open-World. | `apollo/`, `skills/apollo_client.py`, `v0.13.0`–`v0.15.3` |
+| **C — estado escalável** | ⏸️ diferido (gatilho: corpus > ~5k leads). JSON monolítico ainda serve. | nota §4 |
+| **D — entity resolution** | ⏸️ diferido (gatilho: 1º run de volume real; calibrar com Apollo). | nota §4 |
+
+Tudo **opt-in** (`[apollo].enabled` / `[corpus].enabled` / `[gemini].rpd_enabled`): desligado, o pipeline é byte-idêntico ao baseline (invariante de paridade, smoke E2E verde). **Para ativar o volume:** ligar as três flags no `runtime.toml` + `record_apollo_fixtures.py` (supervisionado) + calibrar o mapeamento ICP→filtros (heurístico, L-024).
+
 ## 6. Riscos transversais
 
 - **Quota Gemini RPD é o teto duro** — mesmo com batch, há limite/dia. Mitiga: ondas
