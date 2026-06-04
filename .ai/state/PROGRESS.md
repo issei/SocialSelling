@@ -5,10 +5,10 @@
 
 ## Estado atual
 - **marco_atual:** 🏗️ **Build de VOLUME iniciado** (modo bypass autorizado pelo dono). Prioridade = ADR-004 (Apollo) + ADR-005 (cognição batch) + ADR-006 (corpus acumulativo); LangGraph (ADR-003) é opcional/diferido. Roadmap: `docs/planning/escala-volume-leads.md`. **WU-A1 concluída** → `v0.13.0`.
-- **ultima_tag_verde:** `v0.14.0` (fundação de volume: ledgers crédito/RPD + corpus acumulativo; 73 testes verdes)
-- **proxima_acao:** **WU-A3** — `skills/apollo_client.py` (cliente REST httpx; RateLimit/ApolloError) + `scripts/record_apollo_fixtures.py` (grava respostas reais dos 3 endpoints; chave já presente no `.env`) + testes de normalização/degradação (403/429). Depois: WU-A4 (ladder + plug no M1 + reveal pós-M4), WU-A5 (org-enrich condicional). Em paralelo (ADR-005/006): fiar `credit_ledger`/`request_ledger`/`corpus` no `config.py` + orquestrador (WUs de integração).
-- **wu_em_andamento:** — (fundação ledgers+corpus mergeada via PR #35)
-- **passo_atual:** — (`main` verde, 73 testes; `.env` com APOLLO_API_KEY preenchido; gate via `.venv\Scripts\python.exe -m …`)
+- **ultima_tag_verde:** `v0.14.4` (descoberta Apollo fim-a-fim no orquestrador, opt-in; 100 testes verdes)
+- **proxima_acao:** **degrau 3 (reveal) + degrau 2 (org-enrich)** no fluxo: passo pós-M4 que usa `select_for_reveal` + `CreditBudget.try_spend` p/ revelar contato do top-N e preencher `LeadCard.contact`; e org-enrich condicional (`needs_org_enrich`) antes do M2. Fiar `credit_ledger` no `config.py`/orquestrador. **Depois (maior ganho de volume):** ADR-006 — `CorpusStore` no orquestrador (acumular entre runs, processar só o novo); ADR-005 — batch + determinístico-primeiro no M2 + `RequestBudget` (RPD). `scripts/record_apollo_fixtures.py` (supervisionado, só People Search é grátis).
+- **wu_em_andamento:** — (descoberta Apollo A1→A4c mergeada; PRs #33/#35/#37/#38/#39/#40)
+- **passo_atual:** — (`main` verde, 100 testes; `.env` com APOLLO_API_KEY; gate via `.venv\Scripts\python.exe -m …`)
 - **branch:** `main`
 - **bloqueios:** NENHUM (chave Apollo presente; fixtures reais só na WU-A3)
 
@@ -42,3 +42,4 @@ Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/co
 | 2026-06-04 | Specs de volume + ADRs | SDD+ADR-004 Apollo (#31); roadmap escala-volume + ADR-005 (cognição) + ADR-006 (corpus) (#32) | — (docs) |
 | 2026-06-04 | WU-A1 Apollo schemas+config (bypass) | apollo/schemas.py + ApolloCfg + [apollo] runtime + testes de contrato; gate verde 49 testes (#33) | `v0.13.0` |
 | 2026-06-04 | Fundação ledgers+corpus (fan-out de agentes) | 3 agentes sonnet em paralelo escreveram credit_ledger/request_ledger/corpus; travaram em prompt de permissão; colhidos+gateados+mergeados pelo main loop (#35); gate verde 73 testes. Licoes L-039/40/41 | `v0.14.0` |
+| 2026-06-04 | Descoberta Apollo fim-a-fim (foreground) | WU-A3 cliente REST + normalize (#37); WU-A4 ladder puro (#38); WU-A4b plug no M1 (#39); WU-A4c wiring no orquestrador (#40). Tudo opt-in, mockado, paridade preservada; 100 testes verdes | `v0.14.1`→`v0.14.4` |
