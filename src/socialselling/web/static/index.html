@@ -573,8 +573,16 @@
         LEADS = res.leads || [];
         SORT = { key:"rank", dir:1 };
         renderTable(); updateDashboard();
-        $("runStatus").textContent="Concluído"; $("runStatus").className="text-emerald-400 font-semibold";
         $("lastRunTime").textContent = new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+        if (LEADS.length === 0) {
+          $("runStatus").textContent="0 leads"; $("runStatus").className="text-amber-400 font-semibold";
+          $("leadsEmpty").innerHTML = `<span class="text-3xl mb-2">🪫</span>
+            <p class="font-medium text-amber-400">Nenhum lead neste ciclo.</p>
+            <p class="text-[11px] text-slate-500 max-w-md text-center mt-1">A busca rodou, mas a cognição (Gemini) não retornou inferências. Causa comum: <b>rate-limit/cota do Gemini (429)</b> — o free-tier reseta diariamente. A onda <b>não</b> avançou; tente de novo mais tarde.</p>`;
+          showToast("0 leads neste ciclo — provável limite de cota do Gemini (429). Tente mais tarde.", false);
+        } else {
+          $("runStatus").textContent="Concluído"; $("runStatus").className="text-emerald-400 font-semibold";
+        }
       } catch(e){ $("runStatus").textContent="Falha"; $("runStatus").className="text-rose-400 font-semibold"; setStatus("assistStatus","",true); console.error(e); $("leadsCount").textContent="Erro: "+e.message; }
       finally { $("btnRun").disabled=false; }
     }

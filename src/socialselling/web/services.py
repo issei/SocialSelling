@@ -154,7 +154,7 @@ def run_for_icp(
     # Onda só avança no modo acumulativo; stateless usa wave=0 (paridade).
     waves = WaveStore(_ROOT / cfg.corpus.waves_path) if cfg.corpus.enabled else None
     wave = waves.current(icp_name) if waves is not None else 0
-    cards = run_pipeline(
+    fresh = run_pipeline(
         icp,
         tavily=TavilyClient(tkey),
         gemini=GeminiClient(gkey, model=cfg.gemini.model),
@@ -164,13 +164,17 @@ def run_for_icp(
         cfg=cfg,
         wave=wave,
     )
+    if not cfg.corpus.enabled:
+        return fresh
     # Corpus acumulativo (ADR-006): na UI, cada execução ACUMULA e re-ranqueia o
-    # corpus inteiro por score. Opt-in; desligado => comportamento stateless atual.
-    if cfg.corpus.enabled:
-        store = CorpusStore(_ROOT / cfg.corpus.path)
-        cards = accumulate_and_rank(store, cards, now, max_display=cfg.runtime.max_leads_per_cycle)
-        if waves is not None:
-            waves.advance(icp_name)  # próxima execução busca a próxima onda
+    # corpus inteiro por score.
+    store = CorpusStore(_ROOT / cfg.corpus.path)
+    cards = accumulate_and_rank(store, fresh, now, max_display=cfg.runtime.max_leads_per_cycle)
+    # A onda só avança quando o ciclo PRODUZIU leads. Avançar em run vazio "queimaria"
+    # ondas boas (cacheadas) quando a busca/cognição degrada — ex.: Gemini rate-limited
+    # (429) faz o M2 retornar 0 inferências. Sem leads novos, repete a MESMA onda no retry.
+    if waves is not None and fresh:
+        waves.advance(icp_name)
     return cards
 
 
