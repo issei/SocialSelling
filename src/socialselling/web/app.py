@@ -35,6 +35,7 @@ from socialselling.web.schemas import (
 from socialselling.web.services import (
     DEFAULT_CONFIG_DIR,
     DEFAULT_RUNTIME,
+    CognitionUnavailable,
     InvalidName,
     MissingKeys,
     assist_icp,
@@ -152,6 +153,10 @@ def create_app(
             ) from exc
         except MissingKeys as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except CognitionUnavailable as exc:
+            raise HTTPException(
+                status_code=502, detail=f"Cognição (Gemini) indisponível: {exc}"
+            ) from exc
         except (RateLimitError, GeminiError) as exc:
             raise HTTPException(status_code=502, detail=f"falha externa: {exc}") from exc
         counter["n"] += 1

@@ -28,6 +28,18 @@ class CognitionClient(Protocol):
     def generate_json(self, prompt: str) -> dict[str, Any]: ...
 
 
+def _error_message(resp: httpx.Response, fallback: str) -> str:
+    """Extrai `error.message` do corpo do Gemini (ex.: '...prepayment credits depleted...').
+
+    Surfaciar a causa real é o que transforma um '0 leads' silencioso em algo acionável.
+    """
+    try:
+        msg = resp.json().get("error", {}).get("message")
+    except (ValueError, AttributeError):
+        msg = None
+    return str(msg).strip() if msg else fallback
+
+
 class GeminiClient:
     """Cliente real do Gemini. Pede saída JSON estruturada (temperatura 0)."""
 
@@ -55,10 +67,11 @@ class GeminiClient:
         except httpx.HTTPError as exc:
             raise GeminiError(str(exc)) from exc
         if resp.status_code == 429:
-            raise RateLimitError("gemini rate-limited (429)")
+            raise RateLimitError(_error_message(resp, "gemini rate-limited (429)"))
         if resp.status_code >= 500:
             raise GeminiError(f"gemini server error ({resp.status_code})")
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            raise GeminiError(_error_message(resp, f"gemini error ({resp.status_code})"))
         data: dict[str, Any] = resp.json()
         try:
             text = data["candidates"][0]["content"]["parts"][0]["text"]
