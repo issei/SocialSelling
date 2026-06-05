@@ -583,7 +583,18 @@
         } else {
           $("runStatus").textContent="Concluído"; $("runStatus").className="text-emerald-400 font-semibold";
         }
-      } catch(e){ $("runStatus").textContent="Falha"; $("runStatus").className="text-rose-400 font-semibold"; setStatus("assistStatus","",true); console.error(e); $("leadsCount").textContent="Erro: "+e.message; }
+      } catch(e){
+        $("runStatus").textContent="Falha"; $("runStatus").className="text-rose-400 font-semibold";
+        setStatus("assistStatus","",true); console.error(e);
+        const msg = e.message || "erro desconhecido";
+        const cog = /cogni|gemini/i.test(msg);
+        $("leadsEmpty").style.display = "flex";
+        $("leadsEmpty").innerHTML = `<span class="text-3xl mb-2">${cog?'🧠':'⚠️'}</span>
+          <p class="font-medium text-rose-400">${cog?'Cognição (Gemini) indisponível':'Falha ao executar a prospecção'}</p>
+          <p class="text-[11px] text-slate-400 max-w-md text-center mt-1">${esc(msg)}</p>
+          ${cog?'<p class="text-[11px] text-slate-500 mt-2">Adicione crédito/billing em <a class="text-indigo-400 underline" href="https://ai.studio/projects" target="_blank" rel="noopener">ai.studio/projects</a> e execute de novo.</p>':''}`;
+        $("leadsCount").textContent = "Erro: "+msg;
+      }
       finally { $("btnRun").disabled=false; }
     }
 

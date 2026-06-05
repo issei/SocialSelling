@@ -23,7 +23,12 @@ from socialselling.learning.feedback_store import FeedbackStore
 from socialselling.learning.schemas import FeedbackFeatures, FeedbackLabel, LearnedWeights
 from socialselling.learning.tuner import retrain
 from socialselling.orchestrator import run_pipeline
-from socialselling.skills.gemini_client import CognitionClient, GeminiClient
+from socialselling.skills.gemini_client import (
+    CognitionClient,
+    GeminiClient,
+    GeminiError,
+    RateLimitError,
+)
 from socialselling.skills.tavily_client import TavilyClient
 
 _ROOT = Path(__file__).resolve().parents[3]
@@ -46,6 +51,33 @@ class InvalidName(ValueError):
 
 class MissingKeys(RuntimeError):
     """Chaves de API ausentes no .env para executar o pipeline."""
+
+
+class CognitionUnavailable(RuntimeError):
+    """O ciclo não produziu NADA porque a cognição (Gemini) falhou (ex.: 429/billing).
+
+    Carrega a mensagem real do provedor para a UI exibir algo acionável, em vez de
+    uma tabela vazia silenciosa. Distingue 'busca não achou leads' de 'sensor caiu'.
+    """
+
+
+class _CapturingCognition:
+    """Embrulha o cliente Gemini e GUARDA o último erro de cognição.
+
+    O M2 captura RateLimitError/GeminiError (degradação por design) e devolve []; este
+    wrapper preserva a causa para o limite web decidir se deve surfaciá-la ao usuário.
+    """
+
+    def __init__(self, inner: CognitionClient) -> None:
+        self._inner = inner
+        self.last_error: Exception | None = None
+
+    def generate_json(self, prompt: str) -> dict[str, Any]:
+        try:
+            return self._inner.generate_json(prompt)
+        except (RateLimitError, GeminiError) as exc:
+            self.last_error = exc
+            raise
 
 
 def _safe_icp_path(config_dir: Path, name: str) -> Path:
@@ -154,10 +186,11 @@ def run_for_icp(
     # Onda só avança no modo acumulativo; stateless usa wave=0 (paridade).
     waves = WaveStore(_ROOT / cfg.corpus.waves_path) if cfg.corpus.enabled else None
     wave = waves.current(icp_name) if waves is not None else 0
+    gemini = _CapturingCognition(GeminiClient(gkey, model=cfg.gemini.model))
     fresh = run_pipeline(
         icp,
         tavily=TavilyClient(tkey),
-        gemini=GeminiClient(gkey, model=cfg.gemini.model),
+        gemini=gemini,
         hypotheses=catalog,
         cache_root=_ROOT / "data" / "cache",
         now=now,
@@ -165,16 +198,22 @@ def run_for_icp(
         wave=wave,
     )
     if not cfg.corpus.enabled:
-        return fresh
-    # Corpus acumulativo (ADR-006): na UI, cada execução ACUMULA e re-ranqueia o
-    # corpus inteiro por score.
-    store = CorpusStore(_ROOT / cfg.corpus.path)
-    cards = accumulate_and_rank(store, fresh, now, max_display=cfg.runtime.max_leads_per_cycle)
-    # A onda só avança quando o ciclo PRODUZIU leads. Avançar em run vazio "queimaria"
-    # ondas boas (cacheadas) quando a busca/cognição degrada — ex.: Gemini rate-limited
-    # (429) faz o M2 retornar 0 inferências. Sem leads novos, repete a MESMA onda no retry.
-    if waves is not None and fresh:
-        waves.advance(icp_name)
+        cards = fresh
+    else:
+        # Corpus acumulativo (ADR-006): na UI, cada execução ACUMULA e re-ranqueia o
+        # corpus inteiro por score.
+        store = CorpusStore(_ROOT / cfg.corpus.path)
+        cards = accumulate_and_rank(
+            store, fresh, now, max_display=cfg.runtime.max_leads_per_cycle
+        )
+        # A onda só avança quando o ciclo PRODUZIU leads. Avançar em run vazio "queimaria"
+        # ondas boas (cacheadas) quando a busca/cognição degrada — ex.: Gemini 429.
+        if waves is not None and fresh:
+            waves.advance(icp_name)
+    # Nada a exibir + cognição falhou ⇒ surface o motivo REAL (ex.: billing/429 do Gemini),
+    # não uma lista vazia silenciosa. Com corpus prévio (cards != []), mostramos o que há.
+    if not cards and gemini.last_error is not None:
+        raise CognitionUnavailable(str(gemini.last_error))
     return cards
 
 
