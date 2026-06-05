@@ -31,7 +31,7 @@ from socialselling.contracts import (
 from socialselling.core.cache import JsonCache
 from socialselling.core.credit_ledger import CreditBudget
 from socialselling.core.request_ledger import RequestBudget
-from socialselling.corpus.integration import accumulate, ranked_view
+from socialselling.corpus.integration import accumulate_and_rank
 from socialselling.corpus.store import CorpusStore
 from socialselling.modules.m1_busca import is_degraded, run_m1
 from socialselling.modules.m2_extracao import run_m2
@@ -56,11 +56,13 @@ def run_pipeline(
     now: datetime,
     cfg: RuntimeConfig,
     apollo: ApolloSearchClient | None = None,
+    wave: int = 0,
 ) -> list[LeadCard]:
     """Executa M1→M5 e monta a lista ranqueada de Lead Cards acionaveis.
 
     `apollo` (opt-in, ADR-004): quando fornecido, o M1 agrega a descoberta firmográfica
     do Apollo (degrau 1, 0 crédito). Sem ele, comportamento byte-idêntico ao atual.
+    `wave` (default 0): varia as queries do M1 na busca incremental (ADR-006); 0 = paridade.
     """
     i_vocab = intent_vocab(hypotheses)
     evidences = run_m1(
@@ -75,6 +77,7 @@ def run_pipeline(
         persona_term=cfg.tavily.persona_term,
         include_domains=cfg.tavily.include_domains,
         apollo_client=apollo,
+        wave=wave,
     )
     # Orçamento de requisições Gemini/dia (RPD, ADR-005). Opt-in; desligado => sem gating.
     request_budget: RequestBudget | None = None
@@ -301,8 +304,7 @@ def main(argv: list[str] | None = None) -> int:
     # re-ranqueado. Opt-in; desligado => comportamento stateless atual (sobrescreve).
     if cfg.corpus.enabled:
         store = CorpusStore(_ROOT / cfg.corpus.path)
-        accumulate(store, cards, now)
-        cards = ranked_view(store, max_display=cfg.runtime.max_leads_per_cycle)
+        cards = accumulate_and_rank(store, cards, now, max_display=cfg.runtime.max_leads_per_cycle)
         print(f"corpus: {len(store)} leads conhecidos (acumulado)", file=sys.stderr)
 
     out_path = Path(args.out)

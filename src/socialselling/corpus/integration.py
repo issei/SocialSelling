@@ -34,3 +34,19 @@ def ranked_view(store: CorpusStore, *, max_display: int) -> list[LeadCard]:
         card.model_copy(update={"rank": i}) for i, card in enumerate(cards[:max_display], start=1)
     ]
     return ranked
+
+
+def accumulate_and_rank(
+    store: CorpusStore,
+    cards: list[LeadCard],
+    now: datetime,
+    *,
+    max_display: int,
+) -> list[LeadCard]:
+    """Acumula os cards do run no corpus e devolve o corpus inteiro re-ranqueado.
+
+    É o passo único compartilhado por CLI e UI (ADR-006): "volume acumula entre runs"
+    e a saída é sempre a visão ordenada por score, deduplicada por entity_id.
+    """
+    accumulate(store, cards, now)
+    return ranked_view(store, max_display=max_display)

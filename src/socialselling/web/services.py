@@ -16,6 +16,9 @@ from typing import Any
 from socialselling.config import load_env, load_runtime
 from socialselling.contracts import HypothesisCatalog, ICPCriteria, LeadCard
 from socialselling.core.atomic import atomic_write_text
+from socialselling.corpus.integration import accumulate_and_rank
+from socialselling.corpus.store import CorpusStore
+from socialselling.corpus.waves import WaveStore
 from socialselling.learning.feedback_store import FeedbackStore
 from socialselling.learning.schemas import FeedbackFeatures, FeedbackLabel, LearnedWeights
 from socialselling.learning.tuner import retrain
@@ -146,15 +149,29 @@ def run_for_icp(
     catalog = HypothesisCatalog.model_validate(
         json.loads((config_dir / "hypotheses_catalog.json").read_text(encoding="utf-8"))
     )
-    return run_pipeline(
+    now = datetime.now(UTC)
+    # Busca incremental (ADR-006): a onda do ICP varia as queries p/ trazer leads NOVOS.
+    # Onda só avança no modo acumulativo; stateless usa wave=0 (paridade).
+    waves = WaveStore(_ROOT / cfg.corpus.waves_path) if cfg.corpus.enabled else None
+    wave = waves.current(icp_name) if waves is not None else 0
+    cards = run_pipeline(
         icp,
         tavily=TavilyClient(tkey),
         gemini=GeminiClient(gkey, model=cfg.gemini.model),
         hypotheses=catalog,
         cache_root=_ROOT / "data" / "cache",
-        now=datetime.now(UTC),
+        now=now,
         cfg=cfg,
+        wave=wave,
     )
+    # Corpus acumulativo (ADR-006): na UI, cada execução ACUMULA e re-ranqueia o
+    # corpus inteiro por score. Opt-in; desligado => comportamento stateless atual.
+    if cfg.corpus.enabled:
+        store = CorpusStore(_ROOT / cfg.corpus.path)
+        cards = accumulate_and_rank(store, cards, now, max_display=cfg.runtime.max_leads_per_cycle)
+        if waves is not None:
+            waves.advance(icp_name)  # próxima execução busca a próxima onda
+    return cards
 
 
 def save_scoring(runtime_path: Path, scoring: dict[str, float]) -> None:

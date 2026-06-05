@@ -87,6 +87,7 @@ class CorpusCfg(BaseModel):
 
     enabled: bool = False
     path: str = "data/corpus/leads_corpus.json"
+    waves_path: str = "data/corpus/waves.json"
 
 
 class LearningCfg(BaseModel):

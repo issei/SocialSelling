@@ -32,22 +32,64 @@ _APOLLO_ERRORS = (ApolloAuthError, ApolloCreditError, ApolloRateLimitError, Apol
 
 _COUNTRY_NAMES = {"BR": "Brasil"}
 
+# Modificadores genéricos que diversificam as queries entre ondas (ADR-005/006).
+# A ordem é fixa (determinismo); o "" preserva a query "limpa" como primeira variação.
+_WAVE_MODIFIERS = ("", "PME", "pequena empresa", "startup", "negócio local")
 
-def generate_queries(icp: ICPCriteria, max_queries: int, persona_term: str = "") -> list[str]:
+
+def generate_queries(
+    icp: ICPCriteria,
+    max_queries: int,
+    persona_term: str = "",
+    wave: int = 0,
+) -> list[str]:
     """Gera queries determinísticas (PT-BR, orientadas à persona) a partir do ICP.
 
-    Ex.: industries=[consultoria, advocacia], persona='fundadora', country=BR →
-    ['consultoria fundadora Brasil', 'advocacia fundadora Brasil']. O viés para
-    perfis sociais (Instagram/LinkedIn) é aplicado via `include_domains` no M1.
+    `wave=0` (default) = queries-base de hoje (PARIDADE):
+      industries=[consultoria, advocacia], persona='fundadora', country=BR →
+      ['consultoria fundadora Brasil', 'advocacia fundadora Brasil'].
+
+    `wave>0` = conjunto VARIADO e determinístico (industries × regiões × modificadores),
+    deslizado pela onda — é o que faz a busca incremental trazer leads NOVOS a cada
+    execução (a variação do texto da query também ignora o cache do Tavily). O viés
+    para perfis sociais é aplicado via `include_domains` no M1.
     """
     country = icp.firmographics.geographies.country
     country_name = _COUNTRY_NAMES.get(country.upper(), country)
     persona = persona_term.strip()
-    queries: list[str] = []
-    for industry in icp.firmographics.industries[:max_queries]:
-        parts = [industry.strip(), persona, country_name]
-        queries.append(" ".join(p for p in parts if p))
-    return queries
+    if wave <= 0:
+        return [
+            " ".join(p for p in [industry.strip(), persona, country_name] if p)
+            for industry in icp.firmographics.industries[:max_queries]
+        ]
+    return _wave_queries(icp, max_queries, persona, country_name, wave)
+
+
+def _wave_queries(
+    icp: ICPCriteria,
+    max_queries: int,
+    persona: str,
+    country_name: str,
+    wave: int,
+) -> list[str]:
+    """Janela determinística de queries para uma onda > 0 (sem repetir dentro do pool)."""
+    industries = [i.strip() for i in icp.firmographics.industries if i.strip()]
+    regions = [r.strip() for r in icp.firmographics.geographies.regions if r.strip()]
+    regions = regions or [country_name]
+    pool: list[str] = []
+    seen: set[str] = set()
+    for modifier in _WAVE_MODIFIERS:
+        for region in regions:
+            for industry in industries:
+                query = " ".join(p for p in [industry, persona, region, modifier] if p)
+                if query not in seen:
+                    seen.add(query)
+                    pool.append(query)
+    if not pool:
+        return []
+    start = (wave * max(max_queries, 1)) % len(pool)
+    count = min(max_queries, len(pool))
+    return [pool[(start + i) % len(pool)] for i in range(count)]
 
 
 def is_degraded(evidences: list[ObservedEvidence]) -> bool:
@@ -139,15 +181,17 @@ def run_m1(
     include_domains: list[str] | None = None,
     apollo_client: ApolloSearchClient | None = None,
     apollo_per_page: int = 25,
+    wave: int = 0,
 ) -> list[ObservedEvidence]:
     """Executa o M1: gera queries, consulta Tavily (cache T-24h) e mapeia evidências.
 
     Se `apollo_client` for fornecido (opt-in, ADR-004), agrega a descoberta firmográfica
     do Apollo (degrau 1, 0 crédito) às evidências do Tavily. Sem ele, comportamento
-    byte-idêntico ao atual.
+    byte-idêntico ao atual. `wave` (default 0) varia as queries entre execuções para a
+    busca incremental (ADR-006); `wave=0` preserva paridade.
     """
     evidences: list[ObservedEvidence] = []
-    for query in generate_queries(icp, max_queries, persona_term):
+    for query in generate_queries(icp, max_queries, persona_term, wave):
         payload = cache.get(query, now, cache_ttl_hours)
         if payload is None:
             try:
