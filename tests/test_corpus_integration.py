@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from socialselling.contracts import LeadCard, LeadContact, LeadLinks, ProspectScore
-from socialselling.corpus.integration import accumulate, ranked_view
+from socialselling.corpus.integration import accumulate, accumulate_and_rank, ranked_view
 from socialselling.corpus.store import CorpusStore
 
 _NOW = datetime(2026, 6, 4, 10, 0, 0)
@@ -71,3 +71,17 @@ def test_max_display_limita_exibicao_nao_volume(tmp_path: Path) -> None:
     view = ranked_view(store, max_display=2)
     assert len(view) == 2  # exibição limitada...
     assert len(store) == 5  # ...mas o corpus conhece os 5
+
+
+def test_accumulate_and_rank_acumula_entre_runs(tmp_path: Path) -> None:
+    # Helper único (CLI+UI): dois runs sucessivos crescem o corpus e a saída é a
+    # visão ordenada por score, deduplicada por entity_id.
+    path = tmp_path / "corpus.json"
+    out1 = accumulate_and_rank(CorpusStore(path), [_card("c1", 0.4)], _NOW, max_display=10)
+    assert [c.score.company_id for c in out1] == ["c1"]
+    out2 = accumulate_and_rank(
+        CorpusStore(path), [_card("c2", 0.9), _card("c1", 0.4)], _LATER, max_display=10
+    )
+    assert [c.score.company_id for c in out2] == ["c2", "c1"]  # cresceu, ordenado por score
+    assert [c.rank for c in out2] == [1, 2]
+    assert len(CorpusStore(path)) == 2  # c1 não duplicou

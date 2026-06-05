@@ -72,11 +72,13 @@ email_credits_cap = 100  # conservador (dominio pessoal); 10000 se dominio corpo
 mobile_credits_cap = 5
 
 [corpus]
-# Corpus de leads ACUMULATIVO (ADR-006). Opt-in: enabled=true faz os runs acumularem
-# entre si (upsert idempotente por entity_id) em vez de sobrescrever. Default desligado
-# => run stateless atual (paridade). Ranking passa a ser sobre o corpus inteiro.
-enabled = false
+# Corpus de leads ACUMULATIVO (ADR-006). enabled=true faz os runs acumularem entre si
+# (upsert idempotente por entity_id) em vez de sobrescrever, e a busca vira INCREMENTAL:
+# cada execucao avanca a "onda" (waves_path) variando as queries p/ trazer leads NOVOS.
+# Ranking passa a ser sobre o corpus inteiro, ordenado por score.
+enabled = true
 path = "data/corpus/leads_corpus.json"
+waves_path = "data/corpus/waves.json"
 
 [learning]
 # Aprendizado por feedback like/dislike (ADR-007). enabled=true faz a operadora
