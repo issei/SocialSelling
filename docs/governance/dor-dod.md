@@ -112,7 +112,26 @@ Copie este corpo ao criar a card (`gh project item-create ... --body`). Campos v
 
 ## Tamanho
 <1–2 passos? cabe numa janela? se não, quebrar>
+
+## DoR (checklist — marque [x]; só vai para Todo com TODOS [x])
+- [ ] Objetivo observável em 1 frase
+- [ ] Cabe em 1 WU (1–2 passos / uma janela)
+- [ ] Contrato entrada→saída definido (ADR vinculada se cruza fronteira de módulo)
+- [ ] Gherkin: feliz + degradado + Open-World
+- [ ] Fixtures identificadas (ou "módulo puro"); sem bloqueio de rede-paga/entitlement
+- [ ] Sem decisão de fronteira em aberto
+- [ ] Dentro do escopo canônico (§3/§5/ADR-000) e determinístico (1e-9, APIs mockadas)
+- [ ] DoD específico declarado acima
 ```
+
+> **Bloco DoR checável:** o corpo de cada card inclui o checklist acima. **Quem move Backlog→Todo
+> marca os `[x]`**; o **run noturno revalida** que estão **todos `[x]`** antes de codar — se algum
+> estiver `[ ]`, é DoR incompleto → `BLOCKED`, devolve a Backlog (não adivinha). O `scripts/new_card.ps1`
+> já gera o card com este bloco.
+
+## Prioridade (campo do board)
+O board tem um campo **Priority** (`Alta`/`Media`/`Baixa`). O run noturno pega a card de **Priority
+mais alta** em Todo (empate → ordem da coluna). Defina a prioridade ao mover para Todo.
 
 ## Checklist rápido (para revisão antes de mover)
 

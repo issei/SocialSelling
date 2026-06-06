@@ -32,15 +32,18 @@ gh project list --owner "@me"
 
 ### 1. Estado & backlog
 - Leia `.ai/state/PROGRESS.md`: `proxima_acao`, `wu_em_andamento`, `passo_atual`, bloqueios.
-- Se houver board, liste os cards e ache a proxima WU em "To Do"/"Ready for Dev".
+- Se houver board, liste os cards (`gh project item-list 1 --owner issei --format json`) e escolha
+  a card de **Priority mais alta** na coluna **Todo** (campo Priority: Alta > Media > Baixa; empate
+  → ordem da coluna).
 - **Se nao ha WU pendente** (tudo mergeado, `wu_em_andamento: —`), NAO fabrique trabalho:
   reporte o estado, aponte `proxima_acao` (que pode ser opcional/calibracao) e pergunte ao
   usuario qual WU iniciar.
 
 ### 1b. Revalidar o DoR (antes de codar)
-Cheque a card contra o **Definition of Ready** (`docs/governance/dor-dod.md`): objetivo claro,
-contrato/ADR, Gherkin (feliz+degradado+open-world), fixtures identificadas, sem ambiguidade,
-dentro do escopo. **Se faltar algo essencial** (decisao de fronteira em aberto, contrato
+Cheque a card contra o **Definition of Ready** (`docs/governance/dor-dod.md`): confirme que **todos
+os itens do bloco DoR no corpo estão `[x]`** (objetivo, contrato/ADR, Gherkin feliz+degradado+
+open-world, fixtures, sem ambiguidade, dentro do escopo). Algum `[ ]` = DoR incompleto. **Se faltar
+algo essencial** (decisao de fronteira em aberto, contrato
 indefinido, rede real/entitlement nao resolvido — ex.: Apollo pago, L-056): **NAO adivinhe** —
 escreva `BLOCKED: <motivo>` no `PROGRESS.md`, devolva a card para **Backlog** e pare. Isso e falha
 de DoR, nao de implementacao.
