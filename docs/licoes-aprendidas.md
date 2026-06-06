@@ -172,6 +172,7 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   Ver `docs/governance/modo-operacional.md`.
 
 - **L-058 | Web/CSV | BOM UTF-8 como literal `"﻿"` (U+FEFF) em `io.StringIO` + `csv.writer` funciona** e produz bytes `\xef\xbb\xbf` corretos. `csv.QUOTE_MINIMAL` alinha com RFC-4180; sem necessidade de `QUOTE_ALL`. Testar com `content[:3] == b"\xef\xbb\xbf"` é a asserção mais direta (bytes, não depende de decodificação).
+- **L-060 | Ambiente | Skill `especificar-card` exige Claude local (desktop/CLI), não web remoto.** O `gh project item-create` (necessário para criar cards no board) requer o `gh` CLI, ausente no container remoto. No ambiente web, `mcp__github__issue_write` cria issues soltas — não project items — e o usuário precisa linkar manualmente. Aplicar: usar Claude local para toda tarefa de autoria de card; reservar o ambiente web para runs de desenvolvimento (`github-sdd-sync`).
 - **L-059 | PowerShell/gh | `gh pr create --body-file <arquivo>` evita o problema de parsing do heredoc** quando o corpo tem parênteses, aspas ou palavras que o PowerShell interpreta como operadores. Gravar o body em arquivo temporário e limpar ao fim.
 
 ## Aberto / a confirmar
