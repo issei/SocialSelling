@@ -43,6 +43,15 @@ APIs externas **sempre mockadas** nos testes com fixtures gravadas. Asserções 
 > **cria** specs/tarefas usa o **template de card** de lá; o run que **desenvolve** revalida o DoR
 > ao pegar a card e exige o DoD ao fechar.
 
+> **⚠️ MODO OPERACIONAL (dia vs noite) — REGRA PADRÃO de toda sessão interativa:** uma sessão de dia
+> **especifica e gera cards — NÃO desenvolve o produto.** Enforce o DoR **interrogando e cobrando** o
+> dono pelo que falta; só mova o card para **Todo** quando o DoR estiver **100%**. **Implementação de
+> código de produto (`src/`, `tests/`, fixtures) vira card** e é feita pelo **run noturno** (skill
+> `github-sdd-sync`). Specs/ADRs/contratos/docs/**tooling** (scripts/CI/skills)/processo e a curadoria
+> do board são feitos no dia. **Exceções (pode desenvolver no dia):** pedido explícito do dono ("faça
+> agora") ou **hotfix** de `main` quebrada/bug crítico. Use a skill `especificar-card`. Detalhes:
+> `docs/governance/modo-operacional.md`.
+
 ## 5. Guardrails anti-overengineering (o que NÃO fazer no PoC)
 - ❌ Banco de dados, ORM, migrations, Redis, Celery, RabbitMQ, FastAPI, Docker, AWS/Terraform.
 - ❌ Lógica subjetiva ω, Bayesiano recursivo, KL/EIG, RRF, MMR, capture-recapture (são V1+).

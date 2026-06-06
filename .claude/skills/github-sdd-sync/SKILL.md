@@ -14,6 +14,10 @@ Respeite os guardrails anti-overengineering.
 > **Fonte da verdade do "onde paramos" = `.ai/state/PROGRESS.md`.** O board do GitHub Projects
 > e um espelho. Se os dois divergirem, o PROGRESS.md ganha e o board e corrigido.
 
+> **Papel desta skill = EXECUTOR NOTURNO.** No modo operacional dia/noite
+> (`docs/governance/modo-operacional.md`), esta skill roda no run autonomo das 22:00 e DESENVOLVE
+> as cards que ja estao em Todo (DoR completo). A AUTORIA de cards (dia) e da skill `especificar-card`.
+
 ## Pre-condicao — acesso ao board (verifique uma vez)
 O sync de Projects exige escopo `read:project`/`project` no token. Cheque:
 ```

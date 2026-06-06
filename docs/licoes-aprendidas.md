@@ -161,6 +161,16 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   em Backlog. O runtime já degrada p/ Tavily em 403, então só o *recording* de fixtures bloqueia.
   Resolve o item aberto antigo ("acesso à API no Free é incerto").
 
+## Processo / modo de trabalho
+- **L-057 | Processo | Modo operacional dia/noite (decidido 06/2026):** sessões interativas de **dia
+  só especificam e geram cards** (autoria, barata em tokens) — **não desenvolvem o produto**; a
+  implementação é delegada ao **run noturno** das 22:00 (`github-sdd-sync`). Otimiza a cota do Pro.
+  **Fronteira:** só **código de produto** (`src/`, `tests/`, fixtures) vira card; specs/ADRs/docs/
+  **tooling**/processo/curadoria do board são feitos no dia. **Exceções:** pedido explícito do dono
+  ou hotfix de `main` quebrada. **Como aplicar:** ao receber instrução de evoluir o sistema, usar a
+  skill `especificar-card` — cobrar o DoR item a item (perguntando) e só mover p/ Todo com DoR 100%.
+  Ver `docs/governance/modo-operacional.md`.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
