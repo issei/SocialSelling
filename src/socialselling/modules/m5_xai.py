@@ -9,9 +9,11 @@ Produz `XAIPayload` com drivers positivos/negativos e sinais ausentes
 from __future__ import annotations
 
 from socialselling.contracts import (
+    DataProvenance,
     Driver,
     ICPCriteria,
     Inference,
+    ObservedEvidence,
     ProspectScore,
     XAIPayload,
 )
@@ -26,6 +28,7 @@ def run_m5(
     inference: Inference,
     icp: ICPCriteria,
     *,
+    evidence_index: dict[str, ObservedEvidence] | None = None,
     degraded_mode: bool = False,
 ) -> XAIPayload:
     """Gera a explicação estruturada de um prospect."""
@@ -51,11 +54,34 @@ def run_m5(
         missing.append(f"tecnologias mandatórias não confirmadas: {', '.join(missing_tech)}")
 
     if score.intent > 0 and inference.intent_signals:
+        idx = evidence_index or {}
+        refs: list[DataProvenance] = [
+            DataProvenance(
+                source="Tavily Search",
+                url=ev.source_url or None,
+                snippet=ev.snippet,
+                extracted_at=ev.captured_at,
+            )
+            for eid in inference.derived_from
+            if (ev := idx.get(eid)) is not None
+        ]
+        if refs:
+            linked = ", ".join(
+                f"[{r.snippet[:60]}]({r.url})" if r.url else r.snippet[:60]
+                for r in refs
+            )
+            suffix = f" Fontes: {linked}."
+        else:
+            suffix = " Fonte: Análise Semântica Interna."
         positive.append(
             Driver(
                 driver="INTENT_TIMING",
                 impact=f"+{score.intent:.2f}",
-                text=f"Sinais de timing detectados: {', '.join(sorted(inference.intent_signals))}.",
+                text=(
+                    f"Sinais de timing detectados: {', '.join(sorted(inference.intent_signals))}."
+                    + suffix
+                ),
+                references=refs,
             )
         )
     elif not inference.intent_signals:
