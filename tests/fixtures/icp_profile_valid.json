@@ -1,0 +1,25 @@
+{
+  "profile_id": "saas_latam_test01",
+  "name": "SaaS Latam",
+  "description": "Perfil de teste para fundadoras SaaS na América Latina.",
+  "icp_criteria": {
+    "icp_id": "icp_founders_servicos_brasil",
+    "firmographics": {
+      "industries": ["software", "saas"],
+      "employee_range": { "min": 5, "max": 50 },
+      "geographies": { "country": "BR", "regions": [] },
+      "business_models": ["B2B"]
+    },
+    "technographics": { "mandatory": [], "preferred": [], "excluded": [] },
+    "persona_matrix": {
+      "target_roles": ["FOUNDER", "CEO"],
+      "min_seniority": "FOUNDER_OWNER"
+    },
+    "intent_triggers": []
+  },
+  "hypotheses_config": {
+    "H_01": { "enabled": true, "base_weight": 0.8 },
+    "H_03": { "enabled": true, "base_weight": 0.5 }
+  },
+  "created_at": "2026-06-06T00:00:00+00:00"
+}

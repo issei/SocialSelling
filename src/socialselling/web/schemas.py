@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from socialselling.contracts import ICPCriteria
+from socialselling.contracts import HypothesisCatalog, ICPCriteria
 from socialselling.learning.schemas import FeedbackFeatures
 
 
@@ -52,3 +52,52 @@ class ScoringUpdate(BaseModel):
     confidence_exponent: float = Field(ge=0.0)
     w_fit_tech: float = Field(ge=0.0)
     w_fit_industry: float = Field(ge=0.0)
+
+
+# ---------------------------------------------------------------------------
+# WU-C — ICP Profiles
+# ---------------------------------------------------------------------------
+
+
+class HypothesisConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    base_weight: float = Field(ge=0.0, le=1.0)
+
+
+class ICPProfile(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    profile_id: str
+    name: str = Field(min_length=1, max_length=80)
+    description: str = ""
+    icp_criteria: dict[str, Any]
+    hypotheses_config: dict[str, HypothesisConfig] = Field(default_factory=dict)
+    created_at: str  # ISO-8601
+
+
+class ICPProfileCreate(BaseModel):
+    """Payload de criação — profile_id e created_at são gerados pelo servidor."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, max_length=80)
+    description: str = ""
+    icp_criteria: dict[str, Any]
+    hypotheses_config: dict[str, HypothesisConfig] = Field(default_factory=dict)
+
+
+def apply_profile_to_catalog(
+    profile: ICPProfile, base_catalog: HypothesisCatalog
+) -> HypothesisCatalog:
+    """Filtra e ajusta o catálogo de hipóteses segundo a config do perfil (puro)."""
+    if not profile.hypotheses_config:
+        return base_catalog
+    result = []
+    for h in base_catalog.hypotheses:
+        cfg = profile.hypotheses_config.get(h.hypothesis_id)
+        if cfg is None or not cfg.enabled:
+            continue
+        result.append(h.model_copy(update={"prior": cfg.base_weight}))
+    return HypothesisCatalog(hypotheses=result)

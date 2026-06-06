@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, Response
 from pydantic import ValidationError
 
 from socialselling.config import load_env, load_runtime
-from socialselling.contracts import HypothesisCatalog, LeadCard
+from socialselling.contracts import HypothesisCatalog, ICPCriteria, LeadCard
 from socialselling.learning.feedback_store import FeedbackStore
 from socialselling.skills.gemini_client import (
     CognitionClient,
@@ -28,6 +28,7 @@ from socialselling.skills.gemini_client import (
 from socialselling.web.schemas import (
     AssistRequest,
     FeedbackRequest,
+    ICPProfileCreate,
     RunRequest,
     SaveIcpRequest,
     ScoringUpdate,
@@ -38,10 +39,14 @@ from socialselling.web.services import (
     CognitionUnavailable,
     InvalidName,
     MissingKeys,
+    activate_profile,
     assist_icp,
+    create_profile,
+    delete_profile,
     feedback_labels,
     leads_to_csv,
     load_config,
+    load_profiles,
     read_hypotheses,
     read_icp,
     record_feedback,
@@ -203,6 +208,44 @@ def create_app(
     @app.get("/api/feedback")
     def api_feedback_labels() -> dict[str, str]:
         return feedback_labels(fb_store)
+
+    # -----------------------------------------------------------------------
+    # WU-C — ICP Profile endpoints
+    # -----------------------------------------------------------------------
+
+    @app.get("/api/v1/profiles")
+    def api_list_profiles() -> list[dict[str, Any]]:
+        return [p.model_dump() for p in load_profiles(config_dir)]
+
+    @app.post("/api/v1/profiles", status_code=201)
+    def api_create_profile(req: ICPProfileCreate) -> dict[str, Any]:
+        try:
+            ICPCriteria.model_validate(req.icp_criteria)
+        except ValidationError as exc:
+            raise HTTPException(status_code=422, detail=f"icp_criteria inválido: {exc}") from exc
+        try:
+            profile = create_profile(req, config_dir, now=datetime.now(UTC))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return profile.model_dump()
+
+    @app.delete("/api/v1/profiles/{profile_id}", status_code=204)
+    def api_delete_profile(profile_id: str) -> None:
+        try:
+            delete_profile(profile_id, config_dir)
+        except FileNotFoundError as exc:
+            raise HTTPException(
+                status_code=404, detail=f"perfil não encontrado: {profile_id}"
+            ) from exc
+
+    @app.post("/api/v1/profiles/{profile_id}/activate", status_code=204)
+    def api_activate_profile(profile_id: str) -> None:
+        try:
+            activate_profile(profile_id, config_dir)
+        except FileNotFoundError as exc:
+            raise HTTPException(
+                status_code=404, detail=f"perfil não encontrado: {profile_id}"
+            ) from exc
 
     return app
 
