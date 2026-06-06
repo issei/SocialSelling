@@ -131,6 +131,7 @@ def run_pipeline(
     ranked_scores = run_m4(scores)
     by_company = {inf.company.company_id: inf for inf in inferences}
     ev_url = {ev.evidence_id: ev.source_url for ev in evidences if ev.source_url}
+    evidence_idx = {ev.evidence_id: ev for ev in evidences}
     degraded = is_degraded(evidences)
 
     cards: list[LeadCard] = []
@@ -139,7 +140,9 @@ def run_pipeline(
         inference = by_company.get(score.company_id)
         if inference is None:
             continue
-        explanation = run_m5(score, inference, icp, degraded_mode=degraded)
+        explanation = run_m5(
+            score, inference, icp, evidence_index=evidence_idx, degraded_mode=degraded
+        )
         cards.append(_to_lead_card(rank, score, inference, explanation, ev_url))
         rank += 1
     cards = cards[: cfg.runtime.max_leads_per_cycle]
