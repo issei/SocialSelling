@@ -4,19 +4,17 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **Export CSV de leads** (PR #67, `v0.18.0`). Endpoint `GET /api/run/{run_id}/export.csv` serializa Lead Cards em CSV UTF-8+BOM com delimitador `;`, sem scoring. Funcao pura `leads_to_csv` determinística; 183 testes verdes.
-- **ultima_tag_verde:** `v0.17.0` (feedback+incremental; 159 testes verdes) → `v0.18.0` (export CSV; 183 testes verdes)
-- **proxima_acao:** **[Proveniência GTM]** 4 cards especificados (DoR 100%) em Backlog — aguardam aprovação do dono para mover para Todo e iniciar sequência:
-  - **#70 WU-A** `feat: DataProvenance — contrato + metadados de hipóteses` (Priority: Alta) — fundação; sem dependências; tag `v0.18.1`.
+- **marco_atual:** ✅ **ADR-006 process-only-new** (PR #76). Skip de re-extração Gemini para entidades cujo domínio de company.website já existe no corpus com extração válida. CorpusStore ganha cache de inferências; run_m2 aceita corpus_store; orchestrator e services.py passam corpus_store antes do pipeline. 186 testes verdes.
+- **ultima_tag_verde:** `v0.17.0` (feedback+incremental; 159 testes verdes) → `v0.18.0` (export CSV; 183 testes verdes) → PR #76 (process-only-new; 186 testes)
+- **proxima_acao:** **[Proveniência GTM]** 3 cards em Todo (DoR 100%):
+  - **#70 WU-A** `feat: DataProvenance — contrato + metadados de hipóteses` (Priority: sem campo, Alta per plano) — fundação; sem dependências; tag `v0.18.1`.
   - **#71 WU-B** `feat: M5 — propagação evidence_index → Driver.references` (Priority: Alta) — depende de WU-A; tag `v0.18.2`.
   - **#72 WU-C** `feat: ICP Profile — CRUD + CLI --profile` (Priority: Alta) — paralela a WU-A/B; tag `v0.18.3`.
-  - **#73 WU-D** `feat: UI — wizard guiado + gestor de perfis + badges` (Priority: Media) — depende de WU-A + WU-B + WU-C; tag `v0.19.0` (marco Proveniência GTM completa).
-  - Sequência de merge: WU-A → WU-B (serial); WU-C (paralela a WU-A/B); WU-D (última).
-  - Card "Web: botao Exportar CSV" (Priority: Media) em Todo — pode ser feito antes ou em paralelo com WU-C.
+  - Card "Web: botao Exportar CSV" (Priority: Media) em Todo.
+  - Sequência de merge: WU-A → WU-B (serial); WU-C (paralela a WU-A/B); WU-D (última, ainda em Backlog).
   - **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar.
-  - **Refinamentos diferidos (V1+):** determinístico-primeiro (ADR-005), process-only-new (ADR-006), LangGraph (ADR-003).
-- **wu_em_andamento:** — (PR #67 mergeado)
-- **passo_atual:** — (`main` verde, 183 testes; gate via `.venv\Scripts\python.exe -m …`)
+- **wu_em_andamento:** — (PR #76 mergeado)
+- **passo_atual:** — (`main` verde, 186 testes; gate via `.venv\Scripts\python.exe -m …`)
 
 ### Status de implementação das specs (2026-06-04)
 | Spec | Estado | Tags |
@@ -65,3 +63,4 @@ Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/co
 | 2026-06-04 | Overview + UI redesenhada | overview HTML do projeto (#48); SDD UX + lista de leads em TABELA + drawer de detalhes enriquecidos (#49). Backend inalterado; 123 testes verdes. Licoes L-046/47/48 | `v0.15.4`,`v0.16.0` |
 | 2026-06-04 | Feedback (ADR-007) + busca incremental (ADR-006) | like/dislike → regressão logística (Python puro, determinística) reajusta pesos com auto-apply travado (#54); corpus acumulativo + ondas variam queries na UI p/ leads novos, ordenado por score. Opt-in/paridade; 159 testes verdes. Lições L-052..055 | `v0.17.0` |
 | 2026-06-06 | Export CSV de leads (sem scoring) | Funcao pura leads_to_csv + endpoint GET /api/run/{run_id}/export.csv; UTF-8+BOM, delimitador ";", sem rank/score.*; 11 novos testes; 183 testes verdes. Lições L-058/059 | `v0.18.0` |
+| 2026-06-06 | ADR-006 process-only-new (autônomo) | Skip Gemini para entidades com extração válida no corpus; inference cache (_inf.json) no CorpusStore keyed por company.website domain; orchestrator + services passam corpus_store antes do pipeline; 3 novos testes BDD; 186 testes verdes. Lição L-061 | PR #76 |
