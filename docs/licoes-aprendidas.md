@@ -171,6 +171,9 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   skill `especificar-card` — cobrar o DoR item a item (perguntando) e só mover p/ Todo com DoR 100%.
   Ver `docs/governance/modo-operacional.md`.
 
+- **L-058 | Web/CSV | BOM UTF-8 como literal `"﻿"` (U+FEFF) em `io.StringIO` + `csv.writer` funciona** e produz bytes `\xef\xbb\xbf` corretos. `csv.QUOTE_MINIMAL` alinha com RFC-4180; sem necessidade de `QUOTE_ALL`. Testar com `content[:3] == b"\xef\xbb\xbf"` é a asserção mais direta (bytes, não depende de decodificação).
+- **L-059 | PowerShell/gh | `gh pr create --body-file <arquivo>` evita o problema de parsing do heredoc** quando o corpo tem parênteses, aspas ou palavras que o PowerShell interpreta como operadores. Gravar o body em arquivo temporário e limpar ao fim.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
