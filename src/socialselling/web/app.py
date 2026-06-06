@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import ValidationError
 
 from socialselling.config import load_env, load_runtime
@@ -40,6 +40,7 @@ from socialselling.web.services import (
     MissingKeys,
     assist_icp,
     feedback_labels,
+    leads_to_csv,
     load_config,
     read_hypotheses,
     read_icp,
@@ -170,6 +171,18 @@ def create_app(
         if run_id not in runs:
             raise HTTPException(status_code=404, detail=f"run nao encontrado: {run_id}")
         return runs[run_id]
+
+    @app.get("/api/run/{run_id}/export.csv")
+    def api_run_export_csv(run_id: str) -> Response:
+        if run_id not in runs:
+            raise HTTPException(status_code=404, detail=f"run nao encontrado: {run_id}")
+        cards = [LeadCard.model_validate(c) for c in runs[run_id]["leads"]]
+        csv_text = leads_to_csv(cards)
+        return Response(
+            content=csv_text.encode("utf-8"),
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": 'attachment; filename="leads.csv"'},
+        )
 
     @app.post("/api/feedback")
     def api_feedback(req: FeedbackRequest) -> dict[str, Any]:

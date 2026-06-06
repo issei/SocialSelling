@@ -6,6 +6,8 @@ e delega ao núcleo. Mantém o núcleo (M1–M5) intocado (ADR-002).
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import os
 import re
@@ -274,3 +276,32 @@ def record_feedback(
 def feedback_labels(store: FeedbackStore) -> dict[str, str]:
     """Mapa company_id -> 'like'|'dislike' para a UI pintar os selos ao carregar."""
     return store.labels()
+
+
+_CSV_HEADERS = [
+    "Nome", "Empresa", "Cargo", "Setor", "Localizacao",
+    "Instagram", "LinkedIn", "Website", "E-mail", "Telefone", "Fontes",
+]
+
+
+def leads_to_csv(cards: list[LeadCard]) -> str:
+    """Serializa Lead Cards em CSV UTF-8 com BOM — delimitador ';'; sem scoring."""
+    buf = io.StringIO()
+    buf.write("﻿")  # BOM UTF-8
+    writer = csv.writer(buf, delimiter=";", quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(_CSV_HEADERS)
+    for card in cards:
+        writer.writerow([
+            card.display_name,
+            card.company or "",
+            card.role or "",
+            card.sector or "",
+            card.location or "",
+            card.links.instagram or "",
+            card.links.linkedin or "",
+            card.links.website or "",
+            card.contact.email or "",
+            card.contact.phone or "",
+            " | ".join(card.sources),
+        ])
+    return buf.getvalue()
