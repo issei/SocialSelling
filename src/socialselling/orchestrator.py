@@ -32,7 +32,7 @@ from socialselling.core.cache import JsonCache
 from socialselling.core.credit_ledger import CreditBudget
 from socialselling.core.request_ledger import RequestBudget
 from socialselling.corpus.integration import accumulate_and_rank
-from socialselling.corpus.store import CorpusStore
+from socialselling.corpus.store import CorpusStore  # noqa: F401 (re-exported for callers)
 from socialselling.modules.m1_busca import is_degraded, run_m1
 from socialselling.modules.m2_extracao import run_m2
 from socialselling.modules.m3_score import run_m3
@@ -57,6 +57,7 @@ def run_pipeline(
     cfg: RuntimeConfig,
     apollo: ApolloSearchClient | None = None,
     wave: int = 0,
+    corpus_store: CorpusStore | None = None,
 ) -> list[LeadCard]:
     """Executa M1→M5 e monta a lista ranqueada de Lead Cards acionaveis.
 
@@ -95,6 +96,7 @@ def run_pipeline(
         disqualifier_vocab=DISQUALIFIER_VOCAB,
         batch_size=cfg.gemini.batch_size,
         request_budget=request_budget,
+        corpus_store=corpus_store,
     )
 
     # Degrau 2 (ADR-004): org-enrich CONDICIONAL (só firmografia faltante), sob crédito.
@@ -289,6 +291,12 @@ def main(argv: list[str] | None = None) -> int:
             )
 
     now = datetime.now(UTC)
+    # Corpus acumulativo (ADR-006): inicializado antes de run_pipeline para ativar
+    # process-only-new (skip de re-extração Gemini para entidades já no corpus).
+    corpus_store: CorpusStore | None = None
+    if cfg.corpus.enabled:
+        corpus_store = CorpusStore(_ROOT / cfg.corpus.path)
+
     cards = run_pipeline(
         icp,
         tavily=TavilyClient(tavily_key),
@@ -298,14 +306,14 @@ def main(argv: list[str] | None = None) -> int:
         now=now,
         cfg=cfg,
         apollo=apollo,
+        corpus_store=corpus_store,
     )
 
-    # Corpus acumulativo (ADR-006): runs acumulam entre si; saída = corpus inteiro
-    # re-ranqueado. Opt-in; desligado => comportamento stateless atual (sobrescreve).
-    if cfg.corpus.enabled:
-        store = CorpusStore(_ROOT / cfg.corpus.path)
-        cards = accumulate_and_rank(store, cards, now, max_display=cfg.runtime.max_leads_per_cycle)
-        print(f"corpus: {len(store)} leads conhecidos (acumulado)", file=sys.stderr)
+    if corpus_store is not None:
+        cards = accumulate_and_rank(
+            corpus_store, cards, now, max_display=cfg.runtime.max_leads_per_cycle
+        )
+        print(f"corpus: {len(corpus_store)} leads conhecidos (acumulado)", file=sys.stderr)
 
     out_path = Path(args.out)
     persist_json(cards, out_path)

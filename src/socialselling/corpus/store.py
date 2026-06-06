@@ -5,6 +5,11 @@ Regras:
 - Upsert last-write-wins por last_seen; first_seen preservado.
 - Persistência atômica via atomic_write_text.
 - Relógio sempre injetado (parâmetro `now`); sem datetime.now() interno.
+
+ADR-006 process-only-new: cache de inferências keyed por domínio canônico da empresa
+  (domain = domínio do company.website extraído pelo M2). Persistido em <corpus>_inf.json.
+  Entradas: {"valid": bool, "inference": dict|None}.
+  Valid=True → skip Gemini; valid=False → pendente, re-tentar.
 """
 
 from __future__ import annotations
@@ -50,6 +55,8 @@ class CorpusStore:
     def __init__(self, path: Path) -> None:
         self._path = path
         self._corpus = self._load()
+        self._inf_path = path.with_name(path.stem + "_inf.json")
+        self._inf_cache: dict[str, dict[str, Any]] = self._load_inf_cache()
 
     # ------------------------------------------------------------------
     # Consulta
@@ -114,6 +121,41 @@ class CorpusStore:
         self._corpus.entries[entity_id] = entry
         self._persist()
         return entry
+
+    # ------------------------------------------------------------------
+    # Inference cache (ADR-006 process-only-new)
+    # ------------------------------------------------------------------
+
+    def get_cached_inference(self, domain: str) -> dict[str, Any] | None:
+        """Return valid cached inference dict for domain, or None if absent/pending."""
+        entry = self._inf_cache.get(domain)
+        if entry is None or not entry.get("valid", False):
+            return None
+        return entry.get("inference")
+
+    def put_cached_inference(self, domain: str, inference_dict: dict[str, Any]) -> None:
+        """Persist valid inference for company domain. Atomic write."""
+        self._inf_cache[domain] = {"valid": True, "inference": inference_dict}
+        self._persist_inf_cache()
+
+    def mark_pending(self, domain: str) -> None:
+        """Mark domain extraction as pending (Gemini failed). Does NOT overwrite valid."""
+        if self._inf_cache.get(domain, {}).get("valid", False):
+            return
+        self._inf_cache[domain] = {"valid": False, "inference": None}
+        self._persist_inf_cache()
+
+    def _load_inf_cache(self) -> dict[str, dict[str, Any]]:
+        if not self._inf_path.exists():
+            return {}
+        raw: dict[str, dict[str, Any]] = json.loads(
+            self._inf_path.read_text(encoding="utf-8")
+        )
+        return raw
+
+    def _persist_inf_cache(self) -> None:
+        text = json.dumps(self._inf_cache, ensure_ascii=False, sort_keys=True)
+        atomic_write_text(self._inf_path, text)
 
     # ------------------------------------------------------------------
     # Persistência
