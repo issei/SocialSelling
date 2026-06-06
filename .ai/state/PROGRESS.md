@@ -4,15 +4,14 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **WU-A DataProvenance** (PR #77, `v0.18.1`). DataProvenance + Driver.references + metadados de Hypothesis (label/description_plain/impact_dimension/guide_tags) com defaults backward-compat. hypotheses_catalog.json atualizado H_01..H_05. 189 testes verdes.
-- **ultima_tag_verde:** `v0.17.0` → `v0.18.0` (CSV) → `v0.18.1` (WU-A DataProvenance; 189 testes)
+- **marco_atual:** ✅ **WU-C ICP Profile** (PR #79, `v0.18.3`). CRUD de perfis atômico + 4 endpoints FastAPI + CLI `--profile`; `apply_profile_to_catalog` puro em schemas; 3 BDD; 195 testes verdes.
+- **ultima_tag_verde:** `v0.17.0` → `v0.18.0` (CSV) → `v0.18.1` (WU-A) → `v0.18.2` (WU-B) → `v0.18.3` (WU-C; 195 testes)
 - **proxima_acao:** **[Proveniência GTM — sequência serial]**:
-  - **#71 WU-B** `feat: M5 — propagação evidence_index → Driver.references` — depende de WU-A ✅; tag `v0.18.2`.
-  - **#72 WU-C** `feat: ICP Profile — CRUD + CLI --profile` — paralela a WU-B; tag `v0.18.3`.
+  - **#73 WU-D** `feat: UI — wizard guiado + gestor de perfis + badges` — depende de WU-A/B/C ✅; tag `v0.19.0`; ainda em Backlog.
   - Card "Web: botao Exportar CSV" (Priority: Media) em Todo.
   - **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar.
-- **wu_em_andamento:** — (PR #77 mergeado, v0.18.1 taggeada)
-- **passo_atual:** — (`main` verde, 189 testes; gate via `.venv\Scripts\python.exe -m …`)
+- **wu_em_andamento:** — (PR #79 mergeado, v0.18.3 taggeada)
+- **passo_atual:** — (`main` verde, 195 testes; gate via `.venv\Scripts\python.exe -m …`)
 
 ### Status de implementação das specs (2026-06-04)
 | Spec | Estado | Tags |
@@ -63,3 +62,5 @@ Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/co
 | 2026-06-06 | Export CSV de leads (sem scoring) | Funcao pura leads_to_csv + endpoint GET /api/run/{run_id}/export.csv; UTF-8+BOM, delimitador ";", sem rank/score.*; 11 novos testes; 183 testes verdes. Lições L-058/059 | `v0.18.0` |
 | 2026-06-06 | ADR-006 process-only-new (autônomo) | Skip Gemini para entidades com extração válida no corpus; inference cache (_inf.json) no CorpusStore keyed por company.website domain; orchestrator + services passam corpus_store antes do pipeline; 3 novos testes BDD; 186 testes verdes. Lição L-061 | PR #76 |
 | 2026-06-06 | WU-A DataProvenance (autônomo) | DataProvenance model + Driver.references + Hypothesis metadata (label/description_plain/impact_dimension/guide_tags) com defaults backward-compat; hypotheses_catalog.json atualizado H_01..H_05; 3 BDD; 189 testes verdes | `v0.18.1` |
+| 2026-06-06 | WU-B M5 Proveniência (autônomo) | `evidence_index: dict[str, ObservedEvidence] | None` em `run_m5`; INTENT_TIMING Driver recebe DataProvenance com URL/snippet rastreável; texto com links Markdown ou fallback semântico; orquestrador passa índice automaticamente; 3 BDD; 192 testes verdes | `v0.18.2` |
+| 2026-06-06 | WU-C ICP Profile CRUD (autônomo) | HypothesisConfig/ICPProfile/ICPProfileCreate + apply_profile_to_catalog (puro) em schemas; CRUD atômico em services; 4 endpoints FastAPI; --profile no CLI com precedência sobre --icp; 3 BDD; 195 testes verdes | `v0.18.3` |
