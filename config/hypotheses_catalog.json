@@ -5,35 +5,55 @@
       "description": "Fundadora presa na operacao: negocio depende dela e crescimento travado (sinal mais forte).",
       "prior": 0.30,
       "surface_signals": ["depende_de_mim", "nao_consigo_sair_da_operacao", "sobrecarga", "crescimento_travado"],
-      "sources": ["web_search"]
+      "sources": ["web_search"],
+      "label": "Sobrecarga Operacional",
+      "description_plain": "Fundadora presa na operação — crescimento travado por dependência pessoal.",
+      "impact_dimension": "intent",
+      "guide_tags": ["pain_signal", "overload"]
     },
     {
       "hypothesis_id": "H_02",
       "description": "Contratacao senior recente ou formacao de novo time (urgencia concreta de estrutura).",
       "prior": 0.20,
       "surface_signals": ["contratacao_senior", "novo_time", "vaga_lideranca"],
-      "sources": ["web_search"]
+      "sources": ["web_search"],
+      "label": "Contratação de Liderança",
+      "description_plain": "Empresa contratando líderes seniores — sinal de estruturação acelerada.",
+      "impact_dimension": "intent",
+      "guide_tags": ["growth_signal", "leadership_change"]
     },
     {
       "hypothesis_id": "H_03",
       "description": "Expansao anunciada: nova unidade, novos servicos ou novo mercado.",
       "prior": 0.18,
       "surface_signals": ["nova_unidade", "expansao", "novos_servicos"],
-      "sources": ["web_search"]
+      "sources": ["web_search"],
+      "label": "Expansão de Negócio",
+      "description_plain": "Nova unidade, mercado ou serviço anunciado.",
+      "impact_dimension": "intent",
+      "guide_tags": ["growth_signal"]
     },
     {
       "hypothesis_id": "H_04",
       "description": "Intencao de adotar IA sem processo organizado (programa posiciona-se como pre-requisito).",
       "prior": 0.17,
       "surface_signals": ["intencao_ia", "quero_modernizar", "nao_sei_por_onde_comecar"],
-      "sources": ["web_search"]
+      "sources": ["web_search"],
+      "label": "Adoção de IA/Tecnologia",
+      "description_plain": "Intenção declarada de modernização tecnológica sem processo organizado.",
+      "impact_dimension": "intent",
+      "guide_tags": ["pain_signal", "digital_transformation"]
     },
     {
       "hypothesis_id": "H_05",
       "description": "Conclusao recente de curso, mentoria ou imersao de gestao (intencao; sinal medio).",
       "prior": 0.10,
       "surface_signals": ["conclusao_curso", "mentoria_gestao", "imersao"],
-      "sources": ["web_search"]
+      "sources": ["web_search"],
+      "label": "Investimento em Capacitação",
+      "description_plain": "Conclusão recente de curso, mentoria ou imersão de gestão.",
+      "impact_dimension": "intent",
+      "guide_tags": ["growth_signal", "education_signal"]
     }
   ]
 }
