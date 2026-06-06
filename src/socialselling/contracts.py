@@ -103,6 +103,11 @@ class Hypothesis(BaseModel):
     prior: float = Field(ge=0.0, le=1.0)
     surface_signals: list[str]
     sources: list[str]
+    # Metadados de apresentação (WU-A Proveniência GTM) — defaults para backward-compat.
+    label: str = ""
+    description_plain: str = ""
+    impact_dimension: str = "intent"
+    guide_tags: list[str] = Field(default_factory=list)
 
 
 class HypothesisCatalog(BaseModel):
@@ -189,12 +194,24 @@ class ProspectScore(BaseModel):
     hard_filter_passed: bool = True
 
 
+class DataProvenance(BaseModel):
+    """Rastreabilidade de fonte de evidência para um Driver (WU-A Proveniência GTM)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source: str
+    url: str | None = None
+    snippet: str = ""
+    extracted_at: str  # ISO-8601
+
+
 class Driver(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     driver: str
     impact: str
     text: str
+    references: list[DataProvenance] = Field(default_factory=list)
 
 
 class XAIPayload(BaseModel):
