@@ -138,7 +138,7 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   WU-A3 do SDD Apollo — valida a chave real UMA vez e fixa o orçamento de crédito gasto na gravação.
 
 ## Build de volume (execução bypass)
-- **L-036 | Gate | `scripts/gate.ps1` usa `py`, mas `py` cai no Python global 3.14 SEM as ferramentas de dev** (pytest/ruff/mypy vivem no `.venv`). Localmente, rodar o gate por `.\.venv\Scripts\python.exe -m {ruff|mypy|pytest}` (não `py -m`). O CI usa setup próprio e não sofre disso. Candidato a corrigir `gate.ps1` p/ preferir o python do venv quando existir.
+- **L-036 | Gate | `scripts/gate.ps1` usa `py`, mas `py` cai no Python global 3.14 SEM as ferramentas de dev** (pytest/ruff/mypy vivem no `.venv`). Localmente, rodar o gate por `.\.venv\Scripts\python.exe -m {ruff|mypy|pytest}` (não `py -m`). O CI usa setup próprio e não sofre disso. **RESOLVIDO:** `gate.ps1` agora prefere `$PSScriptRoot\..\.venv\Scripts\python.exe` quando existe (fallback `py`), imprimindo qual Python usou. Roda `& $py -m …` direto.
 - **L-037 | mypy+test | `mypy --strict` reprova `StrEnumMembro == "literal"`** (comparison-overlap) — usar `.value` no teste. E **kwargs inválidos em construtor Pydantic** (teste de `extra=forbid`) — usar `Model.model_validate({...})` com dict, senão o mypy acusa `call-arg`. Padrão para todos os testes de contrato.
 - **L-038 | Commit | Here-string do PowerShell `@'…'@` vaza o `@` para o SUBJECT do commit** (vira "@ feat: …"). Usar `git commit -F <arquivo>` (Write do arquivo de mensagem) em vez de `-m @'…'@`. Confirmar com `git log -1 --format=%s` antes do PR.
 
