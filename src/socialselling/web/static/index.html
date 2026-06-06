@@ -124,8 +124,12 @@
               <p class="text-[11px] text-slate-500">Escolha o ICP no topo e clique em <span class="text-indigo-400 font-medium">Executar Prospecção</span>.</p>
             </div>
           </div>
-          <div class="px-4 py-2 border-t border-slate-700 text-[11px] text-slate-500 shrink-0">
-            Clique numa linha para abrir o diagnóstico. <span id="leadsCount"></span>
+          <div class="px-4 py-2 border-t border-slate-700 text-[11px] text-slate-500 shrink-0 flex items-center justify-between gap-3">
+            <span>Clique numa linha para abrir o diagnóstico. <span id="leadsCount"></span></span>
+            <button id="btnExportCsv" disabled
+              class="bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 font-semibold px-3 py-1 rounded text-[11px] transition shrink-0">
+              Exportar CSV
+            </button>
           </div>
         </div>
       </div>
@@ -279,6 +283,7 @@
     let SORT = { key: "rank", dir: 1 };
     let FEEDBACK = {};         // company_id -> "like" | "dislike" (selos persistentes)
     let CURRENT_LEAD = null;   // lead aberto no drawer
+    let CURRENT_RUN_ID = null; // run_id do último POST /api/run (para export CSV)
 
     /* ---- feedback like/dislike → aprendizado (ADR-007) ---- */
     let toastTimer = null;
@@ -413,6 +418,7 @@
         row.addEventListener("click", () => openDrawer(RENDERED[parseInt(row.dataset.i,10)]));
       });
       updateSortIndicators();
+      updateExportButton();
     }
 
     function updateSortIndicators() {
@@ -421,6 +427,16 @@
         ind.textContent = (th.dataset.sort === SORT.key) ? (SORT.dir>0 ? "▲" : "▼") : "";
         th.classList.toggle("text-white", th.dataset.sort === SORT.key);
       });
+    }
+
+    function updateExportButton() {
+      const btn = $("btnExportCsv");
+      if (btn) btn.disabled = !(LEADS.length && CURRENT_RUN_ID);
+    }
+
+    function exportCsv() {
+      if (!CURRENT_RUN_ID || !LEADS.length) return;
+      window.location.href = "/api/run/" + encodeURIComponent(CURRENT_RUN_ID) + "/export.csv";
     }
 
     function updateDashboard() {
@@ -570,6 +586,7 @@
       $("btnRun").disabled=true; LEADS=[]; renderTable(); updateDashboard();
       try {
         const res = await api("POST","/api/run",{icp_name});
+        CURRENT_RUN_ID = res.run_id || null;
         LEADS = res.leads || [];
         SORT = { key:"rank", dir:1 };
         renderTable(); updateDashboard();
@@ -616,6 +633,7 @@
     $("btnSaveHyp").onclick=saveHyp;
     $("btnAssist").onclick=assist;
     $("btnRun").onclick=run;
+    $("btnExportCsv").onclick=exportCsv;
     boot().catch(e=>console.error(e));
   </script>
 </body>
