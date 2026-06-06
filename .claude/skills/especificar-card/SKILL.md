@@ -39,16 +39,21 @@ completar. Não preencha por suposição; não empurre card incompleta. Itens t�
 - Dentro do escopo canônico (§3/§5/ADR-000)? Determinismo viável (1e-9, APIs mockadas)?
 - **DoD específico** declarado?
 
-### 4. Criar o card e mover para Todo (só com DoR 100%)
-Quando — e somente quando — todos os itens do DoR estiverem satisfeitos:
+### 4. Criar o card (scaffold) → preencher → mover para Todo (só com DoR 100%)
+- **Scaffold:** `pwsh scripts/new_card.ps1 -Title "<tipo>: <resultado>" [-Priority Alta|Media|Baixa]`
+  cria o card em **Backlog** já com o template + o **bloco DoR checável** (`- [ ]`).
+- **Preencher** o corpo (com o dono) e **marcar os `[x]`** do DoR conforme cada item fecha.
+- **Mover para Todo só com DoR 100%** (todos `[x]`) **e aprovação do dono** — isso é o aval para o
+  desenvolvimento noturno. Defina a **Priority** (o run pega a mais alta primeiro):
 ```
-gh project item-create 1 --owner issei --title "<tipo>: <resultado>" --body "<corpo do template>"
-gh project item-edit --id <ITEM_ID> --project-id PVT_kwHOAAi2gM4BZ3J3 \
-  --field-id PVTSSF_lAHOAAi2gM4BZ3J3zhUy5Jg --single-select-option-id f75ad846   # Todo
+gh project item-edit --id <ID> --project-id PVT_kwHOAAi2gM4BZ3J3 \
+  --field-id PVTSSF_lAHOAAi2gM4BZ3J3zhUy5Jg --single-select-option-id f75ad846   # Status=Todo
+gh project item-edit --id <ID> --project-id PVT_kwHOAAi2gM4BZ3J3 \
+  --field-id PVTSSF_lAHOAAi2gM4BZ3J3zhUzDd8 --single-select-option-id da3cda2e   # Priority=Alta
 ```
-(opções: Backlog=`6cf82daa` Todo=`f75ad846` In Progress=`47fc9ee4` Done=`98236657`.) Anuncie o
-comando ao dono (Transparência). **Mover para Todo = aprovação do dono p/ desenvolvimento noturno**
-— se o dono ainda não aprovou, deixe em **Backlog**.
+IDs — Status `PVTSSF_lAHOAAi2gM4BZ3J3zhUy5Jg` (Backlog=`6cf82daa` Todo=`f75ad846` In Progress=`47fc9ee4`
+Done=`98236657`); Priority `PVTSSF_lAHOAAi2gM4BZ3J3zhUzDd8` (Alta=`da3cda2e` Media=`dd378f56`
+Baixa=`8ffead41`). Anuncie o comando ao dono (Transparência). Sem aprovação → deixe em **Backlog**.
 
 ### 5. Sincronizar e propor melhorias
 - Atualize `.ai/state/PROGRESS.md` se a card representa um marco/próxima ação.
