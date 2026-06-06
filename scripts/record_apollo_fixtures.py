@@ -4,9 +4,12 @@ Uso (SUPERVISIONADO — com venv e .env com APOLLO_API_KEY):
     .venv/Scripts/python.exe scripts/record_apollo_fixtures.py
 
 IMPORTANTE (FinOps / ADR-004 §0):
-- Grava SOMENTE People Search (`mixed_people/search`), que é **0 crédito** no tier
-  gratuito. NÃO chama org-enrich nem people/match (esses CONSOMEM crédito) — para
-  evitar gastar a cota mensal sem intenção.
+- People Search (`mixed_people/search`) é **0 crédito**, MAS o endpoint da API exige
+  **plano Apollo PAGO** — no tier gratuito retorna HTTP 403 `API_INACCESSIBLE`. O
+  "0 crédito" vale só na interface web; a master API é bloqueada por completo no Free.
+  Logo, este script só funciona com plano pago. Ver L-056.
+- Grava SOMENTE People Search. NÃO chama org-enrich nem people/match (esses CONSOMEM
+  crédito) — para evitar gastar a cota mensal sem intenção.
 - É ferramenta de teste, fora do runtime do produto.
 
 Lê o ICP de exemplo, monta os filtros do degrau 1 e salva a resposta crua em

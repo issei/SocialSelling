@@ -147,8 +147,20 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-040 | Worktree | Worktree de agente NÃO tem `.venv`** (gitignored, não copiado). O gate dentro dela exige o venv do repo original + `PYTHONPATH=<worktree>\src`. Atrito real no Windows → reforça o padrão "agentes escrevem, main loop valida". Worktrees ficam `locked` enquanto o harness as rastreia; `git worktree remove -f -f` força, mas pode confundir o estado — deixar para o fim da sessão.
 - **L-041 | Diagnóstico | Para diagnosticar agente travado, inspecione o FILESYSTEM da worktree** (`git status`, `ls` dos arquivos-alvo) em vez de ler o `.output` (transcript JSONL estoura o contexto). Revela exatamente até onde o agente chegou.
 
+## Pré-condições externas (billing / entitlement)
+- **L-056 | Apollo | A master API (`mixed_people/search` etc.) é INACESSÍVEL no plano Free** —
+  retorna `HTTP 403 {"error_code":"API_INACCESSIBLE", "error":"... not accessible with this
+  api_key on a free plan. Please upgrade your plan ..."}`. Confirmado com chave real (06/2026).
+  **Pegadinha:** People Search aparece como **"0 crédito"** na interface web, o que induz a crer
+  que é usável via API no Free — NÃO é; o "0 crédito" vale só no app web, a API mestre é bloqueada
+  por *entitlement de plano*, independente de crédito. Diagnóstico: o 403 do cliente esconde o
+  body; bater no endpoint cru (`httpx.post` com `x-api-key`) revela o `error_code`. **Não é
+  problema de código nem de formato de chave** — o cliente já manda a chave no header
+  (`x-api-key`), e o aviso de "key na URL" do portal é ruído. **Como aplicar:** gravar fixtures
+  reais (`scripts/record_apollo_fixtures.py`) exige **upgrade do plano Apollo**; até lá o card fica
+  em Backlog. O runtime já degrada p/ Tavily em 403, então só o *recording* de fixtures bloqueia.
+  Resolve o item aberto antigo ("acesso à API no Free é incerto").
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
-- **Apollo: acesso à API no tier gratuito é incerto** (fontes 2026 divergem). Confirmar com chave
-  real na WU-A3 ANTES de investir nas WUs seguintes (desenho degrada p/ Tavily em 403).
