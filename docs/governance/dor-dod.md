@@ -125,6 +125,8 @@ degradado+open-world) ✓ · fixtures identificadas / sem bloqueio de rede-paga 
 (auto-merge squash) ✓ · PROGRESS + lições atualizados ✓ · card em Done + tag se marco ✓
 
 ## Relação com os outros documentos
+- **Modo operacional (dia autoria / noite execução):** `docs/governance/modo-operacional.md` — quem
+  cria card (dia) e quem desenvolve (noite); skill de autoria `especificar-card`.
 - **Protocolo do run autônomo:** `docs/planning/autonomous-ops.md` §3 (passos S1..S6) e §4
   (guardrails). O DoD é o "verde" que aquele protocolo exige para mergear.
 - **SDD-to-Code Loop:** CLAUDE.md §4 (contrato → Gherkin+fixtures → impl mínima → gate → PR).
