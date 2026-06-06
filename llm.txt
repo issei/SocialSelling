@@ -1,0 +1,185 @@
+# Guia de Contexto e Arquitetura — SocialSelling
+
+Este documento serve como fonte de verdade de alto nível e guia de integração para novos desenvolvedores ou agentes de IA (LLMs) trabalhando no projeto **SocialSelling**. Ele detalha o escopo, a arquitetura do PoC, o fluxo de desenvolvimento, os padrões de engenharia e os combinados operacionais.
+
+---
+
+## 1. Visão do Produto e Escopo
+
+O **SocialSelling** é um sistema de inteligência de dados projetado para tornar a busca de prospects e clientes mais eficiente usando Inteligência Artificial. Ele responde a uma pergunta central: **"Quem devo abordar primeiro?"**, gerando um ranking explicável de leads.
+
+*   **Fonte de Referência:** [CLAUDE.md](https://github.com/issei/SocialSelling/tree/main/CLAUDE.md#L5) e [SDD_SocialSelling_v1.0.md](https://github.com/issei/SocialSelling/tree/main/SDD_SocialSelling_v1.0.md#L1).
+*   **Fora de Escopo (Não implementar):** 
+    *   Sistemas de CRM.
+    *   Automação de outreach, mensageria direta ou cadências de e-mail.
+    *   Previsão de funil de vendas.
+    *   Scraping direto e instável de redes sociais como Instagram/LinkedIn (diferido para versões futuras).
+*   **Guardrails contra Overengineering:** Ver [CLAUDE.md](https://github.com/issei/SocialSelling/tree/main/CLAUDE.md#L55). Não introduzir bancos de dados relacionais complexos (PostgreSQL), filas gerenciadas (Celery/RabbitMQ), servidores web de produção, Docker ou AWS no escopo do PoC atual.
+
+---
+
+## 2. Espinha Arquitetural e Stack do PoC
+
+Com base na decisão canônica da [ADR-000](https://github.com/issei/SocialSelling/tree/main/docs/decisions/ADR-000-escopo-canonico.md), o projeto adota uma arquitetura **local, ultraleve e de custo de infraestrutura gerenciada zero**:
+
+*   **Runtime:** Executado como um único processo local em Python 3.11+.
+*   **Persistência:** Baseada em arquivos locais JSON (fria) com processamento em memória (quente). Toda escrita persistente deve ser **atômica** utilizando o padrão `write-temp + os.replace` para evitar corrupção de dados.
+*   **Sensores de Busca:** [Tavily API](https://tavily.com) (busca exaustiva web) e [Apollo REST API](https://www.apollo.io) (enriquecimento de dados estruturados e descoberta de leads via filtros de ICP).
+*   **Cognição:** [Gemini API](https://ai.google.dev) (`gemini-2.5-flash` ou `gemini-2.5-flash-lite`) como motor cognitivo para extração estruturada de contexto e inferência de sinais.
+
+---
+
+## 3. Pipeline de Execução (Módulos M1 a M5)
+
+O pipeline do SocialSelling funciona como uma sequência determinística de funções puras no orquestrador ([orchestrator.py](https://github.com/issei/SocialSelling/tree/main/src/socialselling/orchestrator.py)), e **não** como agentes autônomos de runtime:
+
+1.  **M1 (Busca):** Recebe o contrato [ICPCriteria](https://github.com/issei/SocialSelling/tree/main/src/socialselling/contracts.py#L83) e realiza buscas exaustivas no Tavily/Apollo. Emite uma lista de [ObservedEvidence](https://github.com/issei/SocialSelling/tree/main/src/socialselling/contracts.py#L117).
+2.  **M2 (Extração/Cognição):** Processa as evidências observadas com o Gemini em lotes determinísticos para extrair entidades corporativas ([CompanyEntity](https://github.com/issei/SocialSelling/tree/main/src/socialselling/contracts.py#L133)), pessoas ([PersonEntity](https://github.com/issei/SocialSelling/tree/main/src/socialselling/contracts.py#L152)) e categorizar personas e sinais de intenção, gerando instâncias de [Inference](https://github.com/issei/SocialSelling/tree/main/src/socialselling/contracts.py#L162).
+3.  **M3 (Scoring):** Avalia a aderência do lead com base em uma fórmula linear configurável:
+    $$P_{score} = (w_{fit} \cdot Fit + w_{intent} \cdot Intent) \cdot Confidence^{confidence\_exponent} \cdot persona\_fit$$
+    Também aplica filtros estáticos ("hard filters") que desqualificam leads indesejados (ex: B2C ou tecnologias concorrentes).
+4.  **M4 (Ranking):** Ordena os leads por $P_{score}$ decrescente com algoritmo de **tie-break estável** (ex: usando `company_id` como critério secundário) para garantir determinismo completo nas execuções.
+5.  **M5 (Explicação/XAI):** Gera um objeto estruturado de justificativa ([XAIPayload](https://github.com/issei/SocialSelling/tree/main/src/socialselling/contracts.py#L200)) com motivadores positivos/negativos, evidências ausentes e carimbos de integridade dos sensores.
+
+---
+
+## 4. Isolamento de Camadas Semânticas & Regras Invioláveis
+
+*   **Isolamento Estrito:** A arquitetura exige separação absoluta entre as seguintes camadas semânticas (nunca compartilham referências mutáveis):
+    *   **Camada 1 (Observed Evidence):** Dados crus coletados do Tavily/Apollo.
+    *   **Camada 2 (Generated Inferences):** Entidades estruturadas e inferências geradas pelo LLM (Gemini).
+    *   **Camada 3 (Evaluated Hypotheses):** Scores de aderência e payloads de explicação (XAI).
+*   **Mundo Aberto (Open-World Assumption):** A ausência de um sinal em um lead não significa que ele seja falso. Deve ser modelada explicitamente como `Missing Evidence`, aumentando o fator de incerteza (reduzindo a confiança `confidence` / $Cs$), sem zerar o score.
+*   **Persistência Atômica:** Qualquer escrita em arquivo físico (como o corpus de leads ou base de feedbacks) deve ocorrer através de arquivo temporário seguido de substituição rápida no sistema operacional.
+
+---
+
+## 5. Fluxo de Desenvolvimento (BDD & SDD-to-Code Loop)
+
+Toda evolução ou correção no código do produto segue rigorosamente o padrão **SDD-to-Code Loop**:
+
+1.  **Contratos Baseados em Pydantic:** Derivar ou estender os modelos de dados no arquivo [contracts.py](https://github.com/issei/SocialSelling/tree/main/src/socialselling/contracts.py).
+2.  **BDD / Gherkin:** Criar ou alterar cenários formais em arquivos `.feature` sob `tests/features/`.
+3.  **Fixtures Mocks:** As chamadas de rede reais são expressamente proibidas na execução de testes. Devem ser gravadas respostas reais de API em `tests/fixtures/` e utilizadas com mocks determinísticos.
+4.  **Implementação Mínima:** Desenvolver apenas o necessário para fazer com que os cenários BDD passem.
+5.  **Quality Gate Local:** Garantir que o gate passe limpo executando:
+6.  **Integração por PR:** Todo trabalho em código deve ser feito em branch secundária (`feat/...`). O merge para `main` é feito via Pull Request com o comando `gh pr create --fill` seguido de auto-merge squash `gh pr merge --squash --auto --delete-branch`.
+
+---
+
+## 6. Agendamento e Modo Operacional (Dia vs. Noite)
+
+Adota-se uma separação estrita de comportamento dependendo do período de trabalho para otimizar os custos/cotas de tokens da API:
+
+*   **Sessão de Dia (Interativa):** Destinada à **autoria, especificação e curadoria de tarefas**.
+    *   Foco em atualizar ADRs, contratos, documentação, tooling e gerenciar o board de tarefas (GitHub Project).
+    *   Qualquer tarefa a ser desenvolvida deve ser rascunhada como uma card no Backlog seguindo o template do [dor-dod.md](https://github.com/issei/SocialSelling/tree/main/docs/governance/dor-dod.md#L84).
+    *   A card só pode ser movida para **Todo** se atender 100% do **Definition of Ready (DoR)** (sem ambiguidades, Gherkin feliz/degradado/open-world definidos, fixtures mapeadas, fatiado em 1 Work Unit).
+    *   **Não implementar código de produto no período diurno** (exceto sob ordens expressas do proprietário ou hotfixes críticos).
+*   **Sessão de Noite (Run Autônomo):** O run diário agendado consome a coluna **Todo** do board e executa de forma autônoma (via skill `github-sdd-sync`).
+    *   O run revalida o DoR antes de começar a codificar. Se estiver incompleto, bloqueia a card.
+    *   Implementa o código e valida se a card atende 100% do **Definition of Done (DoD)** (BDD verde, sem rede real, gate de qualidade ruff/mypy limpo, commits convencionais integrados via PR com CI verde, PROGRESS e lições atualizados).
+
+---
+
+## 7. Padrões de Engenharia Importantes (Combinados)
+
+Com o tempo e evolução do projeto, vários padrões de engenharia foram institucionalizados com base em lições aprendidas:
+
+### A. Garantia de Determinismo (L-012, L-052)
+*   **IDs Estáveis:** IDs de leads e evidências devem ser hashes SHA-256 estáveis do conteúdo/URL truncados em 16 caracteres (ex: `sha256(query|url)[:16]`). Nunca usar UUIDs gerados dinamicamente.
+*   **Relógios Injetados:** Parâmetros de tempo (`now: datetime`) devem ser injetados para assegurar reprodutibilidade de data/hora nos testes.
+*   **Asserções Numéricas:** Comparações de float nos testes devem utilizar `abs(a - b) <= 1e-9` para evitar flutuações de ponto flutuante.
+
+### B. Gestão de Cotas e Billing das APIs (L-028, L-030, L-033, L-057)
+*   **Escada de Enriquecimento (Apollo):** endpoints pagos de alta granularidade (como revelação de contatos de e-mail/telefone) só devem ser chamados para os Top-N leads que já passaram pelas podas/filtros anteriores gratuitos (People Search).
+*   **Cache Persistente Integrado:** Cada hit no cache é um crédito economizado. TTLs variam por volatilidade (Tavily/Apollo Discovery: 24 horas; Apollo Firmografia: 30 dias; Dados de contato revelados: 90+ dias).
+*   **Gemini em Lote (Batch):** Extração em lotes de evidências por chamada API para mitigar os limites de requisições por minuto/dia (RPD) do Gemini.
+*   **Ledger de Crédito Frio:** Persistência do consumo histórico local em JSON atômico ([CreditLedger](https://github.com/issei/SocialSelling/tree/main/src/socialselling/apollo/schemas.py)) para controle financeiro dos sensores.
+*   **Transparência de Erro:** Em caso de estouro de limites ou problemas de cobrança da API externa (HTTP 429 ou erro de faturamento "prepayment credits depleted"), os logs e a interface de usuário devem expor a mensagem crua de erro do provedor (502 Gateway Error com a causa acionável), em vez de falharem silenciosamente.
+
+### C. Corpus de Leads Acumulativo (ADR-006, L-034, L-054)
+*   **Banco de Dados JSON local:** O arquivo `leads_corpus.json` armazena todos os leads gerados em runs anteriores. Novos runs executam um upsert idempotente por `company_id`.
+*   **Busca por Ondas (Waves):** Para encontrar novos leads sem repetir queries, o sistema varia o texto das buscas sequencialmente a cada nova onda (ex: alterando modificadores de indústria, cargo e localização geograficamente de forma determinística).
+
+### D. Aprendizado Baseado em Feedback (ADR-007, L-052, L-053)
+*   **Treinamento Determinístico:** A aplicação suporta feedback do usuário (likes/dislikes 👍/👎 no painel web). Isso treina um modelo de Regressão Logística em Python puro (sem bibliotecas externas) de forma 100% determinística (gradiente full-batch, pesos inicializados em zero, sem fator random).
+*   **Salvaguardas de Aplicação:** Os pesos calculados de Fit e Intent são atualizados com travas de segurança:
+    1.  *Amostra Mínima:* Exige pelo menos $N$ likes e $M$ dislikes cadastrados para treinar.
+    2.  *Regularização L2:* Evita sobreajustes.
+    3.  *Shrinkage:* Reduz oscilações bruscas nos pesos a partir dos pesos atuais configurados.
+    4.  *Clamp/Normalização:* Mantém os pesos na escala correta da fórmula linear.
+
+---
+
+## 8. Estrutura de Pastas e Organização
+
+A organização de diretórios do repositório está disposta de forma a manter o isolamento de cada subsistema:
+
+*   [`config/`](https://github.com/issei/SocialSelling/tree/main/config/): Arquivos de configuração estáticos e dinâmicos.
+    *   `runtime.toml`: Limiares, pesos de score, habilitadores de features e limites financeiros.
+    *   `hypotheses_catalog.json`: Catálogo base das hipóteses cognitivas de intenção.
+*   [`docs/`](https://github.com/issei/SocialSelling/tree/main/docs/): Documentações conceituais e decisões do projeto.
+    *   `decisions/`: Registro de decisões arquiteturais (ADRs 000 a 007).
+    *   `governance/`: Definições de fluxo de trabalho (DoR/DoD, Modo Operacional, DevOps).
+    *   `planning/`: Roadmaps e planos de execução das entregas.
+    *   `licoes-aprendidas.md`: Registro contínuo de aprendizados empíricos.
+*   [`src/socialselling/`](https://github.com/issei/SocialSelling/tree/main/src/socialselling/): Código-fonte da aplicação.
+    *   `contracts.py`: Modelos de dados Pydantic (único ponto de declaração de contratos).
+    *   `orchestrator.py`: Pipeline unificado síncrono.
+    *   `core/`: Implementação da lógica subjetiva, matemática e manipulação de arquivos.
+    *   `modules/`: Implementação isolada de M1 a M5.
+    *   `skills/`: Utilitários locais (busca Tavily, cognição Gemini, etc).
+    *   `apollo/`: Clientes REST, esquemas e regras da integração Apollo.
+    *   `corpus/`: Lógica de gerenciamento do corpus de leads acumulativo.
+    *   `learning/`: Modelo de regressão para aprendizado dos feedbacks da operadora.
+    *   `web/`: Servidor de cockpit local utilizando FastAPI para visualização interativa do ranking de leads, cockpit de pesos e botões de prospecção.
+*   [`data/`](https://github.com/issei/SocialSelling/tree/main/data/): Pasta local (gitignored) contendo o corpus, caches locais e ledgers de faturamento.
+*   [`tests/`](https://github.com/issei/SocialSelling/tree/main/tests/): Diretório de suítes de validação local.
+    *   `features/`: Cenários Gherkin separados por módulo ou teste integrado de fumaça.
+    *   `fixtures/`: Respostas estáticas em formato JSON para mock completo de rede externa.
+
+---
+
+## 9. Comandos Úteis e Operação
+
+Abaixo estão listados os principais comandos suportados na máquina de desenvolvimento local:
+
+### Instalação e Configuração
+```powershell
+# Criação do ambiente virtual no Windows
+py -m venv .venv
+
+# Ativação do ambiente virtual
+.venv\Scripts\Activate.ps1
+
+# Instalação das dependências de desenvolvimento
+pip install -e ".[dev]"
+
+# Instalação das dependências para interface Web
+pip install -e ".[web]"
+
+# Copiar variáveis de ambiente padrão
+cp .env.example .env
+```
+
+### Validação de Qualidade (Quality Gate)
+Deve ser executado localmente antes de qualquer tentativa de merge ou commit estável.
+```powershell
+# Rodar o script unificado do Gate de Qualidade
+.\scripts\gate.ps1
+```
+*(Executa a verificação estrita do Ruff linter, Mypy tipagem estrita e os cenários do Pytest-bdd)*
+
+### Execução via Linha de Comando (CLI)
+```powershell
+# Execução do pipeline completo para um ICP específico
+py -m socialselling.orchestrator --icp config/icp_criteria.example.json
+```
+
+### Execução da Interface Gráfica Local (Cockpit Web)
+```powershell
+# Inicia o servidor web do cockpit local na porta 8000
+py -m socialselling.web
+```
+*(Acesse em http://127.0.0.1:8000 para rodar prospecções interativamente, marcar likes/dislikes e recalibrar pesos)*
