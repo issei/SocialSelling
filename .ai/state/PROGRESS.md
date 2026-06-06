@@ -6,7 +6,15 @@
 ## Estado atual
 - **marco_atual:** ✅ **Export CSV de leads** (PR #67, `v0.18.0`). Endpoint `GET /api/run/{run_id}/export.csv` serializa Lead Cards em CSV UTF-8+BOM com delimitador `;`, sem scoring. Funcao pura `leads_to_csv` determinística; 183 testes verdes.
 - **ultima_tag_verde:** `v0.17.0` (feedback+incremental; 159 testes verdes) → `v0.18.0` (export CSV; 183 testes verdes)
-- **proxima_acao:** Card "Web: botao Exportar CSV na lista de leads" (Priority: Media) em Todo — adicionar botao no front-end que chama o endpoint do PR #67. Verificacao manual (front-end sem harness pytest). **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar. **Refinamentos diferidos (V1+):** determinístico-primeiro (ADR-005), process-only-new (ADR-006), LangGraph (ADR-003).
+- **proxima_acao:** **[Proveniência GTM]** 4 cards especificados (DoR 100%) em Backlog — aguardam aprovação do dono para mover para Todo e iniciar sequência:
+  - **#70 WU-A** `feat: DataProvenance — contrato + metadados de hipóteses` (Priority: Alta) — fundação; sem dependências; tag `v0.18.1`.
+  - **#71 WU-B** `feat: M5 — propagação evidence_index → Driver.references` (Priority: Alta) — depende de WU-A; tag `v0.18.2`.
+  - **#72 WU-C** `feat: ICP Profile — CRUD + CLI --profile` (Priority: Alta) — paralela a WU-A/B; tag `v0.18.3`.
+  - **#73 WU-D** `feat: UI — wizard guiado + gestor de perfis + badges` (Priority: Media) — depende de WU-A + WU-B + WU-C; tag `v0.19.0` (marco Proveniência GTM completa).
+  - Sequência de merge: WU-A → WU-B (serial); WU-C (paralela a WU-A/B); WU-D (última).
+  - Card "Web: botao Exportar CSV" (Priority: Media) em Todo — pode ser feito antes ou em paralelo com WU-C.
+  - **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar.
+  - **Refinamentos diferidos (V1+):** determinístico-primeiro (ADR-005), process-only-new (ADR-006), LangGraph (ADR-003).
 - **wu_em_andamento:** — (PR #67 mergeado)
 - **passo_atual:** — (`main` verde, 183 testes; gate via `.venv\Scripts\python.exe -m …`)
 
