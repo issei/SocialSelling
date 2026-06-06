@@ -37,6 +37,12 @@ M1 Busca/Tavily → M2 Extração/Gemini → M3 Score → M4 Ranking → M5 Expl
 
 APIs externas **sempre mockadas** nos testes com fixtures gravadas. Asserções numéricas com tolerância `abs(a-b) <= 1e-9`.
 
+> **DoR/DoD (portões de qualidade das cards):** `docs/governance/dor-dod.md`. **DoR** = a card está
+> pronta para ir de Backlog→Todo (objetivo, contrato, Gherkin, fixtures, sem ambiguidade); **DoD** =
+> pode ir de In Progress→Done (gate verde, PR mergeado, PROGRESS/lições atualizados). Toda LLM que
+> **cria** specs/tarefas usa o **template de card** de lá; o run que **desenvolve** revalida o DoR
+> ao pegar a card e exige o DoD ao fechar.
+
 ## 5. Guardrails anti-overengineering (o que NÃO fazer no PoC)
 - ❌ Banco de dados, ORM, migrations, Redis, Celery, RabbitMQ, FastAPI, Docker, AWS/Terraform.
 - ❌ Lógica subjetiva ω, Bayesiano recursivo, KL/EIG, RRF, MMR, capture-recapture (são V1+).
@@ -88,6 +94,7 @@ logs/     cognitive_trace.jsonl
 - **Versionamento/rollback:** `docs/planning/versioning-strategy.md` (tags = pontos de restauração).
 - **Operação autônoma (plano Pro):** `docs/planning/autonomous-ops.md` + âncora de estado `.ai/state/PROGRESS.md`.
 - **Práticas:** `docs/governance/devops-sre-iac.md`. CI em `.github/workflows/ci.yml`.
+- **DoR/DoD (criação e conclusão de cards):** `docs/governance/dor-dod.md` — portões de qualidade por coluna do board (Backlog→Todo→In Progress→Done) + **template de card**. Obrigatório para qualquer LLM que **cria** specs/tarefas ou que as **desenvolve**.
 - **Regra de resume:** todo run autônomo LÊ `.ai/state/PROGRESS.md` no início e o ATUALIZA no fim. Setup do zero: `./scripts/bootstrap.ps1`.
 
 ## 9. Checklist de revisão (antes de cada commit)

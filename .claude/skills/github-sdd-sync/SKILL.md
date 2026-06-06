@@ -8,7 +8,8 @@ description: Avanca a proxima Unidade de Trabalho (WU) do SocialSelling pelo SDD
 Voce e Engenheiro de Software Senior + Gerente de Automacao. Pega UMA WU por vez, executa
 o SDD-to-Code Loop com gates, entrega via PR e mantem o board do GitHub Projects refletindo
 o estado real. **Leia antes:** `CLAUDE.md` (secoes 3, 4, 5, 9), `.ai/state/PROGRESS.md`,
-`docs/decisions/ADR-000-escopo-canonico.md`. Respeite os guardrails anti-overengineering.
+`docs/decisions/ADR-000-escopo-canonico.md`, `docs/governance/dor-dod.md` (DoR/DoD).
+Respeite os guardrails anti-overengineering.
 
 > **Fonte da verdade do "onde paramos" = `.ai/state/PROGRESS.md`.** O board do GitHub Projects
 > e um espelho. Se os dois divergirem, o PROGRESS.md ganha e o board e corrigido.
@@ -32,9 +33,17 @@ gh project list --owner "@me"
   reporte o estado, aponte `proxima_acao` (que pode ser opcional/calibracao) e pergunte ao
   usuario qual WU iniciar.
 
-### 2. Mover card → In Implementation (se houver board)
+### 1b. Revalidar o DoR (antes de codar)
+Cheque a card contra o **Definition of Ready** (`docs/governance/dor-dod.md`): objetivo claro,
+contrato/ADR, Gherkin (feliz+degradado+open-world), fixtures identificadas, sem ambiguidade,
+dentro do escopo. **Se faltar algo essencial** (decisao de fronteira em aberto, contrato
+indefinido, rede real/entitlement nao resolvido — ex.: Apollo pago, L-056): **NAO adivinhe** —
+escreva `BLOCKED: <motivo>` no `PROGRESS.md`, devolva a card para **Backlog** e pare. Isso e falha
+de DoR, nao de implementacao.
+
+### 2. Mover card → In Progress (se houver board)
 ```
-gh project item-edit --id <ITEM_ID> --field-id <STATUS_FIELD> --single-select-option-id <IN_IMPL>
+gh project item-edit --id <ITEM_ID> --field-id <STATUS_FIELD> --single-select-option-id <IN_PROGRESS>
 ```
 Anuncie o comando ao usuario (diretriz de Transparencia). Sem board: marque `wu_em_andamento`
 e `passo_atual` no PROGRESS.md.
@@ -57,12 +66,19 @@ Rode `./scripts/gate.ps1` (Windows, usa `py`/`.venv`) ou `./scripts/gate.sh` (WS
 Falha de gate: **mostre o log real** (sem mascarar), apresente o plano de correcao, corrija e
 reexecute. NAO avance enquanto nao estiver totalmente verde.
 
-### 5. Entrega & sincronizacao
-- Branch por mudanca (`feat/...`), commit referenciando os cenarios cobertos. **Nunca** commit
-  direto na `main`. PR: `gh pr create --base main --fill` → `gh pr merge --squash --auto --delete-branch`.
-- Board (se houver): mova o card para **In Review**.
-- Atualize `.ai/state/PROGRESS.md`: marque a WU em revisao/concluida, atualize `proxima_acao`,
-  `ultima_tag_verde` e a tabela de Historico.
+### 5. Entrega & DoD (In Progress → Done)
+So feche a card quando **100% do Definition of Done** (`docs/governance/dor-dod.md`) estiver
+satisfeito: BDD verde+deterministico, fixtures commitadas (sem rede), gate completo verde,
+invariantes (§3) e escopo (§5) preservados, PROGRESS + licoes atualizados.
+- Branch por mudanca (`feat/...`/`fix/...`), commit referenciando os cenarios cobertos. **Nunca**
+  commit direto na `main`. PR: `gh pr create --base main --fill` → `gh pr merge --squash --auto --delete-branch`.
+- Atualize `.ai/state/PROGRESS.md` (WU concluida, `proxima_acao`, `ultima_tag_verde`, Historico) e
+  as licoes — **no mesmo PR**.
+- Board (se houver): **so depois do merge** com CI verde, mova o card para **Done** (link do PR no
+  corpo). Tag `vX.Y.Z` se a WU fechou um marco.
+- **Fail-closed (DoD §9):** gate vermelho apos 2 tentativas / bloqueio externo → **nao** marque
+  Done; deixe a card em In Progress (ou devolva a Backlog), PR aberto/nao mergeado, `BLOCKED:` no
+  PROGRESS.md, e reporte o log real.
 
 ### 6. Auto-learning (sempre ao final)
 Acrescente aprendizados em `docs/licoes-aprendidas.md` (formato `L-NNN`). Passo repetido/
