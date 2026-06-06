@@ -42,6 +42,7 @@ from socialselling.signals import DISQUALIFIER_VOCAB, intent_vocab
 from socialselling.skills.apollo_client import ApolloClient, ApolloSearchClient
 from socialselling.skills.gemini_client import CognitionClient, GeminiClient
 from socialselling.skills.tavily_client import SearchClient, TavilyClient
+from socialselling.web.schemas import ICPProfile, apply_profile_to_catalog
 
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -262,11 +263,14 @@ def render_report(cards: list[LeadCard]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="SocialSelling — pipeline M1→M5 (PoC).")
-    parser.add_argument("--icp", required=True, help="caminho do icp_criteria.json")
+    parser.add_argument("--icp", default=None, help="caminho do icp_criteria.json")
+    parser.add_argument("--profile", default=None, help="profile_id em config/icp_profiles/")
     parser.add_argument("--out", default=str(_ROOT / "data" / "prospects_ranked.json"))
     parser.add_argument("--config", default=str(_ROOT / "config" / "runtime.toml"))
     parser.add_argument("--hypotheses", default=str(_ROOT / "config" / "hypotheses_catalog.json"))
     args = parser.parse_args(argv)
+    if not args.icp and not args.profile:
+        parser.error("forneça --icp ou --profile")
 
     cfg = load_runtime(Path(args.config))
     env = load_env(_ROOT / ".env")
@@ -276,10 +280,26 @@ def main(argv: list[str] | None = None) -> int:
         print("ERRO: TAVILY_API_KEY/GEMINI_API_KEY ausentes no .env", file=sys.stderr)
         return 1
 
-    icp = ICPCriteria.model_validate(json.loads(Path(args.icp).read_text("utf-8")))
-    hypotheses = HypothesisCatalog.model_validate(
+    base_hypotheses = HypothesisCatalog.model_validate(
         json.loads(Path(args.hypotheses).read_text("utf-8"))
     )
+    if args.profile:
+        if args.icp:
+            print("WARN: --profile tem precedência sobre --icp", file=sys.stderr)
+        profiles_dir = _ROOT / "config" / "icp_profiles"
+        profile_path = profiles_dir / f"{args.profile}.json"
+        if not profile_path.exists():
+            print(
+                f"ERRO: perfil '{args.profile}' não encontrado em {profiles_dir}",
+                file=sys.stderr,
+            )
+            return 1
+        profile = ICPProfile.model_validate(json.loads(profile_path.read_text("utf-8")))
+        icp = ICPCriteria.model_validate(profile.icp_criteria)
+        hypotheses = apply_profile_to_catalog(profile, base_hypotheses)
+    else:
+        icp = ICPCriteria.model_validate(json.loads(Path(args.icp).read_text("utf-8")))
+        hypotheses = base_hypotheses
 
     # Sensor Apollo opt-in (ADR-004): só ativa com [apollo].enabled + chave presente.
     apollo: ApolloSearchClient | None = None

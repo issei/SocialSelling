@@ -6,6 +6,7 @@ e delega ao núcleo. Mantém o núcleo (M1–M5) intocado (ADR-002).
 
 from __future__ import annotations
 
+import contextlib
 import csv
 import io
 import json
@@ -14,6 +15,7 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from socialselling.config import load_env, load_runtime
 from socialselling.contracts import HypothesisCatalog, ICPCriteria, LeadCard
@@ -32,6 +34,7 @@ from socialselling.skills.gemini_client import (
     RateLimitError,
 )
 from socialselling.skills.tavily_client import TavilyClient
+from socialselling.web.schemas import ICPProfile, ICPProfileCreate
 
 _ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CONFIG_DIR = _ROOT / "config"
@@ -284,6 +287,93 @@ _CSV_HEADERS = [
     "Nome", "Empresa", "Cargo", "Setor", "Localizacao",
     "Instagram", "LinkedIn", "Website", "E-mail", "Telefone", "Fontes",
 ]
+
+
+_PROFILES_SUBDIR = "icp_profiles"
+_ACTIVE_PROFILE_FILE = "active_profile.json"
+
+
+def _slugify(name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+    return slug or "profile"
+
+
+def load_profiles(config_dir: Path) -> list[ICPProfile]:
+    """Lê todos os perfis de config/icp_profiles/. Retorna [] se diretório inexistente."""
+    pd = config_dir / _PROFILES_SUBDIR
+    if not pd.exists():
+        return []
+    profiles: list[ICPProfile] = []
+    for p in sorted(pd.glob("*.json")):
+        with contextlib.suppress(Exception):
+            profiles.append(ICPProfile.model_validate(json.loads(p.read_text(encoding="utf-8"))))
+    return profiles
+
+
+def save_profile(profile: ICPProfile, config_dir: Path) -> None:
+    """Valida hypothesis_ids e grava o perfil atomicamente."""
+    catalog_path = config_dir / "hypotheses_catalog.json"
+    if catalog_path.exists():
+        catalog = HypothesisCatalog.model_validate(
+            json.loads(catalog_path.read_text(encoding="utf-8"))
+        )
+        valid_ids = {h.hypothesis_id for h in catalog.hypotheses}
+        invalid = {hid for hid in profile.hypotheses_config if hid not in valid_ids}
+        if invalid:
+            raise ValueError(f"hypothesis_id desconhecido(s): {', '.join(sorted(invalid))}")
+    pd = config_dir / _PROFILES_SUBDIR
+    pd.mkdir(parents=True, exist_ok=True)
+    path = pd / f"{profile.profile_id}.json"
+    atomic_write_text(path, json.dumps(profile.model_dump(), ensure_ascii=False, indent=2) + "\n")
+
+
+def create_profile(req: ICPProfileCreate, config_dir: Path, *, now: datetime) -> ICPProfile:
+    """Gera profile_id + created_at e delega para save_profile."""
+    uid = str(uuid4())[:8]
+    profile = ICPProfile(
+        profile_id=f"{_slugify(req.name)}_{uid}",
+        name=req.name,
+        description=req.description,
+        icp_criteria=req.icp_criteria,
+        hypotheses_config=req.hypotheses_config,
+        created_at=now.isoformat(),
+    )
+    save_profile(profile, config_dir)
+    return profile
+
+
+def delete_profile(profile_id: str, config_dir: Path) -> None:
+    """Remove o arquivo do perfil; levanta FileNotFoundError se não existir."""
+    path = config_dir / _PROFILES_SUBDIR / f"{profile_id}.json"
+    if not path.exists():
+        raise FileNotFoundError(profile_id)
+    path.unlink()
+
+
+def activate_profile(profile_id: str, config_dir: Path) -> None:
+    """Marca o perfil como ativo via active_profile.json (escrita atômica)."""
+    if not (config_dir / _PROFILES_SUBDIR / f"{profile_id}.json").exists():
+        raise FileNotFoundError(profile_id)
+    active_path = config_dir / _ACTIVE_PROFILE_FILE
+    atomic_write_text(
+        active_path,
+        json.dumps({"profile_id": profile_id}, ensure_ascii=False) + "\n",
+    )
+
+
+def load_active_profile(config_dir: Path) -> ICPProfile | None:
+    """Retorna o perfil ativo ou None se não houver."""
+    active_path = config_dir / _ACTIVE_PROFILE_FILE
+    if not active_path.exists():
+        return None
+    data: dict[str, Any] = json.loads(active_path.read_text(encoding="utf-8"))
+    profile_id = data.get("profile_id", "")
+    if not profile_id:
+        return None
+    profile_path = config_dir / _PROFILES_SUBDIR / f"{profile_id}.json"
+    if not profile_path.exists():
+        return None
+    return ICPProfile.model_validate(json.loads(profile_path.read_text(encoding="utf-8")))
 
 
 def leads_to_csv(cards: list[LeadCard]) -> str:
