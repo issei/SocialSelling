@@ -4,11 +4,11 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **Aprendizado por feedback (ADR-007)** + **busca incremental acumulativa na UI (ADR-006)**. Like/dislike no cockpit → regressão logística (Python puro, determinística) reajusta `w_fit`/`w_intent` (auto-apply com travas). Cada "Executar Prospecção" acumula no corpus e avança a onda (queries variadas → leads novos), ordenado por score. Tudo opt-in/paridade. PR #54 (feedback) mergeado; busca incremental no PR seguinte. `v0.17.0`.
-- **ultima_tag_verde:** `v0.16.0` (UI: tabela de leads + drawer; 123 testes verdes) → próxima `v0.17.0` (feedback+incremental; 159 testes verdes)
-- **proxima_acao:** **(BLOQUEADO — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais supervisionado (`scripts/record_apollo_fixtures.py`; o Free retorna 403 `API_INACCESSIBLE`, não há acesso de API a People Search no tier gratuito) + ligar `[apollo].enabled`/`[corpus].enabled`/`[gemini].rpd_enabled` num run real e calibrar (mapeamento ICP→filtros é heurístico, L-024). **Refinamentos diferidos (V1+):** determinístico-primeiro (ADR-005), process-only-new (ADR-006), LangGraph (ADR-003, motor opcional) — ver §status no roadmap.
-- **wu_em_andamento:** — (todas as WUs de volume mergeadas; PRs #33/#35/#37→#46)
-- **passo_atual:** — (`main` verde, 120 testes; `.env` com APOLLO_API_KEY; gate via `.venv\Scripts\python.exe -m …`)
+- **marco_atual:** ✅ **Export CSV de leads** (PR #67, `v0.18.0`). Endpoint `GET /api/run/{run_id}/export.csv` serializa Lead Cards em CSV UTF-8+BOM com delimitador `;`, sem scoring. Funcao pura `leads_to_csv` determinística; 183 testes verdes.
+- **ultima_tag_verde:** `v0.17.0` (feedback+incremental; 159 testes verdes) → `v0.18.0` (export CSV; 183 testes verdes)
+- **proxima_acao:** Card "Web: botao Exportar CSV na lista de leads" (Priority: Media) em Todo — adicionar botao no front-end que chama o endpoint do PR #67. Verificacao manual (front-end sem harness pytest). **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar. **Refinamentos diferidos (V1+):** determinístico-primeiro (ADR-005), process-only-new (ADR-006), LangGraph (ADR-003).
+- **wu_em_andamento:** — (PR #67 mergeado)
+- **passo_atual:** — (`main` verde, 183 testes; gate via `.venv\Scripts\python.exe -m …`)
 
 ### Status de implementação das specs (2026-06-04)
 | Spec | Estado | Tags |
@@ -20,7 +20,7 @@
 | ADR-003 LangGraph (motor async opcional) | ⏸️ diferido (opcional por design; pipeline síncrono é o default/oráculo) | — |
 - **branch:** `main`
 - **bloqueios:** **Apollo People Search API exige plano PAGO** — chave Free retorna 403 `API_INACCESSIBLE` (L-056). Card "Gravar fixtures Apollo reais" movido p/ **Backlog** até upgrade do plano. Runtime não quebra (degrada p/ Tavily em 403); só o recording de fixtures fica bloqueado. Demais: nenhum.
-- **board (espelho):** GitHub Project #1 "SocialSelling — SDD Roadmap" — https://github.com/users/issei/projects/1 (populado de PROGRESS.md via `scripts/setup_github_project.ps1`). Colunas: **Backlog** (especs/tarefas ainda não aprovadas, 5 cards) → **Todo** (aprovado p/ dev — fila do run autônomo diário) → **In Progress** → **Done** (20 cards). Fonte da verdade continua aqui; board é espelho (skill `github-sdd-sync`).
+- **board (espelho):** GitHub Project #1 "SocialSelling — SDD Roadmap" — https://github.com/users/issei/projects/1 (populado de PROGRESS.md via `scripts/setup_github_project.ps1`). Colunas: **Backlog** (especs/tarefas ainda não aprovadas, 5 cards) → **Todo** (1 card: botao Exportar CSV) → **In Progress** → **Done** (22 cards). Fonte da verdade continua aqui; board é espelho (skill `github-sdd-sync`).
 
 ### Plano de orquestração (modo bypass — green→auto-merge→tag)
 Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/corpus (paralelos) → A3 (fixtures, precisa chave✓) → A4 ladder+M1 → A5 org-enrich → ADR-005 batch+determinístico-primeiro → ADR-006 wiring corpus no orquestrador → C/D**. Cada WU: branch `feat/…` → contrato → BDD/testes (sem rede; APIs mockadas) → impl → gate (`ruff`+`mypy --strict`+`pytest`) → PR `--squash --auto` → tag `v0.13.x`/`v0.14.0`. Falha de gate = não merge (rollback via última tag).
@@ -56,3 +56,4 @@ Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/co
 | 2026-06-04 | Specs de volume completas (foreground) | ADR-006 corpus no orquestrador (#42); ADR-005 batch+RPD no M2 (#43); ADR-004 degrau 3 reveal+credito (#44); degrau 2 org-enrich (#45); script de fixtures (#46). Escada Apollo completa; 120 testes verdes | `v0.15.0`→`v0.15.3` |
 | 2026-06-04 | Overview + UI redesenhada | overview HTML do projeto (#48); SDD UX + lista de leads em TABELA + drawer de detalhes enriquecidos (#49). Backend inalterado; 123 testes verdes. Licoes L-046/47/48 | `v0.15.4`,`v0.16.0` |
 | 2026-06-04 | Feedback (ADR-007) + busca incremental (ADR-006) | like/dislike → regressão logística (Python puro, determinística) reajusta pesos com auto-apply travado (#54); corpus acumulativo + ondas variam queries na UI p/ leads novos, ordenado por score. Opt-in/paridade; 159 testes verdes. Lições L-052..055 | `v0.17.0` |
+| 2026-06-06 | Export CSV de leads (sem scoring) | Funcao pura leads_to_csv + endpoint GET /api/run/{run_id}/export.csv; UTF-8+BOM, delimitador ";", sem rank/score.*; 11 novos testes; 183 testes verdes. Lições L-058/059 | `v0.18.0` |
