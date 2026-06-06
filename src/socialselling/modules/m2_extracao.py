@@ -8,7 +8,8 @@ semântico estrito. Toda inferência carrega `confidence` e `derived_from`
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+from urllib.parse import urlparse
 
 from socialselling.contracts import (
     CompanyEntity,
@@ -23,6 +24,43 @@ from socialselling.skills.gemini_client import (
     GeminiError,
     RateLimitError,
 )
+
+if TYPE_CHECKING:
+    from socialselling.corpus.store import CorpusStore
+
+# Domínios genéricos / sociais que não identificam uma empresa específica.
+_GENERIC_DOMAINS: frozenset[str] = frozenset({
+    "instagram.com",
+    "linkedin.com",
+    "facebook.com",
+    "twitter.com",
+    "x.com",
+    "youtube.com",
+    "t.co",
+    "bit.ly",
+    "google.com",
+    "google.com.br",
+    "bing.com",
+    "tavily.com",
+})
+
+
+def _company_domain(url: str) -> str | None:
+    """Extrai o domínio canônico de empresa da URL (strip www., filtra genéricos).
+
+    Retorna None para domínios de redes sociais, agregadores ou URLs inválidas —
+    esses não identificam uma empresa única e não devem ser usados como chave de cache.
+    """
+    try:
+        host = urlparse(url).netloc.lower().removeprefix("www.")
+        if not host:
+            return None
+        base = host.split(":")[0]  # remove porta se houver
+        if base in _GENERIC_DOMAINS or any(base.endswith("." + d) for d in _GENERIC_DOMAINS):
+            return None
+        return base
+    except Exception:
+        return None
 
 _PROMPT_HEADER = (
     "Voce e um extrator de LEADS (empresarias fundadoras de servicos) e dados de "
@@ -189,6 +227,7 @@ def run_m2(
     disqualifier_vocab: list[str],
     batch_size: int = 50,
     request_budget: RequestBudget | None = None,
+    corpus_store: CorpusStore | None = None,
 ) -> list[Inference]:
     """Executa o M2 em LOTES (ADR-005): chunking determinístico, 1 chamada Gemini por lote.
 
@@ -196,12 +235,41 @@ def run_m2(
     `request_budget` (RPD, opt-in) só é debitado em cache MISS (chamada real); esgotado,
     o lote é PULADO (degrada, sem erro) e fica para uma onda futura — ondas resumíveis.
     Determinismo: evidências ordenadas por evidence_id antes do chunking.
+
+    ADR-006 process-only-new: `corpus_store` ativa o skip de re-extração. Evidências cujo
+    domínio de source_url tem extração válida no corpus são excluídas do lote Gemini e
+    retornam a inferência cacheada. Evidências com domínio pendente/ausente passam pelo
+    Gemini normalmente. Após extração bem-sucedida, a inferência é persistida no corpus
+    keyed pelo domínio de company.website (da inferência extraída).
     """
     observed = [ev for ev in evidences if not ev.missing_evidence]
     if not observed:
         return []
-    ordered = sorted(observed, key=lambda e: e.evidence_id)
+
     out: list[Inference] = []
+
+    # process-only-new: filtrar evidências cujo domínio já tem extração válida no corpus.
+    if corpus_store is not None:
+        to_process: list[ObservedEvidence] = []
+        seen_domains: set[str] = set()
+        for ev in observed:
+            d = _company_domain(ev.source_url)
+            if d is not None:
+                cached = corpus_store.get_cached_inference(d)
+                if cached is not None:
+                    if d not in seen_domains:
+                        seen_domains.add(d)
+                        inf = Inference.model_validate(cached)
+                        # Atualiza derived_from para o evidence_id atual (rastreabilidade).
+                        out.append(inf.model_copy(update={"derived_from": [ev.evidence_id]}))
+                    continue  # skip: já no corpus
+            to_process.append(ev)
+        observed = to_process
+
+    if not observed:
+        return out
+
+    ordered = sorted(observed, key=lambda e: e.evidence_id)
     for start in range(0, len(ordered), max(1, batch_size)):
         chunk = ordered[start : start + max(1, batch_size)]
         prompt = build_prompt(chunk, intent_vocab, disqualifier_vocab)
@@ -209,6 +277,12 @@ def run_m2(
         if payload is None:
             # RPD: só consome orçamento quando vai REALMENTE chamar (cache miss).
             if request_budget is not None and not request_budget.try_consume(1):
+                # Marca evidências do lote como pendentes para re-tentativa futura.
+                if corpus_store is not None:
+                    for ev in chunk:
+                        d = _company_domain(ev.source_url)
+                        if d:
+                            corpus_store.mark_pending(d)
                 continue  # orçamento do dia esgotado → pula lote (onda futura)
             try:
                 payload = client.generate_json(prompt)
@@ -216,7 +290,21 @@ def run_m2(
             except (RateLimitError, GeminiError):
                 stale = cache.get_any(prompt)
                 if stale is None:
+                    if corpus_store is not None:
+                        for ev in chunk:
+                            d = _company_domain(ev.source_url)
+                            if d:
+                                corpus_store.mark_pending(d)
                     continue
                 payload = stale
-        out += _parse_inferences(payload, chunk, intent_vocab, disqualifier_vocab)
+        new_infs = _parse_inferences(payload, chunk, intent_vocab, disqualifier_vocab)
+        # Persiste as inferências extraídas no corpus keyed pelo domínio de company.website.
+        if corpus_store is not None:
+            for inf in new_infs:
+                website = inf.company.website
+                if website:
+                    d = _company_domain(website)
+                    if d:
+                        corpus_store.put_cached_inference(d, inf.model_dump())
+        out += new_infs
     return out

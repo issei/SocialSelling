@@ -189,6 +189,8 @@ def run_for_icp(
     waves = WaveStore(_ROOT / cfg.corpus.waves_path) if cfg.corpus.enabled else None
     wave = waves.current(icp_name) if waves is not None else 0
     gemini = _CapturingCognition(GeminiClient(gkey, model=cfg.gemini.model))
+    # Corpus inicializado antes do pipeline para ativar process-only-new (ADR-006).
+    corpus_store = CorpusStore(_ROOT / cfg.corpus.path) if cfg.corpus.enabled else None
     fresh = run_pipeline(
         icp,
         tavily=TavilyClient(tkey),
@@ -198,15 +200,15 @@ def run_for_icp(
         now=now,
         cfg=cfg,
         wave=wave,
+        corpus_store=corpus_store,
     )
-    if not cfg.corpus.enabled:
+    if corpus_store is None:
         cards = fresh
     else:
         # Corpus acumulativo (ADR-006): na UI, cada execução ACUMULA e re-ranqueia o
         # corpus inteiro por score.
-        store = CorpusStore(_ROOT / cfg.corpus.path)
         cards = accumulate_and_rank(
-            store, fresh, now, max_display=cfg.runtime.max_leads_per_cycle
+            corpus_store, fresh, now, max_display=cfg.runtime.max_leads_per_cycle
         )
         # A onda só avança quando o ciclo PRODUZIU leads. Avançar em run vazio "queimaria"
         # ondas boas (cacheadas) quando a busca/cognição degrada — ex.: Gemini 429.
