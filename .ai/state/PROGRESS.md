@@ -9,7 +9,8 @@
 - **proxima_acao:** **🚀 ROADMAP ADR-008 APROVADO PARA EXECUÇÃO — 25 cards em Todo (refinados, DoR 100%)**:
   - **Primeira WU do run noturno: `WU-P1` (Ports de persistência / ABCs)** — sem dependências; é a fundação que habilita a bimodalidade. Ordem de execução = Priority + ordem da coluna (P1..P8 → B1..B7 → I1..I8 → D1, D2). Cada card tem **## Plano de execução** (arquivos-alvo + passos) e DoR `[x]`.
   - **Refinamento (2026-06-07):** os 27 cards do ADR-008 foram refinados (plano de execução + refs validadas contra o código real + DoR marcado) via `scripts/seed_adr008_cards.py --sync`. **25 movidos Backlog→Todo.**
-  - **Mantidos em Backlog (bloqueio):** `WU-X1` (provisionar Cognito — ação externa do dono; publicar `COGNITO_ISSUER`/`COGNITO_AUDIENCE`) e `WU-D3` (deploy auto na main exige Cognito vivo). Liberar após WU-X1 + WU-I2.
+  - **✅ WU-X1 CONCLUÍDA (2026-06-07):** Cognito User Pool `us-east-1_o17XMPejk` + app client `54ofg7c96p74niqbdibfkrtavv` provisionados; GitHub vars `COGNITO_ISSUER`/`COGNITO_AUDIENCE` publicadas. (OIDC: secrets `AWS_ROLE_ARN`/`AWS_REGION` já presentes.)
+  - **Mantido em Backlog:** `WU-D3` (deploy auto na main) — Cognito ✅ resolvido; bloqueio restante = **ordem**: promover para Todo só após `WU-I2` mergeada **e** execução manual de `WU-D2` (deploy da Stateful 1x), senão o deploy auto quebraria por falta dos exports `ss-*`.
   - Plano ordenado + grafo de dependências: `docs/planning/adr-008-backlog-plan.md`. Decisões do dono: prod-único; CD stateless auto / stateful manual; OIDC já configurado (secrets `AWS_ROLE_ARN`/`AWS_REGION`); Cognito pendente.
   - **#73 WU-D** `feat: UI — wizard guiado + gestor de perfis + badges` — depende de WU-A/B/C ✅; tag `v0.19.0`; em **Backlog** (não faz parte do roadmap ADR-008).
   - **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar.
@@ -26,7 +27,7 @@
 | ADR-003 LangGraph (motor async opcional) | ⏸️ diferido (opcional por design; pipeline síncrono é o default/oráculo) | — |
 - **branch:** `main`
 - **bloqueios:** **Apollo People Search API exige plano PAGO** — chave Free retorna 403 `API_INACCESSIBLE` (L-056). Card "Gravar fixtures Apollo reais" movido p/ **Backlog** até upgrade do plano. Runtime não quebra (degrada p/ Tavily em 403); só o recording de fixtures fica bloqueado. Demais: nenhum.
-- **board (espelho):** GitHub Project #1 "SocialSelling — SDD Roadmap" — https://github.com/users/issei/projects/1 (populado de PROGRESS.md via `scripts/setup_github_project.ps1`). Colunas: **Backlog** (5 cards: WU-X1, WU-D3, #73 WU-D + 2 legados) → **Todo** (25 cards do roadmap ADR-008, refinados/DoR 100%) → **In Progress** → **Done**. Fonte da verdade continua aqui; board é espelho (skill `github-sdd-sync`).
+- **board (espelho):** GitHub Project #1 "SocialSelling — SDD Roadmap" — https://github.com/users/issei/projects/1 (populado de PROGRESS.md via `scripts/setup_github_project.ps1`). Colunas: **Backlog** (4 cards: WU-D3, #73 WU-D + 2 legados) → **Todo** (25 cards do roadmap ADR-008, refinados/DoR 100%) → **In Progress** → **Done** (inclui WU-X1 Cognito). Fonte da verdade continua aqui; board é espelho (skill `github-sdd-sync`).
 
 ### Plano de orquestração (modo bypass — green→auto-merge→tag)
 Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/corpus (paralelos) → A3 (fixtures, precisa chave✓) → A4 ladder+M1 → A5 org-enrich → ADR-005 batch+determinístico-primeiro → ADR-006 wiring corpus no orquestrador → C/D**. Cada WU: branch `feat/…` → contrato → BDD/testes (sem rede; APIs mockadas) → impl → gate (`ruff`+`mypy --strict`+`pytest`) → PR `--squash --auto` → tag `v0.13.x`/`v0.14.0`. Falha de gate = não merge (rollback via última tag).

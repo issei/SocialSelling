@@ -27,6 +27,7 @@ PROJECT_ID = "PVT_kwHOAAi2gM4BZ3J3"
 STATUS_FID = "PVTSSF_lAHOAAi2gM4BZ3J3zhUy5Jg"  # Status
 BACKLOG = "6cf82daa"
 TODO = "f75ad846"
+DONE = "98236657"
 PRIO_FID = "PVTSSF_lAHOAAi2gM4BZ3J3zhUzDd8"  # Priority
 PRIO_OPT = {"Alta": "da3cda2e", "Media": "dd378f56", "Baixa": "8ffead41"}
 
@@ -51,11 +52,18 @@ READY = {
     "WU-I1", "WU-I2", "WU-I3", "WU-I4", "WU-I5", "WU-I6", "WU-I7", "WU-I8",
     "WU-D1", "WU-D2",
 }
+# WUs concluidas fora do ciclo de desenvolvimento (acao operacional do dono).
+DONE_CARDS = {"WU-X1"}
+
 BLOCK_REASON = {
-    "WU-D3": "deploy automatico na main exige o Cognito User Pool vivo (issuer/audience). "
-             "Liberar para Todo apos WU-X1 + WU-I2 mergeada.",
-    "WU-X1": "acao operacional do dono FORA do repo (provisionar User Pool e publicar "
-             "COGNITO_ISSUER/COGNITO_AUDIENCE). O run noturno nao desenvolve esta card.",
+    "WU-D3": "Cognito ✅ resolvido (WU-X1: User Pool us-east-1_o17XMPejk + vars publicadas). "
+             "Bloqueio restante = ORDEM: so desenvolver/mergear apos WU-I2 (template stateless) "
+             "e a execucao manual de WU-D2 (deploy da Stateful 1x) — senao o deploy auto na main "
+             "quebraria por falta dos exports ss-*. Promover para Todo nesse ponto.",
+}
+DONE_NOTE = {
+    "WU-X1": "Cognito User Pool `us-east-1_o17XMPejk` + app client `54ofg7c96p74niqbdibfkrtavv` "
+             "provisionados (2026-06-07); GitHub vars COGNITO_ISSUER/COGNITO_AUDIENCE publicadas.",
 }
 
 # Plano de execucao por card (passos concretos + arquivos-alvo, ancorados na arvore real).
@@ -180,9 +188,12 @@ def _dor_block(ready: bool) -> str:
 def build_full(code: str, body: str) -> str:
     """Monta o corpo final: body + plano de execucao + Tamanho + DoR + nota de status."""
     plano = PLANS.get(code, "")
+    done = code in DONE_CARDS
     ready = code in READY
-    full = body + "\n\n" + plano + TAMANHO + _dor_block(ready)
-    if ready:
+    full = body + "\n\n" + plano + TAMANHO + _dor_block(done or ready)
+    if done:
+        full += f"\n\n> ✅ CONCLUÍDA (2026-06-07): {DONE_NOTE.get(code, '')}"
+    elif ready:
         full += "\n\n> ✅ DoR completo (2026-06-07) — refinada e pronta para Todo."
     else:
         full += f"\n\n> ⛔ BLOQUEADO (manter em Backlog): {BLOCK_REASON.get(code, 'ver dependencias')}"
@@ -878,11 +889,12 @@ def cmd_create(dry: bool) -> None:
             print(f"[{i:2}] [{prio:<5}] {title}  (Ready={_code(title) in READY})")
             continue
         print(f"[{i:2}/{len(CARDS)}] criando: {title} (Priority={prio})")
-        full = build_full(_code(title), body)
+        code = _code(title)
+        full = build_full(code, body)
         out = run(["gh", "project", "item-create", NUMBER, "--owner", OWNER,
                    "--title", title, "--body", full, "--format", "json"])
         item_id = json.loads(out)["id"]
-        status = TODO if _code(title) in READY else BACKLOG
+        status = DONE if code in DONE_CARDS else (TODO if code in READY else BACKLOG)
         run(["gh", "project", "item-edit", "--id", item_id, "--project-id", PROJECT_ID,
              "--field-id", STATUS_FID, "--single-select-option-id", status])
         run(["gh", "project", "item-edit", "--id", item_id, "--project-id", PROJECT_ID,
@@ -903,11 +915,15 @@ def cmd_sync(dry: bool) -> None:
         if code not in idx:
             continue
         info = idx[code]
-        ready = code in READY
-        target = "Todo" if ready else "Backlog"
-        move = ready and info["status"] != "Todo"
+        if code in DONE_CARDS:
+            target_name, target_opt = "Done", DONE
+        elif code in READY:
+            target_name, target_opt = "Todo", TODO
+        else:
+            target_name, target_opt = "Backlog", BACKLOG
+        move = info["status"] != target_name
         print(f"  {code}: body+plano | status {info['status']}"
-              + (f" -> {target}" if move else f" (mantem {info['status']})"))
+              + (f" -> {target_name}" if move else f" (mantem {info['status']})"))
         if dry:
             continue
         full = build_full(code, body)
@@ -915,10 +931,12 @@ def cmd_sync(dry: bool) -> None:
              "--title", title, "--body", full])
         if move:
             run(["gh", "project", "item-edit", "--id", info["item_id"], "--project-id", PROJECT_ID,
-                 "--field-id", STATUS_FID, "--single-select-option-id", TODO])
+                 "--field-id", STATUS_FID, "--single-select-option-id", target_opt])
     ready_n = sum(1 for c in idx if c in READY)
+    done_n = sum(1 for c in idx if c in DONE_CARDS)
+    back_n = len(idx) - ready_n - done_n
     print(f"\n{'(dry-run) ' if dry else ''}OK: {len(idx)} corpos atualizados; "
-          f"{ready_n} Ready em Todo; {len(idx) - ready_n} mantidos em Backlog (bloqueio).")
+          f"{ready_n} em Todo; {done_n} em Done; {back_n} em Backlog (bloqueio).")
 
 
 def main() -> None:
