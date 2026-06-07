@@ -632,7 +632,7 @@ Gate inclui sam validate das duas stacks; verde offline; sem credenciais AWS no 
 Deploy MANUAL e aprovado da stack de dados (Retain), via OIDC, para que codigo nunca toque recursos com estado.
 
 ## Contrato (entrada -> saida)
-`.github/workflows/cd-stateful.yml`: on workflow_dispatch; environment com required reviewers; permissions id-token:write; configure-aws-credentials assume ${{ vars.AWS_DEPLOY_ROLE_ARN }} em us-east-1; sam build/deploy infra/stateful. ADR-008 secao 3.
+`.github/workflows/cd-stateful.yml`: on workflow_dispatch; environment com required reviewers; permissions id-token:write; configure-aws-credentials assume `${{ secrets.AWS_ROLE_ARN }}` na regiao `${{ secrets.AWS_REGION }}` (provedor OIDC + role ja criados na AWS); sam build/deploy infra/stateful. ADR-008 secao 3.
 
 ## Criterios de aceitacao (Gherkin)
 - Feliz:      Dado dispatch aprovado, Quando o workflow roda, Entao assume o role por OIDC e faz sam deploy da Stateful.
@@ -640,13 +640,13 @@ Deploy MANUAL e aprovado da stack de dados (Retain), via OIDC, para que codigo n
 - Open-World: Dado nenhum dispatch, Entao NADA e deployado (nunca automatico em push).
 
 ## Fixtures necessarias
-Nenhuma no repo (deploy real e operacional, fora do pytest). Var: AWS_DEPLOY_ROLE_ARN.
+Nenhuma no repo (deploy real e operacional, fora do pytest). Secrets do repo (ja configurados): AWS_ROLE_ARN, AWS_REGION.
 
 ## Fora de escopo
 Stateless (D3); testes nativos (continuam offline).
 
 ## Dependencias / bloqueios
-WU-I1, WU-D1. BLOQUEIO: role OIDC/regiao via GitHub vars (OIDC ja configurado).
+WU-I1, WU-D1. OIDC ja resolvido: provedor de identidade + role na AWS criados; secrets AWS_ROLE_ARN/AWS_REGION presentes no repo. Sem bloqueio.
 
 ## DoD especifico
 Workflow so dispara por dispatch com aprovacao; OIDC assume role; sam deploy da Stateful idempotente; nunca em push."""),
@@ -656,7 +656,7 @@ Workflow so dispara por dispatch com aprovacao; OIDC assume role; sam deploy da 
 Deploy AUTOMATICO da stack de codigo apos CI verde na main, importando os exports da Stateful.
 
 ## Contrato (entrada -> saida)
-`.github/workflows/cd-stateless.yml`: on push main (apos gate); permissions id-token:write; assume ${{ vars.AWS_DEPLOY_ROLE_ARN }} em us-east-1; sam build/deploy infra/stateless (Fn::ImportValue da Stateful). ADR-008 secao 3.
+`.github/workflows/cd-stateless.yml`: on push main (apos gate); permissions id-token:write; assume `${{ secrets.AWS_ROLE_ARN }}` na regiao `${{ secrets.AWS_REGION }}` por OIDC; sam build/deploy infra/stateless (Fn::ImportValue da Stateful). ADR-008 secao 3.
 
 ## Criterios de aceitacao (Gherkin)
 - Feliz:      Dado merge na main com CI verde, Quando o workflow roda, Entao faz sam deploy da Stateless importando exports.
@@ -664,13 +664,13 @@ Deploy AUTOMATICO da stack de codigo apos CI verde na main, importando os export
 - Open-World: Dado exports da Stateful ausentes, Entao o deploy falha claro (nao cria recurso orfao).
 
 ## Fixtures necessarias
-Nenhuma no repo. Vars: AWS_DEPLOY_ROLE_ARN; Cognito issuer/audience.
+Nenhuma no repo. Secrets (ja configurados): AWS_ROLE_ARN, AWS_REGION. Vars: Cognito issuer/audience (WU-X1).
 
 ## Fora de escopo
 Stateful (D2, manual); promocao multi-env (fora de escopo MVP).
 
 ## Dependencias / bloqueios
-WU-I2, WU-D1, WU-D2. BLOQUEIO EXTERNO: Cognito (WU-X1) + OIDC vars.
+WU-I2, WU-D1, WU-D2. OIDC ja resolvido (provedor + role + secrets AWS_ROLE_ARN/AWS_REGION). BLOQUEIO EXTERNO restante: Cognito (WU-X1).
 
 ## DoD especifico
 Deploy automatico so apos gate verde; OIDC; importa exports; rollback em falha; nunca toca a Stateful."""),

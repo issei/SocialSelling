@@ -19,7 +19,7 @@
 | **Ambientes AWS** | **Só prod** (MVP enxuto, 1 conta/ambiente). | Sem parametrização multi-env nem promoção encadeada. Exports CloudFormation com nome fixo (`ss-*`). Mantém o guardrail anti-overengineering (§5). |
 | **Gatilho de CD** | **Stateless auto / Stateful manual.** Merge na `main` faz deploy automático da **Stateless Stack** (código, descartável). A **Stateful Stack** (DynamoDB + segredos, `Retain`) só por `workflow_dispatch` com **environment aprovado**. | WU-D2 (stateful, manual+approval) separado de WU-D3 (stateless, auto). Protege dados de deploy de código. |
 | **Cognito User Pool** | **Ainda não provisionado / valores desconhecidos.** | **Bloqueio explícito.** Cards de borda (B) e IaC (I) que dependem do autorizador JWT referenciam `issuer`/`audience` via **GitHub vars** e ficam **BLOCKED** até o dono prover. Card **WU-X1** registra o provisionamento externo. |
-| **Região + OIDC** | **us-east-1**; ARN do role OIDC via **GitHub Actions variables** (ex.: `AWS_DEPLOY_ROLE_ARN`), nunca hardcoded. OIDC **já configurado** no repositório. | Cards D2/D3 assumem o role por OIDC (`aws-actions/configure-aws-credentials@v4`, `permissions: id-token: write`) e lêem região/role das vars. |
+| **Região + OIDC** | **OIDC já configurado na AWS** (provedor de identidade + role criados). No repositório, **secrets**: `AWS_ROLE_ARN` (ARN do role) e `AWS_REGION` (região). Nada hardcoded. | Cards D2/D3 assumem o role por OIDC (`aws-actions/configure-aws-credentials@v4`, `permissions: id-token: write`) lendo `${{ secrets.AWS_ROLE_ARN }}` e `${{ secrets.AWS_REGION }}`. OIDC deixa de ser bloqueio. |
 
 ## Princípio de ordenação
 
@@ -73,8 +73,8 @@ ADR-008 §5).
 | WU-I7 SK single-table mapping | I1, P5 | — |
 | WU-I8 IAM mínimo por Lambda | I2, I5 | — |
 | WU-D1 `sam validate` no gate | I1, I2 | — |
-| WU-D2 CD Stateful (manual+approval) | I1, D1 | OIDC role/região (vars) |
-| WU-D3 CD Stateless (auto no merge) | I2, D1, D2 | **Cognito**, OIDC vars |
+| WU-D2 CD Stateful (manual+approval) | I1, D1 | — (OIDC já resolvido: secrets `AWS_ROLE_ARN`/`AWS_REGION`) |
+| WU-D3 CD Stateless (auto no merge) | I2, D1, D2 | **Cognito** (OIDC já resolvido) |
 | WU-X1 Provisionar Cognito (externo) | — | ação do dono fora do repo |
 
 ## Camada DevOps (detalhe — não coberta pelas SDDs)
@@ -86,12 +86,13 @@ ADR-008 §3:
   dois templates SAM. **Sem** credenciais AWS, sem deploy — só lint de IaC. Honra o guardrail de
   gate 100% offline (SDD-3 §5).
 - **WU-D2 — CD da Stateful Stack (`workflow_dispatch` + environment aprovado).** Deploy manual,
-  raro, com aprovação humana. `permissions: id-token: write`; assume `${{ vars.AWS_DEPLOY_ROLE_ARN }}`
-  por OIDC em `us-east-1`; `sam deploy` da stack stateful (`DeletionPolicy: Retain`). Nunca
-  automático — dados não podem ser tocados por push de código.
+  raro, com aprovação humana. `permissions: id-token: write`; assume `${{ secrets.AWS_ROLE_ARN }}`
+  por OIDC na região `${{ secrets.AWS_REGION }}`; `sam deploy` da stack stateful
+  (`DeletionPolicy: Retain`). Nunca automático — dados não podem ser tocados por push de código.
 - **WU-D3 — CD da Stateless Stack (auto no merge à `main`).** Após CI verde, deploy automático das
-  Lambdas/Step Functions/API Gateway/EventBridge importando os exports da stateful. OIDC, mesma var
-  de role. Idempotente; rollback pela revisão anterior do CloudFormation.
+  Lambdas/Step Functions/API Gateway/EventBridge importando os exports da stateful. OIDC com os
+  mesmos secrets (`AWS_ROLE_ARN`/`AWS_REGION`). Idempotente; rollback pela revisão anterior do
+  CloudFormation.
 - **WU-X1 — Cognito (externo).** Provisionar o User Pool fora deste repo e publicar `issuer`/
   `audience` como GitHub vars. **Bloqueia** o autorizador JWT (I2/D3) e a validação da borda (B).
 
