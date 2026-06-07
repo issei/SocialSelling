@@ -4,14 +4,14 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **UI CSV Export Button** (PR #81). Botão "Exportar CSV" no rodapé da tabela; desabilitado com 0 leads; click dispara download `/api/run/{runId}/export.csv`. Gate verde, 195 testes. Todo coluna **drenada** neste run.
+- **marco_atual:** ✅ **UI CSV Export Button** (PR #81). Botão "Exportar CSV" no rodapé da tabela; desabilitado com 0 leads; click dispara download `/api/run/{runId}/export.csv`. Gate verde, 195 testes.
 - **ultima_tag_verde:** `v0.17.0` → `v0.18.0` (CSV) → `v0.18.1` (WU-A) → `v0.18.2` (WU-B) → `v0.18.3` (WU-C; 195 testes). CSV button sem nova tag (front-end minor).
-- **proxima_acao:** **[Próximo ciclo]**:
-  - **#73 WU-D** `feat: UI — wizard guiado + gestor de perfis + badges` — depende de WU-A/B/C ✅; tag `v0.19.0`; em **Backlog** (aguarda aprovação DoR).
+- **proxima_acao:** **[Próximo ciclo — aguarda especificação diurna]**:
+  - **#73 WU-D** `feat: UI — wizard guiado + gestor de perfis + badges` — depende de WU-A/B/C ✅; tag `v0.19.0`; em **Backlog** (aguarda aprovação DoR pelo dono).
   - **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar.
-  - Board **Todo completamente drenado** por este run noturno (2026-06-06).
-- **wu_em_andamento:** — (PR #81 mergeado)
-- **passo_atual:** — (`main` verde, 195 testes; gate via `.venv\Scripts\python.exe -m …`)
+  - Board **Todo completamente drenado** — run noturno 2026-06-06 confirmou coluna vazia; nenhum card desenvolvido.
+- **wu_em_andamento:** — (nenhum)
+- **passo_atual:** — (`main` verde, 195 testes)
 
 ### Status de implementação das specs (2026-06-04)
 | Spec | Estado | Tags |
