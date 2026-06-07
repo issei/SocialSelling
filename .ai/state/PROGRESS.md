@@ -6,7 +6,8 @@
 ## Estado atual
 - **marco_atual:** ✅ **UI CSV Export Button** (PR #81). Botão "Exportar CSV" no rodapé da tabela; desabilitado com 0 leads; click dispara download `/api/run/{runId}/export.csv`. Gate verde, 195 testes. Todo coluna **drenada** neste run.
 - **ultima_tag_verde:** `v0.17.0` → `v0.18.0` (CSV) → `v0.18.1` (WU-A) → `v0.18.2` (WU-B) → `v0.18.3` (WU-C; 195 testes). CSV button sem nova tag (front-end minor).
-- **proxima_acao:** **[Próximo ciclo]**:
+- **proxima_acao:** **[Aguarda aprovação diurna do DoR]**:
+  - **🆕 ROADMAP ADR-008 (MVP Serverless AWS, BaaS desacoplado + IaC bimodal)** — 27 cards criados em **Backlog** (2026-06-07) de ADR-008 + SDD-1/2/3 + camada DevOps CI/CD. Plano ordenado: `docs/planning/adr-008-backlog-plan.md`. Seeder reproduzível: `scripts/seed_adr008_cards.py`. **Sequência por dependência:** Fase 1 Persistência bimodal (WU-P1..P8) → Fase 2 Borda BaaS (WU-B1..B7) → Fase 3 IaC multi-stack (WU-I1..I8) → Fase 4 DevOps CI/CD (WU-D1..D3 + WU-X1). **Bloqueio:** WU-X1 (provisionar Cognito externo → GitHub vars) trava o autorizador JWT (WU-I2/WU-D3). Decisões do dono (2026-06-07): prod-único; stateless auto / stateful manual; us-east-1; OIDC role via GitHub vars. Aguarda dono mover Backlog→Todo (DoR 100%).
   - **#73 WU-D** `feat: UI — wizard guiado + gestor de perfis + badges` — depende de WU-A/B/C ✅; tag `v0.19.0`; em **Backlog** (aguarda aprovação DoR).
   - **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar.
   - Board **Todo completamente drenado** por este run noturno (2026-06-06).
@@ -23,7 +24,7 @@
 | ADR-003 LangGraph (motor async opcional) | ⏸️ diferido (opcional por design; pipeline síncrono é o default/oráculo) | — |
 - **branch:** `main`
 - **bloqueios:** **Apollo People Search API exige plano PAGO** — chave Free retorna 403 `API_INACCESSIBLE` (L-056). Card "Gravar fixtures Apollo reais" movido p/ **Backlog** até upgrade do plano. Runtime não quebra (degrada p/ Tavily em 403); só o recording de fixtures fica bloqueado. Demais: nenhum.
-- **board (espelho):** GitHub Project #1 "SocialSelling — SDD Roadmap" — https://github.com/users/issei/projects/1 (populado de PROGRESS.md via `scripts/setup_github_project.ps1`). Colunas: **Backlog** (especs/tarefas ainda não aprovadas, 5 cards) → **Todo** (1 card: botao Exportar CSV) → **In Progress** → **Done** (22 cards). Fonte da verdade continua aqui; board é espelho (skill `github-sdd-sync`).
+- **board (espelho):** GitHub Project #1 "SocialSelling — SDD Roadmap" — https://github.com/users/issei/projects/1 (populado de PROGRESS.md via `scripts/setup_github_project.ps1`). Colunas: **Backlog** (30 cards — inclui os 27 do roadmap ADR-008) → **Todo** → **In Progress** → **Done**. Fonte da verdade continua aqui; board é espelho (skill `github-sdd-sync`).
 
 ### Plano de orquestração (modo bypass — green→auto-merge→tag)
 Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/corpus (paralelos) → A3 (fixtures, precisa chave✓) → A4 ladder+M1 → A5 org-enrich → ADR-005 batch+determinístico-primeiro → ADR-006 wiring corpus no orquestrador → C/D**. Cada WU: branch `feat/…` → contrato → BDD/testes (sem rede; APIs mockadas) → impl → gate (`ruff`+`mypy --strict`+`pytest`) → PR `--squash --auto` → tag `v0.13.x`/`v0.14.0`. Falha de gate = não merge (rollback via última tag).
