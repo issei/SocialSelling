@@ -167,11 +167,11 @@ PLANS = {
 2. Sem credenciais AWS no job (validacao local). Fail-closed se template invalido.""",
     "WU-D2": """## Plano de execucao
 1. Criar `.github/workflows/cd-stateful.yml`: `on: workflow_dispatch`; `environment:` com required reviewers; `permissions: id-token: write`.
-2. `aws-actions/configure-aws-credentials@v4` assumindo `${{ secrets.AWS_ROLE_ARN }}` em `${{ secrets.AWS_REGION }}`; `sam build`/`sam deploy` da stateful.
-3. Nunca em push.""",
+2. `aws-actions/configure-aws-credentials@v4` assumindo `${{ secrets.AWS_ROLE_ARN }}` em `${{ secrets.AWS_REGION }}`; `sam build` + `sam deploy --stack-name socialselling-stateful --resolve-s3 --capabilities CAPABILITY_NAMED_IAM`.
+3. Role precisa da policy `infra/iam/github-actions-deploy-policy.json` anexada. Nunca em push.""",
     "WU-D3": """## Plano de execucao
-1. Criar `.github/workflows/cd-stateless.yml`: `on: push` (main, apos gate); OIDC com `${{ secrets.AWS_ROLE_ARN }}`/`${{ secrets.AWS_REGION }}`; `sam deploy` da stateless (`Fn::ImportValue`).
-2. **NAO mergear ate o Cognito existir** (deploy automatico falharia). Liberar apos WU-X1 + WU-I2.""",
+1. Criar `.github/workflows/cd-stateless.yml`: `on: push` (main, apos gate); OIDC com `${{ secrets.AWS_ROLE_ARN }}`/`${{ secrets.AWS_REGION }}`; `sam deploy --stack-name socialselling-stateless --resolve-s3 --capabilities CAPABILITY_NAMED_IAM` (importa `ss-*` da stateful) + parametros `CognitoIssuer=${{ vars.COGNITO_ISSUER }}` / `CognitoAudience=${{ vars.COGNITO_AUDIENCE }}`.
+2. Cognito ✅ pronto. Bloqueio restante (ordem): so mergear apos WU-I2 + execucao manual de WU-D2 (deploy da Stateful 1x), senao o deploy auto quebraria por falta dos exports `ss-*`.""",
     "WU-X1": """## Plano de execucao (acao do dono — externa ao repo)
 1. Provisionar o Cognito User Pool + app client (fora deste repo).
 2. Publicar `COGNITO_ISSUER` e `COGNITO_AUDIENCE` como GitHub vars.

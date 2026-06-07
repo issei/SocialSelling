@@ -1,0 +1,233 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudFormationStackOps",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateStack",
+        "cloudformation:UpdateStack",
+        "cloudformation:DeleteStack",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:DescribeStacks",
+        "cloudformation:DescribeStackEvents",
+        "cloudformation:DescribeStackResource",
+        "cloudformation:DescribeStackResources",
+        "cloudformation:ListStackResources",
+        "cloudformation:GetTemplate",
+        "cloudformation:GetStackPolicy",
+        "cloudformation:SetStackPolicy",
+        "cloudformation:TagResource",
+        "cloudformation:UntagResource",
+        "cloudformation:UpdateTerminationProtection"
+      ],
+      "Resource": [
+        "arn:aws:cloudformation:us-east-1:497568177086:stack/socialselling-stateful/*",
+        "arn:aws:cloudformation:us-east-1:497568177086:stack/socialselling-stateless/*",
+        "arn:aws:cloudformation:us-east-1:497568177086:stack/aws-sam-cli-managed-default/*"
+      ]
+    },
+    {
+      "Sid": "CloudFormationReadAndExports",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:ListExports",
+        "cloudformation:ListStacks",
+        "cloudformation:ValidateTemplate",
+        "cloudformation:GetTemplateSummary",
+        "cloudformation:CreateUploadBucket"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SamArtifactsBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:GetBucketLocation",
+        "s3:GetBucketPolicy",
+        "s3:PutBucketPolicy",
+        "s3:PutBucketTagging",
+        "s3:PutBucketVersioning",
+        "s3:PutEncryptionConfiguration",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::aws-sam-cli-managed-default-*",
+        "arn:aws:s3:::aws-sam-cli-managed-default-*/*"
+      ]
+    },
+    {
+      "Sid": "LambdaManage",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:CreateFunction",
+        "lambda:DeleteFunction",
+        "lambda:GetFunction",
+        "lambda:GetFunctionConfiguration",
+        "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration",
+        "lambda:PublishVersion",
+        "lambda:ListVersionsByFunction",
+        "lambda:AddPermission",
+        "lambda:RemovePermission",
+        "lambda:GetPolicy",
+        "lambda:TagResource",
+        "lambda:UntagResource",
+        "lambda:PutFunctionConcurrency",
+        "lambda:DeleteFunctionConcurrency"
+      ],
+      "Resource": "arn:aws:lambda:us-east-1:497568177086:function:socialselling-*"
+    },
+    {
+      "Sid": "ApiGatewayManage",
+      "Effect": "Allow",
+      "Action": "apigateway:*",
+      "Resource": "arn:aws:apigateway:us-east-1::/*"
+    },
+    {
+      "Sid": "StepFunctionsManage",
+      "Effect": "Allow",
+      "Action": [
+        "states:CreateStateMachine",
+        "states:UpdateStateMachine",
+        "states:DeleteStateMachine",
+        "states:DescribeStateMachine",
+        "states:TagResource",
+        "states:UntagResource",
+        "states:ListTagsForResource"
+      ],
+      "Resource": "arn:aws:states:us-east-1:497568177086:stateMachine:socialselling-*"
+    },
+    {
+      "Sid": "EventBridgeManage",
+      "Effect": "Allow",
+      "Action": [
+        "events:PutRule",
+        "events:DeleteRule",
+        "events:DescribeRule",
+        "events:EnableRule",
+        "events:DisableRule",
+        "events:PutTargets",
+        "events:RemoveTargets",
+        "events:TagResource",
+        "events:UntagResource",
+        "events:ListTagsForResource"
+      ],
+      "Resource": "arn:aws:events:us-east-1:497568177086:rule/socialselling-*"
+    },
+    {
+      "Sid": "CloudWatchLogsForLambdaAndSfn",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DeleteLogGroup",
+        "logs:PutRetentionPolicy",
+        "logs:DeleteRetentionPolicy",
+        "logs:TagResource",
+        "logs:UntagResource",
+        "logs:ListTagsForResource",
+        "logs:CreateLogStream",
+        "logs:DeleteLogStream",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": [
+        "arn:aws:logs:us-east-1:497568177086:log-group:/aws/lambda/socialselling-*",
+        "arn:aws:logs:us-east-1:497568177086:log-group:/aws/lambda/socialselling-*:*",
+        "arn:aws:logs:us-east-1:497568177086:log-group:/aws/vendedlogs/states/socialselling-*",
+        "arn:aws:logs:us-east-1:497568177086:log-group:/aws/vendedlogs/states/socialselling-*:*"
+      ]
+    },
+    {
+      "Sid": "CloudWatchLogsDescribe",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups",
+        "logs:DescribeResourcePolicies",
+        "logs:PutResourcePolicy"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DynamoDbStatefulTable",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:CreateTable",
+        "dynamodb:UpdateTable",
+        "dynamodb:DeleteTable",
+        "dynamodb:DescribeTable",
+        "dynamodb:DescribeContinuousBackups",
+        "dynamodb:UpdateContinuousBackups",
+        "dynamodb:DescribeTimeToLive",
+        "dynamodb:UpdateTimeToLive",
+        "dynamodb:TagResource",
+        "dynamodb:UntagResource",
+        "dynamodb:ListTagsOfResource"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:us-east-1:497568177086:table/SocialSellingTable",
+        "arn:aws:dynamodb:us-east-1:497568177086:table/SocialSellingTable/*"
+      ]
+    },
+    {
+      "Sid": "SecretsManagerStateful",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:CreateSecret",
+        "secretsmanager:UpdateSecret",
+        "secretsmanager:DeleteSecret",
+        "secretsmanager:RestoreSecret",
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:PutSecretValue",
+        "secretsmanager:TagResource",
+        "secretsmanager:UntagResource",
+        "secretsmanager:GetResourcePolicy"
+      ],
+      "Resource": "arn:aws:secretsmanager:us-east-1:497568177086:secret:/socialselling/*"
+    },
+    {
+      "Sid": "IamRolesForStackResources",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:GetRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:UpdateAssumeRolePolicy"
+      ],
+      "Resource": "arn:aws:iam::497568177086:role/socialselling-*"
+    },
+    {
+      "Sid": "IamPassRoleToStackServices",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::497568177086:role/socialselling-*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": [
+            "lambda.amazonaws.com",
+            "states.amazonaws.com",
+            "events.amazonaws.com",
+            "apigateway.amazonaws.com"
+          ]
+        }
+      }
+    }
+  ]
+}
