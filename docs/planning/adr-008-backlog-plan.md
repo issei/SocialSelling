@@ -99,6 +99,31 @@ ADR-008 §3:
 > **Fora de escopo do CD (guardrails §5):** sem multi-conta, sem Terraform, sem LocalStack, sem
 > pipeline de promoção dev→staging→prod, sem rollback automático sofisticado. MVP enxuto.
 
+## Fase 5 — Segurança & FinOps (ADR-009): write gated
+
+O dono autorizou **operações de escrita na AWS** sob a condição de **testes + revisores de segurança
+automáticos** (FinOps bem arquitetado, sem brechas). Formalizado na **ADR-009**. Consequência: o
+**deploy real é write** — `WU-D2` saiu do Todo e voltou ao **Backlog**; o write só liga via o
+card-portão `WU-G1`, quando os gates abaixo estiverem **Done**.
+
+| Card | Entrega | Status |
+|---|---|---|
+| WU-S1 | `cfn-lint` + `checkov` no CI (required check) sobre `infra/` | Todo |
+| WU-S2 | IAM Access Analyzer `validate-policy` + teste anti-wildcard sobre `infra/iam/` | Todo |
+| WU-S3 | Permissions boundary nas roles criadas pelo CFN | Todo |
+| WU-S4 | Revisor de segurança automático (Claude) nos PRs de `infra/` | Todo |
+| WU-F1 | Caps de recurso (Lambda mem/timeout/concurrency) + log retention finita | Todo |
+| WU-F2 | AWS Budgets + alerta (parametrizar valor/email) | Todo |
+| WU-F3 | Cost-allocation tags obrigatórias + check no CI | Todo |
+| **WU-G1** | **Portão:** liga `--allow-write` (MCP) + promove D2/D3 | **Backlog** (Ready só com S1..S4+F1..F3 = Done) |
+
+**Gate de escrita (fail-closed):**
+```
+WU-S1..S4 + WU-F1..F3 (Done)  ──►  WU-G1 (liga write)  ──►  WU-D2 (deploy Stateful, manual)  ──►  WU-D3 (deploy Stateless, auto)
+```
+Os scanners rodam **offline** (cfn-lint/checkov/teste anti-wildcard); o Access Analyzer é validação
+(sem mutação). O gate de produto (`ruff`+`mypy`+`pytest`) segue 100% offline (WU-P8).
+
 ## Quality gate (inegociável, herdado)
 
 Todos os cards mantêm: `ruff` + `mypy --strict` + `pytest` **100% offline e determinístico**

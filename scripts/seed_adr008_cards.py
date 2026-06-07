@@ -50,16 +50,22 @@ READY = {
     "WU-P1", "WU-P2", "WU-P3", "WU-P4", "WU-P5", "WU-P6", "WU-P7", "WU-P8",
     "WU-B1", "WU-B2", "WU-B3", "WU-B4", "WU-B5", "WU-B6", "WU-B7",
     "WU-I1", "WU-I2", "WU-I3", "WU-I4", "WU-I5", "WU-I6", "WU-I7", "WU-I8",
-    "WU-D1", "WU-D2",
+    "WU-D1",
+    # ADR-009 — gates de seguranca & FinOps (pre-requisito do write)
+    "WU-S1", "WU-S2", "WU-S3", "WU-S4", "WU-F1", "WU-F2", "WU-F3",
 }
 # WUs concluidas fora do ciclo de desenvolvimento (acao operacional do dono).
 DONE_CARDS = {"WU-X1"}
 
 BLOCK_REASON = {
-    "WU-D3": "Cognito ✅ resolvido (WU-X1: User Pool us-east-1_o17XMPejk + vars publicadas). "
-             "Bloqueio restante = ORDEM: so desenvolver/mergear apos WU-I2 (template stateless) "
-             "e a execucao manual de WU-D2 (deploy da Stateful 1x) — senao o deploy auto na main "
-             "quebraria por falta dos exports ss-*. Promover para Todo nesse ponto.",
+    "WU-D2": "Operacao de WRITE (deploy real da Stateful). ADR-009: write so apos os gates de "
+             "seguranca+FinOps verdes (WU-S1..S4 + WU-F1..F3) e via WU-G1. Tambem requer a policy "
+             "IAM anexada (infra/iam/) + WU-I1. Promover para Todo no WU-G1.",
+    "WU-D3": "Operacao de WRITE (deploy auto na main). Cognito ✅ resolvido (WU-X1). Bloqueio: "
+             "(a) ADR-009 — gates de seguranca+FinOps verdes + WU-G1; (b) ordem — apos WU-I2 e "
+             "execucao manual de WU-D2 (Stateful 1x), senao quebra por falta dos exports ss-*.",
+    "WU-G1": "Card-portao (ADR-009). So vira Ready quando WU-S1..S4 + WU-F1..F3 estiverem em Done. "
+             "Ate la, --allow-write OFF e D2/D3 em Backlog (fail-closed).",
 }
 DONE_NOTE = {
     "WU-X1": "Cognito User Pool `us-east-1_o17XMPejk` + app client `54ofg7c96p74niqbdibfkrtavv` "
@@ -176,6 +182,39 @@ PLANS = {
 1. Provisionar o Cognito User Pool + app client (fora deste repo).
 2. Publicar `COGNITO_ISSUER` e `COGNITO_AUDIENCE` como GitHub vars.
 3. Avisar para destravar WU-I2 (deploy) e WU-D3.""",
+    "WU-S1": """## Plano de execucao
+1. Novo job no CI (ou workflow `iac-security.yml`): `pip install cfn-lint checkov`.
+2. `cfn-lint infra/**/template.yaml` + `checkov -d infra/ --framework cloudformation`.
+3. Definir severidade bloqueante (ex.: checkov HIGH/CRITICAL falham); documentar skips justificados via `.checkov.yaml`.
+4. Marcar como required check na branch protection.""",
+    "WU-S2": """## Plano de execucao
+1. Teste py `tests/test_iam_policy_guardrails.py`: carrega `infra/iam/*.json` e reprova `Action:"*"`+`Resource:"*"` juntos, e `iam:PassRole` sem `Condition`.
+2. Job no CI: `aws accessanalyzer validate-policy --policy-document file://... --policy-type IDENTITY_POLICY` para cada arquivo; falha em ERROR/SECURITY_WARNING.
+3. Rodar ja contra `github-actions-deploy-policy.json`.""",
+    "WU-S3": """## Plano de execucao
+1. Criar `infra/iam/permissions-boundary.json` (limite superior do que as roles do projeto podem fazer).
+2. Deploya-la como managed policy e referenciar em `PermissionsBoundary` nas roles do `infra/stateless` (Globals/Function).
+3. Regra checkov/policy garante que nenhuma role e criada sem boundary.""",
+    "WU-S4": """## Plano de execucao
+1. `.github/workflows/iac-security-review.yml`: `on: pull_request` com `paths: infra/**`.
+2. Rodar revisao de seguranca via Claude (action oficial / skill `security-review`) sobre o diff e postar comentario.
+3. Advisory (nao bloqueia); o bloqueio fica nos required checks S1/S2. Usar `ANTHROPIC_API_KEY` (secret).""",
+    "WU-F1": """## Plano de execucao
+1. Em `infra/stateless` (Globals/Function): `Timeout`, `MemorySize`, `ReservedConcurrentExecutions` por funcao (M2 maior; demais enxutos).
+2. LogGroups explicitos com `RetentionInDays: 14` (evita custo infinito de logs).
+3. Check (checkov) garante retention + caps; DynamoDB ja PAY_PER_REQUEST (WU-I1).""",
+    "WU-F2": """## Plano de execucao
+1. Adicionar `AWS::Budgets::Budget` (mensal) + `SubscribersWithNotification` (email) — parametros `BudgetAmount`/`BudgetEmail`.
+2. Colocar na stateful (ciclo longo) ou numa pequena stack de governanca.
+3. `sam validate`; documentar valor/email (input do dono).""",
+    "WU-F3": """## Plano de execucao
+1. `Globals` / `Tags` nos templates: `Project=socialselling`, `Environment=prod`, `CostCenter=<dono>`.
+2. Check no CI (checkov custom policy ou script) que reprova recurso taggeavel sem as 3 tags.
+3. Nota: ativar essas chaves como Cost Allocation Tags no Billing (acao de conta).""",
+    "WU-G1": """## Plano de execucao (card-portao — so quando S1..S4 + F1..F3 = Done)
+1. Editar `.mcp.json`: adicionar `--allow-write` (e, se preciso, `--allow-sensitive-data-access`) ao `aws-serverless-mcp-server`.
+2. Mover WU-D2 e WU-D3 (respeitando tambem Cognito/ordem) para Todo via `seed_adr008_cards.py --sync`.
+3. Registrar em PROGRESS + ADR-009 que o write foi habilitado com os gates verdes.""",
 }
 
 
@@ -852,6 +891,199 @@ BLOQUEIO: depende de acao do dono (provisionar fora do repo). Bloqueia WU-I2 e W
 
 ## DoD especifico
 issuer/audience publicados como GitHub vars; WU-I2/WU-D3 deixam de estar BLOCKED."""),
+
+    # ===================== FASE 5 — Seguranca & FinOps (ADR-009) =====================
+    ("WU-S1 - Scan de IaC no CI (cfn-lint + checkov)", "Alta", """\
+## Objetivo
+Bloquear no CI qualquer template SAM com erro de lint ou finding de seguranca, antes de qualquer deploy.
+
+## Contrato (entrada -> saida)
+Job de CI roda `cfn-lint` + `checkov` sobre `infra/**`; finding de severidade relevante => build falha (required check). ADR-009 secao 2.
+
+## Criterios de aceitacao (Gherkin)
+- Feliz:      Dado templates limpos, Quando o CI roda, Entao cfn-lint+checkov passam.
+- Degradado:  Dado um template com S3 publico/SG aberto/IAM wildcard, Entao o check FALHA (fail-closed) e bloqueia o merge.
+- Open-World: Dado infra/ ainda sem templates, Entao o job passa vacuamente (nada a escanear) sem quebrar.
+
+## Fixtures necessarias
+Nenhuma (scanners locais, offline; sem AWS).
+
+## Fora de escopo
+Validacao de IAM policy (WU-S2); deploy (D2/D3).
+
+## Dependencias / bloqueios
+Cobertura real depende de WU-I1/I2 (templates); o wiring do job pode ir antes.
+
+## DoD especifico
+cfn-lint + checkov como required checks; politica de severidade documentada; verde offline."""),
+
+    ("WU-S2 - Validacao de IAM (Access Analyzer + anti-wildcard)", "Alta", """\
+## Objetivo
+Garantir que toda policy IAM do repo seja minima e valida — sem wildcards perigosos nem PassRole sem condicao.
+
+## Contrato (entrada -> saida)
+CI roda `aws accessanalyzer validate-policy` sobre `infra/iam/*.json` + teste py que reprova `Action:"*"`/`Resource:"*"` em acoes sensiveis e `iam:PassRole` sem `Condition`. ADR-009 secao 2.
+
+## Criterios de aceitacao (Gherkin)
+- Feliz:      Dado infra/iam/github-actions-deploy-policy.json, Quando o check roda, Entao validate-policy nao retorna ERROR/SECURITY_WARNING e o teste anti-wildcard passa.
+- Degradado:  Dado uma policy com Action:"*" e Resource:"*", Entao o check FALHA e bloqueia o merge.
+- Open-World: Dado um PassRole sem Condition, Entao o teste sinaliza (nao silencia).
+
+## Fixtures necessarias
+validate-policy e chamada de validacao (sem mutacao); teste anti-wildcard e puro/offline.
+
+## Fora de escopo
+Permissions boundary (WU-S3).
+
+## Dependencias / bloqueios
+Nenhum (a policy ja existe em infra/iam/).
+
+## DoD especifico
+Required check verde sobre a policy atual; teste anti-wildcard cobrindo os 3 casos."""),
+
+    ("WU-S3 - Permissions boundary nas roles do CFN", "Media", """\
+## Objetivo
+Limitar o raio de explosao das roles que o CloudFormation cria, anexando uma permissions boundary a cada uma.
+
+## Contrato (entrada -> saida)
+`infra/iam/permissions-boundary.json` (managed policy) + `PermissionsBoundary` nas roles (Globals/Function) do `infra/stateless`. ADR-009 secao 2; alinha WU-I8.
+
+## Criterios de aceitacao (Gherkin)
+- Feliz:      Dado o template stateless, Quando sam validate + checkov, Entao toda role tem PermissionsBoundary.
+- Degradado:  Dado uma role sem boundary, Entao o check (checkov/policy) FALHA.
+- Open-World: Dado boundary ausente no parametro, Entao o deploy nao cria role sem limite.
+
+## Fixtures necessarias
+Nenhuma (declarativo; offline).
+
+## Fora de escopo
+Policies funcionais por Lambda (WU-I8).
+
+## Dependencias / bloqueios
+WU-I2 (template stateless).
+
+## DoD especifico
+Boundary aplicada a todas as roles do CFN; check garante presenca."""),
+
+    ("WU-S4 - Revisor de seguranca automatico no PR", "Alta", """\
+## Objetivo
+Adicionar um revisor de seguranca automatico que comenta PRs tocando infra/, complementando os hard-gates.
+
+## Contrato (entrada -> saida)
+GitHub Action roda revisao de seguranca (Claude / skill security-review) no diff de `infra/**` e posta comentario; required checks (S1/S2) seguem como bloqueio. ADR-009 secao 2.
+
+## Criterios de aceitacao (Gherkin)
+- Feliz:      Dado um PR que altera infra/, Quando a Action roda, Entao um comentario de revisao de seguranca e postado.
+- Degradado:  Dado um PR que introduz brecha (ex.: SG 0.0.0.0/0), Entao o comentario aponta o risco E o hard-gate (S1) bloqueia.
+- Open-World: Dado um PR sem mudanca em infra/, Entao o revisor nao roda (sem ruido).
+
+## Fixtures necessarias
+Nenhuma (CI/Action).
+
+## Fora de escopo
+O bloqueio em si (e dos required checks S1/S2).
+
+## Dependencias / bloqueios
+WU-S1, WU-S2 (os hard-gates que o agente complementa).
+
+## DoD especifico
+Action ativa em PRs de infra/; comenta achados; nao substitui os required checks."""),
+
+    ("WU-F1 - Caps de recurso + retencao de logs (FinOps)", "Media", """\
+## Objetivo
+Conter custo por design: caps de memoria/timeout/concorrencia nas Lambdas e retencao finita de logs.
+
+## Contrato (entrada -> saida)
+Globals/Function nos templates: `MemorySize`/`Timeout` limitados, `ReservedConcurrentExecutions`; LogGroups com `RetentionInDays` (ex.: 14); DynamoDB `PAY_PER_REQUEST`. ADR-009 secao 3.
+
+## Criterios de aceitacao (Gherkin)
+- Feliz:      Dado o template, Quando sam validate + check, Entao toda Lambda tem timeout/mem/concurrency e todo log group tem retention.
+- Degradado:  Dado uma Lambda sem reserved concurrency ou log sem retention, Entao o check FALHA.
+- Open-World: Dado pico de invocacoes, Entao a reserved concurrency limita o gasto (nao escala infinito).
+
+## Fixtures necessarias
+Nenhuma (declarativo; offline).
+
+## Fora de escopo
+Budgets (WU-F2).
+
+## Dependencias / bloqueios
+WU-I2/I5 (templates/wrappers).
+
+## DoD especifico
+Caps presentes e checados; log retention finita em todos os grupos."""),
+
+    ("WU-F2 - AWS Budgets + alerta de gasto", "Media", """\
+## Objetivo
+Ter teto de gasto observavel: AWS Budget mensal com alerta.
+
+## Contrato (entrada -> saida)
+`AWS::Budgets::Budget` (na stateful ou stack de governanca) com threshold + SNS/email; parametros `BudgetAmount`/`BudgetEmail`. ADR-009 secao 3; alinha LEDGER#FINOPS (ADR-003/008).
+
+## Criterios de aceitacao (Gherkin)
+- Feliz:      Dado o template, Quando sam validate, Entao um Budget mensal com alerta esta declarado.
+- Degradado:  Dado gasto > threshold, Entao o alerta dispara (notificacao), sem derrubar o servico.
+- Open-World: Dado custo baixo, Entao nenhum alerta (sem falso positivo).
+
+## Fixtures necessarias
+Nenhuma (declarativo). Parametros: valor do budget + email (input do dono).
+
+## Fora de escopo
+Caps de recurso (WU-F1).
+
+## Dependencias / bloqueios
+Valor do budget + email de alerta (input do dono).
+
+## DoD especifico
+Budget + alerta declarados e validados; parametros documentados."""),
+
+    ("WU-F3 - Cost-allocation tags obrigatorias", "Media", """\
+## Objetivo
+Permitir rastrear custo por projeto/ambiente via tags obrigatorias em todos os recursos.
+
+## Contrato (entrada -> saida)
+Globals/Tags nos templates: `Project`, `Environment`, `CostCenter` (ou owner); check no CI de que recursos taggeaveis tem as tags. ADR-009 secao 3.
+
+## Criterios de aceitacao (Gherkin)
+- Feliz:      Dado os templates, Quando o check de tags roda, Entao todo recurso taggeavel tem Project/Environment/CostCenter.
+- Degradado:  Dado um recurso sem tags, Entao o check FALHA.
+- Open-World: Dado um recurso que nao suporta tags, Entao o check o ignora (sem falso erro).
+
+## Fixtures necessarias
+Nenhuma (declarativo; offline).
+
+## Fora de escopo
+Ativar as cost allocation tags no Billing (acao de conta — nota).
+
+## Dependencias / bloqueios
+WU-I1/I2 (templates).
+
+## DoD especifico
+Tags obrigatorias presentes e checadas no CI."""),
+
+    ("WU-G1 - [Portao] Habilitar write na AWS apos os gates", "Baixa", """\
+## Objetivo
+Habilitar operacoes de escrita na AWS (MCP --allow-write + liberacao do pipeline de deploy) SO apos os gates de seguranca+FinOps verdes.
+
+## Contrato (entrada -> saida)
+`.mcp.json`: aws-serverless com `--allow-write`; promover WU-D2/D3 para Todo. So Ready com WU-S1..S4 + WU-F1..F3 em Done. ADR-009 secao 1.
+
+## Criterios de aceitacao (Gherkin)
+- Feliz:      Dado todos os gates de seguranca+FinOps em Done, Quando WU-G1 executa, Entao --allow-write e ligado e D2/D3 vao para Todo.
+- Degradado:  Dado algum gate vermelho/incompleto, Entao WU-G1 permanece BLOCKED (fail-closed) e o write fica OFF.
+- Open-World: n/a (card-portao de governanca).
+
+## Fixtures necessarias
+Nenhuma (config/governanca).
+
+## Fora de escopo
+Implementar os gates (WU-S*/WU-F*).
+
+## Dependencias / bloqueios
+BLOQUEIO: WU-S1..S4 + WU-F1..F3 em Done. Ate la, write OFF (fail-closed).
+
+## DoD especifico
+--allow-write ligado; D2/D3 promovidas; ADR-009 honrada."""),
 ]
 
 
@@ -882,13 +1114,14 @@ def _board_index() -> dict[str, dict]:
     return idx
 
 
-def cmd_create(dry: bool) -> None:
-    print(f"=== Seed ADR-008 backlog: {len(CARDS)} cards ===")
-    for i, (title, prio, body) in enumerate(CARDS, 1):
+def cmd_create(dry: bool, only: set[str] | None = None) -> None:
+    sel = [c for c in CARDS if only is None or _code(c[0]) in only]
+    print(f"=== Seed cards: {len(sel)}{' (filtrado)' if only else ''} ===")
+    for i, (title, prio, body) in enumerate(sel, 1):
         if dry:
             print(f"[{i:2}] [{prio:<5}] {title}  (Ready={_code(title) in READY})")
             continue
-        print(f"[{i:2}/{len(CARDS)}] criando: {title} (Priority={prio})")
+        print(f"[{i:2}/{len(sel)}] criando: {title} (Priority={prio})")
         code = _code(title)
         full = build_full(code, body)
         out = run(["gh", "project", "item-create", NUMBER, "--owner", OWNER,
@@ -900,7 +1133,7 @@ def cmd_create(dry: bool) -> None:
         run(["gh", "project", "item-edit", "--id", item_id, "--project-id", PROJECT_ID,
              "--field-id", PRIO_FID, "--single-select-option-id", PRIO_OPT[prio]])
     print("\n(dry-run) nada criado." if dry else
-          f"\nOK: {len(CARDS)} cards criados. Board: https://github.com/users/{OWNER}/projects/{NUMBER}")
+          f"\nOK: {len(sel)} cards criados. Board: https://github.com/users/{OWNER}/projects/{NUMBER}")
 
 
 def cmd_sync(dry: bool) -> None:
@@ -944,8 +1177,14 @@ def main() -> None:
     ap.add_argument("--dry-run", action="store_true", help="so lista, nao escreve")
     ap.add_argument("--sync", action="store_true",
                     help="atualiza corpos dos cards existentes e move Ready->Todo (nao cria)")
+    ap.add_argument("--codes", default="",
+                    help="cria so estes WU codes (CSV), ex.: WU-S1,WU-S2 (modo create)")
     a = ap.parse_args()
-    (cmd_sync if a.sync else cmd_create)(a.dry_run)
+    if a.sync:
+        cmd_sync(a.dry_run)
+    else:
+        only = {c.strip() for c in a.codes.split(",") if c.strip()} or None
+        cmd_create(a.dry_run, only)
 
 
 if __name__ == "__main__":
