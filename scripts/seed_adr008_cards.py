@@ -13,6 +13,7 @@ AVISO: NAO deduplica. Rodar duas vezes duplica os cards. Rodar UMA vez.
 Todos entram em Backlog (autoria de dia). O dono move Backlog->Todo com DoR 100%.
 Requer `gh` autenticado com escopo project (gh auth refresh -s project,read:project).
 """
+# ruff: noqa: E501  -- corpos de card sao prosa longa (Gherkin/DoR); nao reflow.
 from __future__ import annotations
 
 import argparse
