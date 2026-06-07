@@ -22,6 +22,33 @@ _TAVILY = _ROOT / "tests" / "fixtures" / "tavily"
 _GEMINI = _ROOT / "tests" / "fixtures" / "gemini"
 _NOW = datetime(2026, 1, 1, tzinfo=UTC)
 
+# ICP fixo para os testes — independente do config/icp_criteria.talita.json em runtime.
+_TEST_ICP: dict[str, Any] = {
+    "icp_id": "icp_founders_servicos_brasil",
+    "firmographics": {
+        "industries": ["consultoria", "advocacia", "engenharia", "software", "saas"],
+        "employee_range": {"min": 5, "max": 30},
+        "geographies": {"country": "BR", "regions": ["SE", "S"]},
+        "business_models": ["B2B"],
+    },
+    "technographics": {
+        "mandatory": [],
+        "preferred": ["clickup", "notion", "trello", "asana", "monday", "pipedrive"],
+        "excluded": [],
+    },
+    "persona_matrix": {
+        "target_roles": ["FOUNDER", "CEO", "MANAGING_PARTNER", "SOCIA_GESTORA"],
+        "min_seniority": "FOUNDER_OWNER",
+    },
+    "intent_triggers": [
+        "FUNDADORA_PRESA_NA_OPERACAO",
+        "CONTRATACAO_SENIOR",
+        "EXPANSAO_OU_NOVA_UNIDADE",
+        "INTENCAO_ADOCAO_IA",
+        "CONCLUSAO_CURSO_GESTAO",
+    ],
+}
+
 
 def _vocab() -> list[str]:
     raw = json.loads((_ROOT / "config" / "hypotheses_catalog.json").read_text("utf-8"))
@@ -61,8 +88,7 @@ def _build_evidences() -> list[ObservedEvidence]:
     from socialselling.config import load_runtime
     from socialselling.contracts import ICPCriteria
 
-    raw = json.loads((_ROOT / "config" / "icp_criteria.talita.json").read_text("utf-8"))
-    icp = ICPCriteria.model_validate(raw)
+    icp = ICPCriteria.model_validate(_TEST_ICP)
     cfg = load_runtime(_ROOT / "config" / "runtime.toml")
     return run_m1(
         icp,

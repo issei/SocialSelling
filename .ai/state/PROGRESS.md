@@ -4,15 +4,15 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **UI CSV Export Button** (PR #81). Botão "Exportar CSV" no rodapé da tabela; desabilitado com 0 leads; click dispara download `/api/run/{runId}/export.csv`. Gate verde, 195 testes. Todo coluna **drenada** neste run.
+- **marco_atual:** ✅ **UI CSV Export Button** (PR #81). Botão "Exportar CSV" no rodapé da tabela; desabilitado com 0 leads; click dispara download `/api/run/{runId}/export.csv`. Gate verde, 195 testes.
 - **ultima_tag_verde:** `v0.17.0` → `v0.18.0` (CSV) → `v0.18.1` (WU-A) → `v0.18.2` (WU-B) → `v0.18.3` (WU-C; 195 testes). CSV button sem nova tag (front-end minor).
 - **proxima_acao:** **[Aguarda aprovação diurna do DoR]**:
   - **🆕 ROADMAP ADR-008 (MVP Serverless AWS, BaaS desacoplado + IaC bimodal)** — 27 cards criados em **Backlog** (2026-06-07) de ADR-008 + SDD-1/2/3 + camada DevOps CI/CD. Plano ordenado: `docs/planning/adr-008-backlog-plan.md`. Seeder reproduzível: `scripts/seed_adr008_cards.py`. **Sequência por dependência:** Fase 1 Persistência bimodal (WU-P1..P8) → Fase 2 Borda BaaS (WU-B1..B7) → Fase 3 IaC multi-stack (WU-I1..I8) → Fase 4 DevOps CI/CD (WU-D1..D3 + WU-X1). **Bloqueio:** WU-X1 (provisionar Cognito externo → GitHub vars) trava o autorizador JWT (WU-I2/WU-D3). Decisões do dono (2026-06-07): prod-único; stateless auto / stateful manual; us-east-1; OIDC role via GitHub vars. Aguarda dono mover Backlog→Todo (DoR 100%).
   - **#73 WU-D** `feat: UI — wizard guiado + gestor de perfis + badges` — depende de WU-A/B/C ✅; tag `v0.19.0`; em **Backlog** (aguarda aprovação DoR).
   - **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar.
-  - Board **Todo completamente drenado** por este run noturno (2026-06-06).
-- **wu_em_andamento:** — (PR #81 mergeado)
-- **passo_atual:** — (`main` verde, 195 testes; gate via `.venv\Scripts\python.exe -m …`)
+  - Board **Todo completamente drenado** — run noturno 2026-06-06 confirmou coluna vazia; nenhum card desenvolvido.
+- **wu_em_andamento:** — (nenhum)
+- **passo_atual:** — (`main` verde, 195 testes)
 
 ### Status de implementação das specs (2026-06-04)
 | Spec | Estado | Tags |

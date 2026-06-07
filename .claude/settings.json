@@ -2,33 +2,33 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(gh project:*)",
-      "Bash(gh pr create:*)",
-      "Bash(gh pr merge:*)",
-      "Bash(gh pr view:*)",
-      "Bash(gh pr list:*)",
-      "Bash(gh auth status:*)",
-      "Bash(git checkout:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(git pull:*)",
-      "Bash(git branch:*)",
-      "Bash(git fetch:*)",
-      "Bash(git status:*)",
-      "Bash(git log:*)",
-      "Bash(git diff:*)",
-      "Bash(./scripts/gate.ps1:*)",
-      "Bash(.venv/Scripts/python.exe -m pytest:*)",
-      "Bash(.venv/Scripts/python.exe -m ruff:*)",
-      "Bash(.venv/Scripts/python.exe -m mypy:*)"
+      "Bash(gh project *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git branch *)",
+      "Bash(git fetch *)",
+      "Bash(git tag *)",
+      "Bash(./scripts/gate.ps1)",
+      "Bash(./scripts/gate.ps1 *)",
+      "Bash(.venv/Scripts/python.exe -m pytest *)",
+      "Bash(.venv/Scripts/python.exe -m ruff *)",
+      "Bash(.venv/Scripts/python.exe -m mypy *)"
     ],
     "deny": [
-      "Bash(git push --force:*)",
-      "Bash(git push -f:*)",
-      "Bash(git push --force-with-lease:*)",
-      "Bash(rm -rf:*)",
-      "Bash(git reset --hard:*)"
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git push --force-with-lease *)",
+      "Bash(git reset --hard *)"
     ]
   }
 }

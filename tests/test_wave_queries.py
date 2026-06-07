@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -11,13 +10,39 @@ from socialselling.contracts import ICPCriteria
 from socialselling.core.cache import JsonCache
 from socialselling.modules.m1_busca import generate_queries, run_m1
 
-_ROOT = Path(__file__).resolve().parents[1]
 _NOW = datetime(2026, 1, 1, tzinfo=UTC)
+
+# ICP fixo para os testes — independente do config/icp_criteria.talita.json em runtime.
+# Deve corresponder ao ICP usado ao gravar as fixtures Tavily/Gemini.
+_TEST_ICP: dict[str, Any] = {
+    "icp_id": "icp_founders_servicos_brasil",
+    "firmographics": {
+        "industries": ["consultoria", "advocacia", "engenharia", "software", "saas"],
+        "employee_range": {"min": 5, "max": 30},
+        "geographies": {"country": "BR", "regions": ["SE", "S"]},
+        "business_models": ["B2B"],
+    },
+    "technographics": {
+        "mandatory": [],
+        "preferred": ["clickup", "notion", "trello", "asana", "monday", "pipedrive"],
+        "excluded": [],
+    },
+    "persona_matrix": {
+        "target_roles": ["FOUNDER", "CEO", "MANAGING_PARTNER", "SOCIA_GESTORA"],
+        "min_seniority": "FOUNDER_OWNER",
+    },
+    "intent_triggers": [
+        "FUNDADORA_PRESA_NA_OPERACAO",
+        "CONTRATACAO_SENIOR",
+        "EXPANSAO_OU_NOVA_UNIDADE",
+        "INTENCAO_ADOCAO_IA",
+        "CONCLUSAO_CURSO_GESTAO",
+    ],
+}
 
 
 def _talita() -> ICPCriteria:
-    raw = json.loads((_ROOT / "config" / "icp_criteria.talita.json").read_text("utf-8"))
-    return ICPCriteria.model_validate(raw)
+    return ICPCriteria.model_validate(_TEST_ICP)
 
 
 def test_onda_zero_e_paridade() -> None:
