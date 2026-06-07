@@ -26,24 +26,167 @@ NUMBER = "1"
 PROJECT_ID = "PVT_kwHOAAi2gM4BZ3J3"
 STATUS_FID = "PVTSSF_lAHOAAi2gM4BZ3J3zhUy5Jg"  # Status
 BACKLOG = "6cf82daa"
+TODO = "f75ad846"
 PRIO_FID = "PVTSSF_lAHOAAi2gM4BZ3J3zhUzDd8"  # Priority
 PRIO_OPT = {"Alta": "da3cda2e", "Media": "dd378f56", "Baixa": "8ffead41"}
 
-DOR = """
+TAMANHO = "\n\n## Tamanho\n1 WU (1-2 passos / uma janela; termina em checkpoint seguro)."
 
-## Tamanho
-1 WU (1-2 passos / uma janela; termina em checkpoint seguro).
+_DOR_ITEMS = [
+    "Objetivo observavel em 1 frase",
+    "Cabe em 1 WU (1-2 passos / uma janela)",
+    "Contrato entrada->saida definido (ADR-008/SDD vinculada)",
+    "Gherkin: feliz + degradado + Open-World",
+    "Fixtures identificadas (ou modulo puro); sem bloqueio de rede-paga",
+    "Sem decisao de fronteira em aberto",
+    "Dentro do escopo (CLAUDE.md 3/5, ADR-000/008) e deterministico (1e-9, APIs/AWS mockadas)",
+    "DoD especifico declarado acima",
+]
 
-## DoR (checklist -- marque [x]; so vai para Todo com TODOS [x])
-- [ ] Objetivo observavel em 1 frase
-- [ ] Cabe em 1 WU (1-2 passos / uma janela)
-- [ ] Contrato entrada->saida definido (ADR-008/SDD vinculada)
-- [ ] Gherkin: feliz + degradado + Open-World
-- [ ] Fixtures identificadas (ou modulo puro); sem bloqueio de rede-paga
-- [ ] Sem decisao de fronteira em aberto
-- [ ] Dentro do escopo (CLAUDE.md 3/5, ADR-000/008) e deterministico (1e-9, APIs/AWS mockadas)
-- [ ] DoD especifico declarado acima
-"""
+# WUs que estao Ready (DoR 100%) e devem ir para Todo. WU-X1 (acao externa do dono)
+# e WU-D3 (deploy auto depende do Cognito vivo) permanecem em Backlog (bloqueio).
+READY = {
+    "WU-P1", "WU-P2", "WU-P3", "WU-P4", "WU-P5", "WU-P6", "WU-P7", "WU-P8",
+    "WU-B1", "WU-B2", "WU-B3", "WU-B4", "WU-B5", "WU-B6", "WU-B7",
+    "WU-I1", "WU-I2", "WU-I3", "WU-I4", "WU-I5", "WU-I6", "WU-I7", "WU-I8",
+    "WU-D1", "WU-D2",
+}
+BLOCK_REASON = {
+    "WU-D3": "deploy automatico na main exige o Cognito User Pool vivo (issuer/audience). "
+             "Liberar para Todo apos WU-X1 + WU-I2 mergeada.",
+    "WU-X1": "acao operacional do dono FORA do repo (provisionar User Pool e publicar "
+             "COGNITO_ISSUER/COGNITO_AUDIENCE). O run noturno nao desenvolve esta card.",
+}
+
+# Plano de execucao por card (passos concretos + arquivos-alvo, ancorados na arvore real).
+PLANS = {
+    "WU-P1": """## Plano de execucao
+1. Criar `src/socialselling/core/repositories/__init__.py` e `base.py`.
+2. Definir as 4 ABCs (`abc.ABC` + `@abstractmethod`) com as assinaturas exatas do SDD-3 secao 2; tipar com `from socialselling.contracts import LeadCard`.
+3. Teste `tests/test_repositories_base.py`: instanciar cada ABC levanta `TypeError`.
+4. Gate: `ruff` + `mypy --strict`.""",
+    "WU-P2": """## Plano de execucao
+1. Criar `core/repositories/local_json.py` com `LocalJSONRepository` (4 Ports).
+2. **Delegar** (sem reimplementar) para os stores existentes: corpus->`corpus/store.py`; cache->`core/cache.py`; ledgers->`core/credit_ledger.py`/`core/request_ledger.py`; feedback->`learning/feedback_store.py`; waves->`corpus/waves.py`. Escrita via `core/atomic.py`.
+3. `user_id` aceito e fixo (tenant logico unico) — paridade byte-identica.
+4. Smoke E2E byte-identico + cenarios de atomicidade.""",
+    "WU-P3": """## Plano de execucao
+1. Criar `tests/support/fake_repository.py` (`FakeRepository` em memoria, dicts) implementando as 4 ABCs.
+2. Upsert idempotente por `entity_id`; leitura ausente -> None.
+3. Expor via fixture em `tests/conftest.py` para o nucleo.""",
+    "WU-P4": """## Plano de execucao
+1. Criar `tests/features/persistence_contract.feature` + steps em `tests/steps/`.
+2. Parametrizar a bateria contra `LocalJSONRepository` (P2) e `FakeRepository` (P3).
+3. Cenarios: upsert idempotente (1e-9), atomicidade, cache T-24h, ledger cap (sem escrita parcial), ordenacao estavel.""",
+    "WU-P5": """## Plano de execucao
+1. Criar `core/repositories/dynamodb.py` (UNICO modulo com `import boto3`).
+2. Mapear Ports -> `PutItem`/`GetItem`/`UpdateItem`/`Query` + `ConditionExpression` (concorrencia otimista; cap de saldo). Chaves PK/SK do SDD-2 secao 2.
+3. Testes com `botocore.stub.Stubber` (sem rede); rodar a MESMA `persistence_contract.feature` contra ele.""",
+    "WU-P6": """## Plano de execucao
+1. Adicionar `persistence_mode` em `config.py` (`[runtime]`) + `config/runtime.toml` (default "local").
+2. Criar `core/repositories/factory.py: build_repositories(cfg)` retornando o conjunto de Ports concretas.
+3. Modo invalido -> `ValueError` (fail-fast). Teste cobre local/aws/invalido.""",
+    "WU-P7": """## Plano de execucao
+1. Refatorar `orchestrator.py` (composition root) para construir os repositorios via factory e injeta-los em M1-M5/corpus/learning por parametro.
+2. Remover acesso direto a arquivo/`boto3` dos modulos puros.
+3. Guard no gate: `grep` falha se houver `import boto3` ou caminho de arquivo fora dos adapters. Paridade local byte-identica.""",
+    "WU-P8": """## Plano de execucao
+1. Em `tests/conftest.py`, fixture `autouse` que bloqueia rede (monkeypatch em `socket.socket`) e falha o teste se houver tentativa de conexao.
+2. Mensagem clara apontando o teste infrator.
+3. Cenario "gate offline" verde; documentar no `dor-dod`/`gate`.""",
+    "WU-B1": """## Plano de execucao
+1. Criar `src/socialselling/edge/__init__.py` + `edge/contracts.py` com os 7 schemas (`extra="forbid"`).
+2. Reusar `ICPCriteria`/`LeadCard`/`ProspectScore`/`XAIPayload`/`OperatingMode` de `contracts.py`.
+3. Teste: `RunRequest` rejeita `user_id` no corpo; `mypy --strict`.""",
+    "WU-B2": """## Plano de execucao
+1. Criar `edge/run_handler.py: handle(event) -> PipelineTrigger`.
+2. Extrair `sub` de `$context.authorizer.claims.sub`; `now` de `requestTimeEpoch` (ISO); `run_id = sha256(user_id+icp_id+now-truncado)`.
+3. Fixture de evento APIGW em `tests/fixtures/edge/`; StartSyncExecution mockado.""",
+    "WU-B3": """## Plano de execucao
+1. Criar `edge/serialize.py`: `RankedProspect[] + LeadCard[] -> RunResponse` (sem recomputar).
+2. Ordenar `leads` por rank; preencher `finops` e `operating_mode`.
+3. Fixture do output do SFN; asserir byte-identico (1e-9).""",
+    "WU-B4": """## Plano de execucao
+1. Criar `edge/errors.py: classify(cause) -> (ApiError, status)` conforme tabela SDD-1 secao 3.
+2. Preservar a mensagem CRUA do provedor (L-057); billing -> `actionable_hint` com link.
+3. Fixtures de `error.Cause` (RPD, billing, 5xx).""",
+    "WU-B5": """## Plano de execucao
+1. Declarar o estado `Catch` global -> `FormatError` na ASL (placeholder em `infra/stateless/statemachine/`).
+2. Testar por fixture do output do SFN (erro -> ApiError correto).
+3. Billing nao-retentavel vai direto ao Catch (sem retry).""",
+    "WU-B6": """## Plano de execucao
+1. Criar `openapi/socialselling.yaml` (POST /runs + esquemas de erro) congruente com os contratos.
+2. Adicionar lint OpenAPI no CI (`openapi-spec-validator` via pip, offline).
+3. Asserir que campos do yaml batem com `RunRequest`/`RunResponse`/`ApiError`.""",
+    "WU-B7": """## Plano de execucao
+1. Teste e2e da borda com fixtures: corpus previo + cognicao indisponivel -> 200 `DEGRADED_GEMINI`.
+2. Cota sem corpus -> 429 (nunca "0 leads").
+3. Lead sem intent -> visivel + `explanation.missing_signals` preenchido.""",
+    "WU-I1": """## Plano de execucao
+1. Criar `infra/stateful/template.yaml` (SAM): DynamoDB PAY_PER_REQUEST, PK/SK, TTL `expires_at`, 3 SecretsManager, `DeletionPolicy/UpdateReplacePolicy: Retain`, Exports `ss-*`.
+2. Teste: parse YAML afirma `Retain` e schema PK/SK.
+3. `sam validate` offline no gate.""",
+    "WU-I2": """## Plano de execucao
+1. Criar `infra/stateless/template.yaml` (SAM): fn-m1..m5, fn-run-handler, fn-wave, StateMachine, API Gateway, EventBridge; importar `ss-*` via `Fn::ImportValue`.
+2. Autorizador JWT do Cognito com **Parameters** `CognitoIssuer`/`CognitoAudience` (sem default) — valores so no deploy; `sam validate` passa offline.
+3. Teste afirma imports e o autorizador na rota.""",
+    "WU-I3": """## Plano de execucao
+1. Criar `infra/stateless/statemachine/pipeline.asl.json` (M1->M2->M3->M4->M5 + Catch->FormatError).
+2. Runner local de teste executa a ASL com fixtures de cada modulo.
+3. Ordem e saida byte-identicas (1e-9).""",
+    "WU-I4": """## Plano de execucao
+1. Adicionar `Retry`/`TimeoutSeconds` por estado na ASL (M1=30s/2x; M2=120s/3x base2s; M3-5=15s/1x).
+2. Distinguir 429 transitorio (retry) de billing duro (Catch direto).
+3. Testes de retry/backoff com mocks.""",
+    "WU-I5": """## Plano de execucao
+1. Criar `src/socialselling/aws/handlers/m1.py`..`m5.py` (wrappers finos).
+2. Cada wrapper: le segredo (Secrets Manager), injeta `DynamoDBRepository` (P5/P6) + `now`, chama a funcao pura, serializa. SEM regra de negocio; modulos puros INALTERADOS.
+3. Testes com repo fake + segredo mock (sem AWS).""",
+    "WU-I6": """## Plano de execucao
+1. Criar `src/socialselling/aws/handlers/wave.py` envolvendo `corpus/waves.py` -> `accumulate_and_rank`.
+2. Regra EventBridge `cron(0 6 * * ? *)` no template -> `StartExecution` assincrono.
+3. Avanco de `WAVE#STATE` SOMENTE com leads novos (L-056); cenario verde.""",
+    "WU-I7": """## Plano de execucao
+1. Centralizar a derivacao de chaves (PK=`USER#<user_id>`, SK por tipo) em `core/repositories/dynamodb.py` (ou `keys.py`).
+2. Teste de chaves: cada tipo (LEAD/CACHE/LEDGER/FEEDBACK/WAVE) gera o PK/SK esperado.
+3. `entity_id`/`company_id` por hash estavel (sem UUID/relogio).""",
+    "WU-I8": """## Plano de execucao
+1. Declarar policies IAM por funcao no `infra/stateless/template.yaml`: so a `SocialSellingTable` importada + o segredo do modulo.
+2. Sem privilegio cruzado entre modulos.
+3. Revisao + `sam validate`.""",
+    "WU-D1": """## Plano de execucao
+1. Editar `.github/workflows/ci.yml`: adicionar setup do SAM CLI + passo `sam validate` para `infra/stateful` e `infra/stateless`.
+2. Sem credenciais AWS no job (validacao local). Fail-closed se template invalido.""",
+    "WU-D2": """## Plano de execucao
+1. Criar `.github/workflows/cd-stateful.yml`: `on: workflow_dispatch`; `environment:` com required reviewers; `permissions: id-token: write`.
+2. `aws-actions/configure-aws-credentials@v4` assumindo `${{ secrets.AWS_ROLE_ARN }}` em `${{ secrets.AWS_REGION }}`; `sam build`/`sam deploy` da stateful.
+3. Nunca em push.""",
+    "WU-D3": """## Plano de execucao
+1. Criar `.github/workflows/cd-stateless.yml`: `on: push` (main, apos gate); OIDC com `${{ secrets.AWS_ROLE_ARN }}`/`${{ secrets.AWS_REGION }}`; `sam deploy` da stateless (`Fn::ImportValue`).
+2. **NAO mergear ate o Cognito existir** (deploy automatico falharia). Liberar apos WU-X1 + WU-I2.""",
+    "WU-X1": """## Plano de execucao (acao do dono — externa ao repo)
+1. Provisionar o Cognito User Pool + app client (fora deste repo).
+2. Publicar `COGNITO_ISSUER` e `COGNITO_AUDIENCE` como GitHub vars.
+3. Avisar para destravar WU-I2 (deploy) e WU-D3.""",
+}
+
+
+def _dor_block(ready: bool) -> str:
+    mark = "x" if ready else " "
+    lines = "\n".join(f"- [{mark}] {it}" for it in _DOR_ITEMS)
+    return f"\n\n## DoR (checklist -- TODOS [x] para ir a Todo)\n{lines}"
+
+
+def build_full(code: str, body: str) -> str:
+    """Monta o corpo final: body + plano de execucao + Tamanho + DoR + nota de status."""
+    plano = PLANS.get(code, "")
+    ready = code in READY
+    full = body + "\n\n" + plano + TAMANHO + _dor_block(ready)
+    if ready:
+        full += "\n\n> ✅ DoR completo (2026-06-07) — refinada e pronta para Todo."
+    else:
+        full += f"\n\n> ⛔ BLOQUEADO (manter em Backlog): {BLOCK_REASON.get(code, 'ver dependencias')}"
+    return full
 
 # (titulo, Priority, corpo) — corpo sem o bloco DoR (apendado automaticamente).
 CARDS: list[tuple[str, str, str]] = [
@@ -709,31 +852,82 @@ def run(args: list[str]) -> str:
     return res.stdout
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--dry-run", action="store_true", help="so lista, nao cria")
-    a = ap.parse_args()
+def _code(title: str) -> str:
+    return title.split(" ")[0]
 
+
+def _board_index() -> dict[str, dict]:
+    """Mapeia WU code -> {item_id, content_id, status} a partir do board atual."""
+    out = run(["gh", "project", "item-list", NUMBER, "--owner", OWNER,
+               "--limit", "100", "--format", "json"])
+    idx: dict[str, dict] = {}
+    for it in json.loads(out)["items"]:
+        title = it.get("content", {}).get("title", "")
+        code = _code(title)
+        if code in PLANS:  # so cards do roadmap ADR-008
+            idx[code] = {"item_id": it["id"],
+                         "content_id": it.get("content", {}).get("id", ""),
+                         "status": it.get("status", "")}
+    return idx
+
+
+def cmd_create(dry: bool) -> None:
     print(f"=== Seed ADR-008 backlog: {len(CARDS)} cards ===")
     for i, (title, prio, body) in enumerate(CARDS, 1):
-        full = body + DOR
-        if a.dry_run:
-            print(f"[{i:2}] [{prio:<5}] {title}")
+        if dry:
+            print(f"[{i:2}] [{prio:<5}] {title}  (Ready={_code(title) in READY})")
             continue
         print(f"[{i:2}/{len(CARDS)}] criando: {title} (Priority={prio})")
+        full = build_full(_code(title), body)
         out = run(["gh", "project", "item-create", NUMBER, "--owner", OWNER,
                    "--title", title, "--body", full, "--format", "json"])
         item_id = json.loads(out)["id"]
+        status = TODO if _code(title) in READY else BACKLOG
         run(["gh", "project", "item-edit", "--id", item_id, "--project-id", PROJECT_ID,
-             "--field-id", STATUS_FID, "--single-select-option-id", BACKLOG])
+             "--field-id", STATUS_FID, "--single-select-option-id", status])
         run(["gh", "project", "item-edit", "--id", item_id, "--project-id", PROJECT_ID,
              "--field-id", PRIO_FID, "--single-select-option-id", PRIO_OPT[prio]])
+    print("\n(dry-run) nada criado." if dry else
+          f"\nOK: {len(CARDS)} cards criados. Board: https://github.com/users/{OWNER}/projects/{NUMBER}")
 
-    if a.dry_run:
-        print("\n(dry-run) nenhum card criado.")
-    else:
-        print(f"\nOK: {len(CARDS)} cards criados em Backlog. "
-              f"Board: https://github.com/users/{OWNER}/projects/{NUMBER}")
+
+def cmd_sync(dry: bool) -> None:
+    """Atualiza o corpo (plano+DoR) dos cards existentes e move os Ready para Todo."""
+    idx = _board_index()
+    missing = [c for c in PLANS if c not in idx]
+    if missing:
+        print(f"AVISO: cards nao encontrados no board: {missing}")
+    print(f"=== Sync ADR-008: {len(idx)} cards no board ===")
+    for title, _prio, body in CARDS:
+        code = _code(title)
+        if code not in idx:
+            continue
+        info = idx[code]
+        ready = code in READY
+        target = "Todo" if ready else "Backlog"
+        move = ready and info["status"] != "Todo"
+        print(f"  {code}: body+plano | status {info['status']}"
+              + (f" -> {target}" if move else f" (mantem {info['status']})"))
+        if dry:
+            continue
+        full = build_full(code, body)
+        run(["gh", "project", "item-edit", "--id", info["content_id"],
+             "--title", title, "--body", full])
+        if move:
+            run(["gh", "project", "item-edit", "--id", info["item_id"], "--project-id", PROJECT_ID,
+                 "--field-id", STATUS_FID, "--single-select-option-id", TODO])
+    ready_n = sum(1 for c in idx if c in READY)
+    print(f"\n{'(dry-run) ' if dry else ''}OK: {len(idx)} corpos atualizados; "
+          f"{ready_n} Ready em Todo; {len(idx) - ready_n} mantidos em Backlog (bloqueio).")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dry-run", action="store_true", help="so lista, nao escreve")
+    ap.add_argument("--sync", action="store_true",
+                    help="atualiza corpos dos cards existentes e move Ready->Todo (nao cria)")
+    a = ap.parse_args()
+    (cmd_sync if a.sync else cmd_create)(a.dry_run)
 
 
 if __name__ == "__main__":
