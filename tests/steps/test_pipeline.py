@@ -22,6 +22,33 @@ _TAVILY = _ROOT / "tests" / "fixtures" / "tavily"
 _GEMINI = _ROOT / "tests" / "fixtures" / "gemini"
 _NOW = datetime(2026, 1, 1, tzinfo=UTC)
 
+# ICP fixo para os testes — independente do config/icp_criteria.talita.json em runtime.
+_TEST_ICP: dict[str, Any] = {
+    "icp_id": "icp_founders_servicos_brasil",
+    "firmographics": {
+        "industries": ["consultoria", "advocacia", "engenharia", "software", "saas"],
+        "employee_range": {"min": 5, "max": 30},
+        "geographies": {"country": "BR", "regions": ["SE", "S"]},
+        "business_models": ["B2B"],
+    },
+    "technographics": {
+        "mandatory": [],
+        "preferred": ["clickup", "notion", "trello", "asana", "monday", "pipedrive"],
+        "excluded": [],
+    },
+    "persona_matrix": {
+        "target_roles": ["FOUNDER", "CEO", "MANAGING_PARTNER", "SOCIA_GESTORA"],
+        "min_seniority": "FOUNDER_OWNER",
+    },
+    "intent_triggers": [
+        "FUNDADORA_PRESA_NA_OPERACAO",
+        "CONTRATACAO_SENIOR",
+        "EXPANSAO_OU_NOVA_UNIDADE",
+        "INTENCAO_ADOCAO_IA",
+        "CONCLUSAO_CURSO_GESTAO",
+    ],
+}
+
 scenarios("../features/pipeline_smoke.feature")
 
 
@@ -55,8 +82,7 @@ def ctx() -> dict[str, Any]:
 
 
 def _icp() -> ICPCriteria:
-    raw = json.loads((_ROOT / "config" / "icp_criteria.talita.json").read_text("utf-8"))
-    return ICPCriteria.model_validate(raw)
+    return ICPCriteria.model_validate(_TEST_ICP)
 
 
 def _catalog() -> HypothesisCatalog:
