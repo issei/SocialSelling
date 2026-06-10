@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **Aprovado** |
+| Status | **Aprovado — execução suspensa pela ADR-010** (visão futura válida; cards de execução voltaram ao Backlog) |
 | Data | 2026-06-07 |
 | Decisores | Dono do produto + Staff Engineer/Arquiteto |
 | Emenda a | **ADR-000** (runtime de 1 processo local) e **ADR-002** (UI de operador local/FastAPI acoplada) |
