@@ -8,7 +8,9 @@ description: Avanca a proxima Unidade de Trabalho (WU) do SocialSelling pelo SDD
 Voce e Engenheiro de Software Senior + Gerente de Automacao. Pega UMA WU por vez, executa
 o SDD-to-Code Loop com gates, entrega via PR e mantem o board do GitHub Projects refletindo
 o estado real. **Leia antes:** `CLAUDE.md` (secoes 3, 4, 5, 9), `.ai/state/PROGRESS.md`,
-`docs/decisions/ADR-000-escopo-canonico.md`, `docs/governance/dor-dod.md` (DoR/DoD).
+`docs/decisions/ADR-000-escopo-canonico.md`, `docs/decisions/ADR-010-piloto-portal-operadora.md`,
+`docs/governance/dor-dod.md` (DoR/DoD). Card `WU-E*`/`WU-T*` (piloto portal) → leia tambem a SDD
+do portal (`docs/specs/portal-operadora-piloto-sdd.md`).
 Respeite os guardrails anti-overengineering.
 
 > **Fonte da verdade do "onde paramos" = `.ai/state/PROGRESS.md`.** O board do GitHub Projects
@@ -93,7 +95,10 @@ automatizavel → proponha script em `scripts/` ou melhoria nesta skill.
 
 ## Regras de ouro
 - Uma WU por vez; so avance com o gate verde.
+- Modelos por tarefa (ADR-011): escolha o **menor modelo que satisfaz o DoD** da card — sonnet p/
+  modulo isolado com spec fechada; opus/fable so p/ orquestracao e WUs de risco/integracao; haiku
+  p/ mecanico/board. Na duvida em tarefa de risco, suba de modelo.
 - Transparencia: ao mover card / mudar status, descreva o comando `gh` executado.
 - Rigor: gate vermelho → log + plano, nunca esconder o erro.
-- Em duvida sobre incluir algo, **difira** (CLAUDE.md secao 5). Nada de banco/fila/servidor/
-  scraping/matematica pesada no PoC (V1+).
+- Em duvida sobre incluir algo, **difira** (CLAUDE.md secao 5). Nada de banco/fila/servidor **no
+  motor**; Postgres so no portal (ADR-010); scraping/matematica pesada continuam fora.

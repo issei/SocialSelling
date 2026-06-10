@@ -1,5 +1,9 @@
 # Plano de backlog — ADR-008 (MVP Serverless AWS, BaaS desacoplado + IaC bimodal)
 
+> **⚠️ SUPERSEDED (2026-06-09):** a execução deste plano foi **suspensa pela ADR-010** (piloto
+> portal da operadora). Os cards P/B/I/D/S/F voltaram ao **Backlog**. Plano vigente:
+> `docs/planning/adr-010-backlog-plan.md`.
+
 > **O que é:** o plano ordenado de cards que operacionaliza a **ADR-008** e suas três SDDs
 > derivadas. Decompõe cada Work Unit (WU) das specs em um card do **GitHub Project #1** com DoR
 > rascunhado, ordenado por dependência. Inclui a camada **DevOps CI/CD** (deploy via OIDC na AWS),
