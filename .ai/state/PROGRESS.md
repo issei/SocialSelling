@@ -27,9 +27,8 @@
 - **wu_em_andamento:** — (nenhuma; próxima = WU-T3)
 - **passo_atual:** — (`main` verde 226 testes, tag `v0.19.0`)
 - **pendências de processo (Revisão #001):**
-  - **P4c parcial:** worktrees órfãs removidas ✅; **`data/corpus/` NÃO commitado** — repo é
-    **PÚBLICO** e o corpus contém dados pessoais de prospects (nomes, Instagram). Aguardando
-    decisão do dono (gitignore vs repo privado vs anonimizar). Card em In Progress.
+  - **P4c ✅ concluído:** worktrees órfãs removidas; `data/corpus/` no **`.gitignore`** (decisão do
+    dono 2026-06-11 — repo é público e o corpus tem PII de prospects; corpus fica só local).
   - **P4b** (lições dedup+validador) e **P6** (`ship_wu.ps1`) em Todo para o run noturno.
   - **P8** (cron 22:00) desbloqueado → Todo; ativação = sessão de dia com o dono.
 

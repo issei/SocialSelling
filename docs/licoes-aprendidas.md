@@ -192,8 +192,8 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   commitados.** `data/corpus/leads_corpus.json` contém PII de pessoas reais; o repo é público —
   commitar = publicar dossiê indexável (LGPD). **Antes de versionar qualquer `data/`, checar
   `gh repo view --json visibility` e inspecionar o conteúdo.** Decisão de versionamento do corpus
-  exige: repo privado, OU anonimização, OU gitignore (corpus fica só local). Pendente com o dono
-  (Revisão #001/P4c).
+  exige: repo privado, OU anonimização, OU gitignore (corpus fica só local). **Decidido
+  (2026-06-11): `data/corpus/` no `.gitignore`** — corpus permanece apenas local (Revisão #001/P4c).
 
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
