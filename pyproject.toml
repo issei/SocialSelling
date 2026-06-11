@@ -19,6 +19,14 @@ web = [
   "uvicorn>=0.29",
   "jinja2>=3.1",
 ]
+# Portal da operadora (ADR-010): Render free + Neon Postgres free.
+portal = [
+  "fastapi>=0.110",
+  "uvicorn>=0.29",
+  "jinja2>=3.1",
+  "itsdangerous>=2.1",
+  "psycopg[binary]>=3.1",
+]
 dev = [
   "pytest>=8.0",
   "pytest-bdd>=7.0",
@@ -46,6 +54,10 @@ files = ["src", "tests"]
 
 [[tool.mypy.overrides]]
 module = ["uvicorn.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["psycopg", "psycopg.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
