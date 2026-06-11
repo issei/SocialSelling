@@ -179,6 +179,23 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-063 | Web/Profiles | `apply_profile_to_catalog` deve ficar em `schemas.py` (puro), não em `services.py`.** `services.py` já importa de `orchestrator.py`; se `orchestrator.py` também importasse de `services.py`, criaria ciclo. A solução é colocar funções puras (sem IO) em `schemas.py` onde ambos podem importar sem circular. Aplicar: funções de transformação pura que precisam ser compartilhadas entre camadas devem viver no módulo de tipos/schemas, não no de serviços.
 - **L-062 | M5/XAI | `evidence_index` como `dict | None` (default `None`) é mais seguro que `{}` como default mutável.** Mutable default args em Python são compartilhados entre chamadas; usar `None` e resolver `idx = evidence_index or {}` internamente evita bug sutil de estado compartilhado. Aplicar: qualquer parâmetro dict/list opcional deve usar `None` como default.
 
+- **L-064 | Estratégia | Validação de produto ANTES de infraestrutura.** O roadmap AWS da ADR-008
+  (31 cards) seria construído **inteiro contra mocks** — multi-tenant, IaC, CI/CD — sem **nenhum
+  usuário real no fim** para dizer se o ranking ("quem devo abordar primeiro?") funciona. O pivô
+  ADR-010 (piloto fino: motor local inalterado + portal mínimo p/ operadora real) preservou o
+  objetivo com **~1/3 dos cards** e produz o dado que nenhum mock dá: conversão real. **Sinal de
+  alerta:** backlog grande sem consumidor final definido — antes de aprovar um roadmap de infra,
+  perguntar "quem usa o resultado da primeira fase, e o que ele valida?". Aplicar: priorizar a
+  fatia que põe o produto na mão de um usuário real; infra escala depois, com dados na mão.
+- **L-065 | Processo/ADR | ADR que emenda escopo DEVE atualizar CLAUDE.md e skills no MESMO PR.**
+  A ADR-008 emendou a ADR-000 (autorizou AWS/DynamoDB), mas o CLAUDE.md §5 e a skill noturna
+  (`github-sdd-sync`) continuaram proibindo banco/AWS — o run noturno **colidiria com os próprios
+  cards aprovados** (guardrail manda diferir; card manda implementar; fail-closed = card devolvido
+  a Backlog sem culpa do código). Detectado na autoria da ADR-010, que já entrou com CLAUDE.md +
+  skill emendados juntos. **Aplicar:** ao aprovar ADR que muda escopo/guardrail, `grep` nos
+  guardrails (CLAUDE.md §2/§5/§6, skills, dor-dod) atrás de regras que a contradigam — passo
+  obrigatório da autoria, no mesmo PR da ADR.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.
