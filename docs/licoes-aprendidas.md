@@ -179,6 +179,8 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-063 | Web/Profiles | `apply_profile_to_catalog` deve ficar em `schemas.py` (puro), não em `services.py`.** `services.py` já importa de `orchestrator.py`; se `orchestrator.py` também importasse de `services.py`, criaria ciclo. A solução é colocar funções puras (sem IO) em `schemas.py` onde ambos podem importar sem circular. Aplicar: funções de transformação pura que precisam ser compartilhadas entre camadas devem viver no módulo de tipos/schemas, não no de serviços.
 - **L-062 | M5/XAI | `evidence_index` como `dict | None` (default `None`) é mais seguro que `{}` como default mutável.** Mutable default args em Python são compartilhados entre chamadas; usar `None` e resolver `idx = evidence_index or {}` internamente evita bug sutil de estado compartilhado. Aplicar: qualquer parâmetro dict/list opcional deve usar `None` como default.
 
+- **L-063 | Infra | `api.github.com` pode ficar inacessível (TCP timeout) enquanto `github.com` e `api.github.com` respondendo ao ICMP ping.** O token `gh` armazenado no keyring pode mostrar "invalid" como sintoma do timeout, não de token expirado. Verificar com `curl -v https://api.github.com/user` antes de concluir que token é inválido. Mitigação: em runs autônomos, detectar o bloqueio e continuar com `git push` direto; documentar branches para PR manual pelo dono.
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.

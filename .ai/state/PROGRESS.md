@@ -4,35 +4,54 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **UI CSV Export Button** (PR #81). Botão "Exportar CSV" no rodapé da tabela; desabilitado com 0 leads; click dispara download `/api/run/{runId}/export.csv`. Gate verde, 195 testes.
-- **ultima_tag_verde:** `v0.17.0` → `v0.18.0` (CSV) → `v0.18.1` (WU-A) → `v0.18.2` (WU-B) → `v0.18.3` (WU-C; 195 testes). CSV button sem nova tag (front-end minor).
-- **proxima_acao:** **🚀 ROADMAP AWS (ADR-008 + ADR-009) EM EXECUÇÃO — 31 cards em Todo (refinados, DoR 100%)**:
-  - **Primeira WU do run noturno: `WU-P1` (Ports de persistência / ABCs)** — sem dependências; fundação da bimodalidade. Ordem = Priority + ordem da coluna (P1..P8 → B1..B7 → I1..I8 → D1 → gates S/F). Cada card tem **## Plano de execução** (arquivos-alvo + passos) e DoR `[x]`.
-  - **🆕 ADR-009 (2026-06-07) — write na AWS sob gates de segurança+FinOps (fail-closed).** O dono autorizou operações de **escrita** na AWS sob a condição de **testes + revisores automáticos**. Criados 8 cards: **WU-S1..S4** (cfn-lint+checkov; IAM Access Analyzer+anti-wildcard; permissions boundary; revisor Claude no PR) e **WU-F1..F3** (caps+log retention; AWS Budgets+alerta; cost-allocation tags) — todos em **Todo**. Decisões: checkov+cfn-lint+Access Analyzer; Budgets+caps+tags; CI hard-gate + agente no PR.
-  - **Write é GATED:** `WU-D2` (deploy stateful) **movido Todo→Backlog** (é write); `WU-D3` e `WU-G1` em Backlog. **WU-G1** é o card-portão que liga `--allow-write` (MCP) e promove D2/D3 — só vira Ready quando **WU-S1..S4 + WU-F1..F3 = Done**.
-  - **✅ WU-X1 CONCLUÍDA (2026-06-07):** Cognito User Pool `us-east-1_o17XMPejk` + app client `54ofg7c96p74niqbdibfkrtavv`; GitHub vars `COGNITO_ISSUER`/`COGNITO_AUDIENCE` publicadas. (OIDC: secrets `AWS_ROLE_ARN`/`AWS_REGION` presentes.)
-  - Planos/grafo: `docs/planning/adr-008-backlog-plan.md`; ADRs `docs/decisions/ADR-008-*.md`, `ADR-009-*.md`. Tooling AWS read-only: `.mcp.json` + `docs/planning/aws-tooling-eval.md`.
-  - **#73 WU-D** `feat: UI — wizard guiado + gestor de perfis + badges` — depende de WU-A/B/C ✅; tag `v0.19.0`; em **Backlog** (não faz parte do roadmap ADR-008).
-  - **(BLOQUEADO paralelo — requer plano Apollo PAGO, L-056)** gravar fixtures Apollo reais + calibrar.
-- **wu_em_andamento:** — (nenhum)
-- **passo_atual:** — (`main` verde, 195 testes)
+- **marco_atual:** 🔄 **Run noturno 2026-06-10 — 4 WUs ADR-010 implementadas, branches prontas para PR manual**. `main` intacta (195 testes). Bloqueio de rede: `api.github.com` TCP inacessível — `gh pr create/merge` e `gh project item-edit` falharam; `git push` funcionou normalmente.
+- **ultima_tag_verde:** `v0.18.3` (WU-C ICP Profiles; 195 testes). Próxima tag após merge das branches ADR-010.
+- **proxima_acao:** **🚀 ROADMAP ADR-010 — branches prontas para PR + próxima WU: `WU-T3` (Auth por código de acesso)**
+  - **⚠️ AÇÃO DO DONO — criar PRs manualmente via GitHub web UI** (api.github.com bloqueada neste run). Ordem de merge (squash, base muda a cada merge):
+    1. `feat/wu-e1-canonical-entity-id` → base=`main` → merge → nova `main`
+    2. `feat/wu-e2-portal-contracts` → base=nova `main` → merge → nova `main`
+    3. `feat/wu-t1-portal-scaffold` → base=nova `main` → merge → nova `main`
+    4. `feat/wu-t2-publish-endpoint` → base=nova `main` → merge → nova `main`
+  - **Estado das branches ADR-010 (todas pushed, gate 100% verde):**
+    - ✅ **WU-E1** `core/identity.py: canonical_entity_id` — 9 BDD, 204 testes (acumulado); `feat/wu-e1-canonical-entity-id`
+    - ✅ **WU-E2** `portal/contracts.py` + `config/feedback_catalog.json` + loader — 9 BDD; `feat/wu-e2-portal-contracts`
+    - ✅ **WU-T1** scaffold portal (app FastAPI, BasePortalDAO, InMemoryDAO, PostgresDAO, /healthz) — 7 BDD; `feat/wu-t1-portal-scaffold`
+    - ✅ **WU-T2** `POST /api/publish` (Bearer, 201/409/401/422) — 6 BDD, 217 testes (acumulado); `feat/wu-t2-publish-endpoint`
+    - ⏳ **WU-T3** Auth por código (POST /login, cookie assinado, POST /logout, guarda de sessão) — **próxima**
+    - ⏳ WU-T4 APIs de feedback (POST lead/feedback + GET /api/feedback cursor)
+    - ⏳ WU-T5 UI Jinja2 (carteira + lead card)
+    - ⏳ WU-E3 CLI publish
+    - ⏳ WU-E4 CLI pull-feedback
+    - ⏳ WU-T6 render.yaml + runbook + smoke
+    - ⏳ WU-E5 e2e offline
+    - 🔲 WU-X2 [externo/dono] Deploy Render + DNS + seed
+  - **🔄 PIVÔ (2026-06-09): ADR-010 + ADR-011 aprovadas (sessão de dia).** Execução roadmap AWS (ADR-008) **suspensa** — 32 cards AWS em Backlog. ADR-008 = visão futura (não revogada); ADR-009 dormente. Novo alvo: **motor local INALTERADO + portal da operadora** (`src/socialselling/portal/`; FastAPI+Jinja2+JS vanilla; Render free + Neon Postgres free). Motor nunca acessa banco — só HTTP.
+  - **Contas criadas pelo dono (2026-06-09):** Render free + Neon Postgres free (projeto "socialselling", região AWS us-east-1). Domínio `selling.issei.com.br` (CNAME) planejado. **WU-X2 = ação do dono** (CNAME + env vars + seed SQL).
+  - **Na prateleira:** Cognito **WU-X1 ✅** (User Pool `us-east-1_o17XMPejk` + app client). Sem uso no piloto (auth = código de acesso + cookie assinado).
+  - ADRs: `docs/decisions/ADR-010-piloto-portal-operadora.md`, `ADR-011-processo-agentico-de-referencia.md`. SDD: `docs/specs/portal-operadora-piloto-sdd.md`. Plano: `docs/planning/adr-010-backlog-plan.md`.
+- **wu_em_andamento:** — (branch T2 pushed; aguardando merge pelo dono)
+- **passo_atual:** — (todas 4 branches pushed; `main` verde 195 testes)
 
-### Status de implementação das specs (2026-06-04)
+### Status de implementação das specs
 | Spec | Estado | Tags |
 |---|---|---|
 | ADR-004 Apollo (descoberta + org-enrich + reveal + ledger + cache + degradação) | ✅ completo, testado | `v0.13.0`–`v0.15.3` |
 | ADR-005 cognição (batch + orçamento RPD + ondas resumíveis) | ✅ core; determinístico-primeiro diferido | `v0.15.1` |
-| ADR-006 corpus (acumular + upsert idempotente + ranked view) | ✅ core; **acumulação + ondas ligadas na UI** (`v0.17.0`); process-only-new diferido | `v0.14.0`,`v0.15.0`,`v0.17.0` |
-| ADR-007 aprendizado por feedback (like/dislike → regressão treina e reajusta pesos, auto-apply) | ✅ core (`w_fit`/`w_intent`); pesos internos/exponent diferidos | `v0.17.0` |
-| ADR-003 LangGraph (motor async opcional) | ⏸️ diferido (opcional por design; pipeline síncrono é o default/oráculo) | — |
-- **branch:** `main`
-- **bloqueios:** **Apollo People Search API exige plano PAGO** — chave Free retorna 403 `API_INACCESSIBLE` (L-056). Card "Gravar fixtures Apollo reais" movido p/ **Backlog** até upgrade do plano. Runtime não quebra (degrada p/ Tavily em 403); só o recording de fixtures fica bloqueado. Demais: nenhum.
-- **board (espelho):** GitHub Project #1 "SocialSelling — SDD Roadmap" — https://github.com/users/issei/projects/1 (populado de PROGRESS.md via `scripts/setup_github_project.ps1`). Colunas: **Backlog** (6: WU-D2, WU-D3, WU-G1 [write gated, ADR-009] + #73 WU-D + 2 legados) → **Todo** (31 do roadmap AWS, refinados/DoR 100%) → **In Progress** → **Done** (inclui WU-X1 Cognito). Fonte da verdade continua aqui; board é espelho (skill `github-sdd-sync`).
+| ADR-006 corpus (acumular + upsert idempotente + ranked view) | ✅ core; acumulação + ondas + process-only-new | `v0.14.0`,`v0.15.0`,`v0.17.0` |
+| ADR-007 aprendizado por feedback (like/dislike → regressão treina e reajusta pesos) | ✅ core (`w_fit`/`w_intent`) | `v0.17.0` |
+| ADR-010 portal da operadora | 🔄 **em execução** — WU-E1/E2/T1/T2 prontas (branches); T3..E5 pendentes | — (branches) |
+| ADR-003 LangGraph (motor async opcional) | ⏸️ diferido | — |
 
-### Plano de orquestração (modo bypass — green→auto-merge→tag)
-Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/corpus (paralelos) → A3 (fixtures, precisa chave✓) → A4 ladder+M1 → A5 org-enrich → ADR-005 batch+determinístico-primeiro → ADR-006 wiring corpus no orquestrador → C/D**. Cada WU: branch `feat/…` → contrato → BDD/testes (sem rede; APIs mockadas) → impl → gate (`ruff`+`mypy --strict`+`pytest`) → PR `--squash --auto` → tag `v0.13.x`/`v0.14.0`. Falha de gate = não merge (rollback via última tag).
-- **Modelos:** Opus (main) p/ orquestração e WUs de risco (ledgers, integração); sonnet p/ módulos puros isolados em paralelo; haiku p/ tarefas mecânicas. Autolearning: `docs/licoes-aprendidas.md` ao fim de cada WU.
-- **backlog de calibração (não bloqueia, ver `docs/analysis/sondagem-talita.md`):** calibrar pesos `[persona]`/priors com conversão real; pessoa-vs-empresa quando a conta da firma não traz a fundadora; (opcional, fora do guardrail) enriquecimento de contato.
+- **branch atual:** `feat/wu-t2-publish-endpoint`
+- **bloqueios:**
+  - **`api.github.com` TCP inacessível neste run** — PRs e board precisam de ação manual do dono. `git push` ao `github.com` funcionou normalmente.
+  - **Apollo pago deixou de ser bloqueio (ADR-010)** — piloto Tavily-only.
+- **board (espelho):** GitHub Project #1 "SocialSelling — SDD Roadmap". Colunas atuais no board podem estar desatualizadas (não foi possível mover cards via `gh` neste run). O estado real é este PROGRESS.md.
+
+### Plano de orquestração ADR-010 (modo bypass)
+Sequência: E1 → E2 → T1 → T2 → T3 → T4 → T5 → E3 → E4 → T6 → E5 (→ WU-X2 externo).
+Cada WU: branch `feat/...` → contrato → BDD (offline) → impl → gate (`ruff`+`mypy --strict`+`pytest`) → push → PR → merge squash → tag.
+Falha de gate = não merge. Flakiness = falha (zero tolerância).
 
 ## Pré-condições antes de liberar autonomia plena
 - [x] `bootstrap` executado (venv + deps) e gate completo verde (ruff+mypy+pytest).
@@ -64,8 +83,10 @@ Sequência (do roadmap §3, "não soltar Apollo sozinho"): **A1✅ → A2/RPD/co
 | 2026-06-04 | Overview + UI redesenhada | overview HTML do projeto (#48); SDD UX + lista de leads em TABELA + drawer de detalhes enriquecidos (#49). Backend inalterado; 123 testes verdes. Licoes L-046/47/48 | `v0.15.4`,`v0.16.0` |
 | 2026-06-04 | Feedback (ADR-007) + busca incremental (ADR-006) | like/dislike → regressão logística (Python puro, determinística) reajusta pesos com auto-apply travado (#54); corpus acumulativo + ondas variam queries na UI p/ leads novos, ordenado por score. Opt-in/paridade; 159 testes verdes. Lições L-052..055 | `v0.17.0` |
 | 2026-06-06 | Export CSV de leads (sem scoring) | Funcao pura leads_to_csv + endpoint GET /api/run/{run_id}/export.csv; UTF-8+BOM, delimitador ";", sem rank/score.*; 11 novos testes; 183 testes verdes. Lições L-058/059 | `v0.18.0` |
-| 2026-06-06 | ADR-006 process-only-new (autônomo) | Skip Gemini para entidades com extração válida no corpus; inference cache (_inf.json) no CorpusStore keyed por company.website domain; orchestrator + services passam corpus_store antes do pipeline; 3 novos testes BDD; 186 testes verdes. Lição L-061 | PR #76 |
-| 2026-06-06 | WU-A DataProvenance (autônomo) | DataProvenance model + Driver.references + Hypothesis metadata (label/description_plain/impact_dimension/guide_tags) com defaults backward-compat; hypotheses_catalog.json atualizado H_01..H_05; 3 BDD; 189 testes verdes | `v0.18.1` |
-| 2026-06-06 | WU-B M5 Proveniência (autônomo) | `evidence_index: dict[str, ObservedEvidence] | None` em `run_m5`; INTENT_TIMING Driver recebe DataProvenance com URL/snippet rastreável; texto com links Markdown ou fallback semântico; orquestrador passa índice automaticamente; 3 BDD; 192 testes verdes | `v0.18.2` |
-| 2026-06-06 | WU-C ICP Profile CRUD (autônomo) | HypothesisConfig/ICPProfile/ICPProfileCreate + apply_profile_to_catalog (puro) em schemas; CRUD atômico em services; 4 endpoints FastAPI; --profile no CLI com precedência sobre --icp; 3 BDD; 195 testes verdes | `v0.18.3` |
-| 2026-06-06 | UI CSV Export Button (autônomo) | Botão "Exportar CSV" no rodapé da tabela de leads; desabilitado com 0 leads; click dispara download /api/run/{runId}/export.csv; CURRENT_RUN_ID no estado JS; gate verde 195 testes | PR #81 |
+| 2026-06-06 | ADR-006 process-only-new (autônomo) | Skip Gemini para entidades com extração válida no corpus; inference cache (_inf.json) no CorpusStore; 3 BDD; 186 testes verdes. Lição L-061 | PR #76 |
+| 2026-06-06 | WU-A DataProvenance (autônomo) | DataProvenance model + Driver.references + Hypothesis metadata; hypotheses_catalog.json H_01..H_05; 3 BDD; 189 testes verdes | `v0.18.1` |
+| 2026-06-06 | WU-B M5 Proveniência (autônomo) | evidence_index; INTENT_TIMING Driver com URL/snippet; 3 BDD; 192 testes verdes | `v0.18.2` |
+| 2026-06-06 | WU-C ICP Profile CRUD (autônomo) | HypothesisConfig/ICPProfile/ICPProfileCreate + apply_profile_to_catalog; CRUD atômico; 4 endpoints; --profile CLI; 3 BDD; 195 testes verdes | `v0.18.3` |
+| 2026-06-06 | UI CSV Export Button (autônomo) | Botão "Exportar CSV" desabilitado sem leads; click dispara download; CURRENT_RUN_ID no JS; gate verde 195 testes | PR #81 |
+| 2026-06-09 | Pivô ADR-010 + ADR-011 (sessão de dia) | ADRs+SDD+plano de cards+12 cards novos; 32 cards AWS arquivados em Backlog | — (docs) |
+| 2026-06-10 | Run noturno ADR-010 (autônomo) | **BLOQUEIO DE REDE** (`api.github.com` TCP inacessível) — PRs e board não atualizados. WU-E1+E2+T1+T2 implementadas, gate verde (217 testes), branches pushed. Lições L-062. | branches pushed, aguardando merge manual |
