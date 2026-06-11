@@ -1,7 +1,6 @@
 """App FastAPI do portal da operadora (ADR-010 / SDD §4).
 
-Scaffold WU-T1: middleware X-Robots-Tag, /healthz, injeção do DAO.
-Rotas de publicação/feedback/auth/UI são adicionadas em WU-T2..T5.
+Rotas: WU-T1 scaffold + WU-T2 publish + WU-T3 auth + WU-T4 feedback + WU-T5 UI.
 """
 
 from __future__ import annotations
@@ -17,6 +16,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from socialselling.portal.dao import BasePortalDAO
+from socialselling.portal.routers import publish as publish_router
 
 
 class NoIndexMiddleware(BaseHTTPMiddleware):
@@ -46,6 +46,9 @@ def create_portal_app(dao: BasePortalDAO) -> FastAPI:
 
     # Disponibiliza o DAO via state para os routers
     app.state.dao = dao
+
+    # Routers (ordem reflete as WUs — sem dependência circular)
+    app.include_router(publish_router.router)
 
     @app.get("/healthz", include_in_schema=False)
     async def healthz() -> JSONResponse:
