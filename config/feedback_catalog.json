@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "statuses": [
+    {
+      "status_id": "novo",
+      "label": "Novo",
+      "terminal": false,
+      "rotulo_aprendizado": "neutro",
+      "ordem": 1
+    },
+    {
+      "status_id": "interagindo",
+      "label": "Interagindo",
+      "terminal": false,
+      "rotulo_aprendizado": "neutro",
+      "ordem": 2
+    },
+    {
+      "status_id": "abordado",
+      "label": "Abordado",
+      "terminal": false,
+      "rotulo_aprendizado": "neutro",
+      "ordem": 3
+    },
+    {
+      "status_id": "respondeu",
+      "label": "Respondeu",
+      "terminal": false,
+      "rotulo_aprendizado": "positivo",
+      "ordem": 4
+    },
+    {
+      "status_id": "nao_respondeu",
+      "label": "Não respondeu",
+      "terminal": false,
+      "rotulo_aprendizado": "negativo_fraco",
+      "ordem": 5
+    },
+    {
+      "status_id": "reuniao_marcada",
+      "label": "Reunião marcada",
+      "terminal": false,
+      "rotulo_aprendizado": "positivo_forte",
+      "ordem": 6
+    },
+    {
+      "status_id": "cliente",
+      "label": "Cliente",
+      "terminal": true,
+      "rotulo_aprendizado": "positivo_forte",
+      "ordem": 7
+    },
+    {
+      "status_id": "contato_invalido",
+      "label": "Contato inválido",
+      "terminal": true,
+      "rotulo_aprendizado": "qualidade_dado",
+      "ordem": 8
+    },
+    {
+      "status_id": "fora_do_perfil",
+      "label": "Fora do perfil",
+      "terminal": true,
+      "rotulo_aprendizado": "negativo_fit",
+      "ordem": 9
+    }
+  ]
+}
