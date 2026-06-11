@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **Aprovado** |
+| Status | **Aprovado** — **Dormente — sem pegada AWS no piloto (ADR-010)** |
 | Data | 2026-06-07 |
 | Decisores | Dono do produto + Staff Engineer/Arquiteto |
 | Complementa | **ADR-008** (MVP serverless + IaC bimodal) |
