@@ -16,6 +16,12 @@ Backlog ──[ DoR ]──► Todo ──(aprovação humana)──► (run peg
 
 - **Backlog → Todo:** a card precisa satisfazer **100% do DoR**. Mover para Todo = "aprovo o
   desenvolvimento autônomo disto". **Só humano move Backlog→Todo** (o run nunca se auto-aprova).
+- **WIP de especificação — just-in-time (Revisão de Processo #001/P3):** o **Todo mantém no máximo
+  ~5 cards** com DoR 100%; o restante fica no **Backlog como título de 1 linha** (sem DoR
+  detalhado). O DoR completo só é preenchido quando a card entra na janela de execução (Todo com
+  <3 cards → sessão de dia repõe a partir do Backlog — *puxado*, não empurrado). Motivo: DoR
+  antecipado é investimento perecível — em 2026-06 um lote de 27+ cards AWS totalmente
+  especificados foi suspenso por pivô (ADR-010) dois dias depois.
 - **Todo → In Progress:** o run autônomo pega a card de maior prioridade. **Antes de codar**, ele
   **revalida o DoR**; se algo essencial faltar (ambiguidade, contrato indefinido, fixture/rede não
   resolvida), ele **não adivinha** — marca `BLOCKED:` no `PROGRESS.md`, devolve a card para Backlog

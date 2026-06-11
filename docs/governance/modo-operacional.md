@@ -37,6 +37,9 @@ Fora desses dois casos, implementação de produto = **card/noite**.
    ao dono** até completar. **Nunca** empurrar card incompleta para Todo.
 4. Card com **DoR 100%** → criar no board e mover para **Todo** (anunciando o comando `gh`).
 5. Se a evolução for grande, **quebrar em várias cards pequenas** (1 WU cada; cabe numa janela).
+   **WIP de especificação (just-in-time):** detalhar DoR só das **~5 primeiras** (limite do Todo);
+   o resto entra no Backlog como **título de 1 linha** e só ganha DoR quando for puxado
+   (ver `dor-dod.md` §Mapa). Não especificar roadmaps inteiros de uma vez.
 6. **Auto-learning + melhoria de processo:** registrar lições e, quando houver oportunidade de
    deixar o processo mais inteligente (template, DoR, automação, board), **propor/perguntar** ao
    dono.

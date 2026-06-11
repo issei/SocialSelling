@@ -21,6 +21,11 @@ template), `CLAUDE.md` (§3 escopo, §4 loop, §5 guardrails), `.ai/state/PROGRE
 Capte o que o dono quer mudar e o **porquê** (qual resultado observável; como serve a "Quem devo
 abordar primeiro?"). Se for grande, planeje **quebrar em várias cards pequenas** (1 WU cada).
 
+> **WIP de especificação — just-in-time (`dor-dod.md` §Mapa):** o Todo comporta no máximo **~5
+> cards** com DoR 100%. Num roadmap grande, detalhe o DoR só da primeira fatia; o resto vira
+> **título de 1 linha no Backlog** e só ganha DoR quando for puxado (Todo com <3 cards). DoR
+> antecipado é investimento perecível (lote AWS queimado por pivô em 2026-06).
+
 ### 2. Rascunhar a card pelo template
 Use o **template de card** do `dor-dod.md` (Objetivo / Contrato / Critérios Gherkin / Fixtures /
 Fora de escopo / Dependências / DoD específico / Tamanho).
