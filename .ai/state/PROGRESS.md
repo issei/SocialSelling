@@ -4,19 +4,14 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** 🔄 **Run noturno 2026-06-10 — 4 WUs ADR-010 implementadas, branches prontas para PR manual**. `main` intacta (195 testes). Bloqueio de rede: `api.github.com` TCP inacessível — `gh pr create/merge` e `gh project item-edit` falharam; `git push` funcionou normalmente.
-- **ultima_tag_verde:** `v0.18.3` (WU-C ICP Profiles; 195 testes). Próxima tag após merge das branches ADR-010.
-- **proxima_acao:** **🚀 ROADMAP ADR-010 — branches prontas para PR + próxima WU: `WU-T3` (Auth por código de acesso)**
-  - **⚠️ AÇÃO DO DONO — criar PRs manualmente via GitHub web UI** (api.github.com bloqueada neste run). Ordem de merge (squash, base muda a cada merge):
-    1. `feat/wu-e1-canonical-entity-id` → base=`main` → merge → nova `main`
-    2. `feat/wu-e2-portal-contracts` → base=nova `main` → merge → nova `main`
-    3. `feat/wu-t1-portal-scaffold` → base=nova `main` → merge → nova `main`
-    4. `feat/wu-t2-publish-endpoint` → base=nova `main` → merge → nova `main`
-  - **Estado das branches ADR-010 (todas pushed, gate 100% verde):**
-    - ✅ **WU-E1** `core/identity.py: canonical_entity_id` — 9 BDD, 204 testes (acumulado); `feat/wu-e1-canonical-entity-id`
-    - ✅ **WU-E2** `portal/contracts.py` + `config/feedback_catalog.json` + loader — 9 BDD; `feat/wu-e2-portal-contracts`
-    - ✅ **WU-T1** scaffold portal (app FastAPI, BasePortalDAO, InMemoryDAO, PostgresDAO, /healthz) — 7 BDD; `feat/wu-t1-portal-scaffold`
-    - ✅ **WU-T2** `POST /api/publish` (Bearer, 201/409/401/422) — 6 BDD, 217 testes (acumulado); `feat/wu-t2-publish-endpoint`
+- **marco_atual:** ✅ **2026-06-11 — WU-E1/E2/T1/T2 (ADR-010) mergeadas na `main`** via PRs #93–#96 (squash, gate verde). `main` com **226 testes**. Bloqueio de `api.github.com` do run 2026-06-10 resolvido (rede normalizou no dia seguinte).
+- **ultima_tag_verde:** `v0.19.0` (ADR-010 WU-E1..T2; 226 testes).
+- **proxima_acao:** **🚀 ROADMAP ADR-010 — próxima WU: `WU-T3` (Auth por código de acesso)**
+  - **Estado das WUs ADR-010 (E1..T2 na `main`, tag `v0.19.0`):**
+    - ✅ **WU-E1** `core/identity.py: canonical_entity_id` — 9 BDD; PR #93
+    - ✅ **WU-E2** `portal/contracts.py` + `config/feedback_catalog.json` + loader — 9 BDD; PR #94
+    - ✅ **WU-T1** scaffold portal (app FastAPI, BasePortalDAO, InMemoryDAO, PostgresDAO, /healthz) — 7 BDD; PR #95
+    - ✅ **WU-T2** `POST /api/publish` (Bearer, 201/409/401/422) — 6 BDD; PR #96
     - ⏳ **WU-T3** Auth por código (POST /login, cookie assinado, POST /logout, guarda de sessão) — **próxima**
     - ⏳ WU-T4 APIs de feedback (POST lead/feedback + GET /api/feedback cursor)
     - ⏳ WU-T5 UI Jinja2 (carteira + lead card)
@@ -29,8 +24,8 @@
   - **Contas criadas pelo dono (2026-06-09):** Render free + Neon Postgres free (projeto "socialselling", região AWS us-east-1). Domínio `selling.issei.com.br` (CNAME) planejado. **WU-X2 = ação do dono** (CNAME + env vars + seed SQL).
   - **Na prateleira:** Cognito **WU-X1 ✅** (User Pool `us-east-1_o17XMPejk` + app client). Sem uso no piloto (auth = código de acesso + cookie assinado).
   - ADRs: `docs/decisions/ADR-010-piloto-portal-operadora.md`, `ADR-011-processo-agentico-de-referencia.md`. SDD: `docs/specs/portal-operadora-piloto-sdd.md`. Plano: `docs/planning/adr-010-backlog-plan.md`.
-- **wu_em_andamento:** — (branch T2 pushed; aguardando merge pelo dono)
-- **passo_atual:** — (todas 4 branches pushed; `main` verde 195 testes)
+- **wu_em_andamento:** — (nenhuma; próxima = WU-T3)
+- **passo_atual:** — (`main` verde 226 testes, tag `v0.19.0`)
 
 ### Status de implementação das specs
 | Spec | Estado | Tags |
@@ -39,13 +34,12 @@
 | ADR-005 cognição (batch + orçamento RPD + ondas resumíveis) | ✅ core; determinístico-primeiro diferido | `v0.15.1` |
 | ADR-006 corpus (acumular + upsert idempotente + ranked view) | ✅ core; acumulação + ondas + process-only-new | `v0.14.0`,`v0.15.0`,`v0.17.0` |
 | ADR-007 aprendizado por feedback (like/dislike → regressão treina e reajusta pesos) | ✅ core (`w_fit`/`w_intent`) | `v0.17.0` |
-| ADR-010 portal da operadora | 🔄 **em execução** — WU-E1/E2/T1/T2 prontas (branches); T3..E5 pendentes | — (branches) |
+| ADR-010 portal da operadora | 🔄 **em execução** — WU-E1/E2/T1/T2 na `main`; T3..E5 pendentes | `v0.19.0` |
 | ADR-003 LangGraph (motor async opcional) | ⏸️ diferido | — |
 
-- **branch atual:** `feat/wu-t2-publish-endpoint`
+- **branch atual:** `main`
 - **bloqueios:**
-  - **`api.github.com` TCP inacessível neste run** — PRs e board precisam de ação manual do dono. `git push` ao `github.com` funcionou normalmente.
-  - **Apollo pago deixou de ser bloqueio (ADR-010)** — piloto Tavily-only.
+  - Nenhum ativo. (`api.github.com` voltou em 2026-06-11; Apollo pago deixou de ser bloqueio — piloto Tavily-only.)
 - **board (espelho):** GitHub Project #1 "SocialSelling — SDD Roadmap". Colunas atuais no board podem estar desatualizadas (não foi possível mover cards via `gh` neste run). O estado real é este PROGRESS.md.
 
 ### Plano de orquestração ADR-010 (modo bypass)
@@ -90,3 +84,4 @@ Falha de gate = não merge. Flakiness = falha (zero tolerância).
 | 2026-06-06 | UI CSV Export Button (autônomo) | Botão "Exportar CSV" desabilitado sem leads; click dispara download; CURRENT_RUN_ID no JS; gate verde 195 testes | PR #81 |
 | 2026-06-09 | Pivô ADR-010 + ADR-011 (sessão de dia) | ADRs+SDD+plano de cards+12 cards novos; 32 cards AWS arquivados em Backlog | — (docs) |
 | 2026-06-10 | Run noturno ADR-010 (autônomo) | **BLOQUEIO DE REDE** (`api.github.com` TCP inacessível) — PRs e board não atualizados. WU-E1+E2+T1+T2 implementadas, gate verde (217 testes), branches pushed. Lições L-062. | branches pushed, aguardando merge manual |
+| 2026-06-11 | Desbloqueio PRs ADR-010 (sessão de dia) | Rede normalizada; PRs #93–#96 criados e mergeados em ordem (squash + update-branch; conflitos de squash na T2 resolvidos localmente, gate verde). `main` = 226 testes. Board sincronizado. | `v0.19.0` |
