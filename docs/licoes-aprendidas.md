@@ -181,6 +181,20 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 
 - **L-063 | Infra | `api.github.com` pode ficar inacessível (TCP timeout) enquanto `github.com` e `api.github.com` respondendo ao ICMP ping.** O token `gh` armazenado no keyring pode mostrar "invalid" como sintoma do timeout, não de token expirado. Verificar com `curl -v https://api.github.com/user` antes de concluir que token é inválido. Mitigação: em runs autônomos, detectar o bloqueio e continuar com `git push` direto; documentar branches para PR manual pelo dono.
 
+- **L-064 | gh/Windows | Tooling de board no Windows tem 3 pegadinhas encadeadas.** (1) `gh project
+  item-edit` em **draft issue** exige `--title` JUNTO com `--body` (só body → erro "Title can't be
+  blank"); buscar o `content.id` (`DI_...`) via `item-list --format json`, não o `PVTI_...`.
+  (2) `subprocess` no Python/Windows decodifica em cp1252 por padrão — `capture_output` de `gh`
+  com acentos/emoji quebra; passar `encoding="utf-8"`. (3) Heredoc bash (`<<'EOF'`) via tool no
+  Windows quebra com CRLF (delimitador nunca casa); para corpos longos, escrever ARQUIVO e usar
+  `--body "$(cat f)"`. E `jq` não existe standalone — usar o `--jq` embutido do `gh` ou `py`.
+- **L-065 | Privacidade | REPO PÚBLICO: dados de prospects (nomes, Instagram, scores) NUNCA são
+  commitados.** `data/corpus/leads_corpus.json` contém PII de pessoas reais; o repo é público —
+  commitar = publicar dossiê indexável (LGPD). **Antes de versionar qualquer `data/`, checar
+  `gh repo view --json visibility` e inspecionar o conteúdo.** Decisão de versionamento do corpus
+  exige: repo privado, OU anonimização, OU gitignore (corpus fica só local). Pendente com o dono
+  (Revisão #001/P4c).
+
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
 - `gate.ps1`/`gate.sh` so passam apos `pip install -e ".[dev]"` num venv.

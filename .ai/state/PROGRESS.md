@@ -4,7 +4,7 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **2026-06-11 — WU-E1/E2/T1/T2 (ADR-010) mergeadas na `main`** via PRs #93–#96 (squash, gate verde). `main` com **226 testes**. Bloqueio de `api.github.com` do run 2026-06-10 resolvido (rede normalizou no dia seguinte).
+- **marco_atual:** ✅ **2026-06-11 — WU-E1/E2/T1/T2 (ADR-010) mergeadas na `main`** via PRs #93–#96 (squash, gate verde). `main` com **226 testes**. Bloqueio de `api.github.com` do run 2026-06-10 resolvido. **À tarde: Revisão de Processo #001** (`docs/analysis/process-reviews/`) executada — cards P1/P2+P5/P3/P4a/P7 concluídos (PRs #98–#101 + board), skill `revisao-processo` criada, 34 cards AWS arquivados com prefixo `[ICEBOX-ADR008]`, Backlog ativo = 5 cards.
 - **ultima_tag_verde:** `v0.19.0` (ADR-010 WU-E1..T2; 226 testes).
 - **proxima_acao:** **🚀 ROADMAP ADR-010 — próxima WU: `WU-T3` (Auth por código de acesso)**
   - **Estado das WUs ADR-010 (E1..T2 na `main`, tag `v0.19.0`):**
@@ -26,6 +26,12 @@
   - ADRs: `docs/decisions/ADR-010-piloto-portal-operadora.md`, `ADR-011-processo-agentico-de-referencia.md`. SDD: `docs/specs/portal-operadora-piloto-sdd.md`. Plano: `docs/planning/adr-010-backlog-plan.md`.
 - **wu_em_andamento:** — (nenhuma; próxima = WU-T3)
 - **passo_atual:** — (`main` verde 226 testes, tag `v0.19.0`)
+- **pendências de processo (Revisão #001):**
+  - **P4c parcial:** worktrees órfãs removidas ✅; **`data/corpus/` NÃO commitado** — repo é
+    **PÚBLICO** e o corpus contém dados pessoais de prospects (nomes, Instagram). Aguardando
+    decisão do dono (gitignore vs repo privado vs anonimizar). Card em In Progress.
+  - **P4b** (lições dedup+validador) e **P6** (`ship_wu.ps1`) em Todo para o run noturno.
+  - **P8** (cron 22:00) desbloqueado → Todo; ativação = sessão de dia com o dono.
 
 ### Status de implementação das specs
 | Spec | Estado | Tags |
@@ -85,3 +91,4 @@ Falha de gate = não merge. Flakiness = falha (zero tolerância).
 | 2026-06-09 | Pivô ADR-010 + ADR-011 (sessão de dia) | ADRs+SDD+plano de cards+12 cards novos; 32 cards AWS arquivados em Backlog | — (docs) |
 | 2026-06-10 | Run noturno ADR-010 (autônomo) | **BLOQUEIO DE REDE** (`api.github.com` TCP inacessível) — PRs e board não atualizados. WU-E1+E2+T1+T2 implementadas, gate verde (217 testes), branches pushed. Lições L-062. | branches pushed, aguardando merge manual |
 | 2026-06-11 | Desbloqueio PRs ADR-010 (sessão de dia) | Rede normalizada; PRs #93–#96 criados e mergeados em ordem (squash + update-branch; conflitos de squash na T2 resolvidos localmente, gate verde). `main` = 226 testes. Board sincronizado. | `v0.19.0` |
+| 2026-06-11 | Revisão de Processo #001 (sessão de dia) | Relatório histórico + skill `revisao-processo` (#98); 9 cards P especificados; executados: P1 (já atendido pelos merges), P2+P5 skill v2 (#99), P3 WIP just-in-time (#100), P4a icebox 34 cards AWS, P7 allowlist (#101), P4c parcial (worktrees ✅; corpus RETIDO — repo público + PII). P4b/P6 → noite; P8 desbloqueado. Lições L-064/065. | PRs #98–#101 |
