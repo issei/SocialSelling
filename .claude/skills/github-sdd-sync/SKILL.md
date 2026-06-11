@@ -81,8 +81,11 @@ satisfeito: BDD verde+deterministico, fixtures commitadas (sem rede), gate compl
 invariantes (§3) e escopo (§5) preservados, PROGRESS + licoes atualizados.
 - Branch por mudanca (`feat/...`/`fix/...`), commit referenciando os cenarios cobertos. **Nunca**
   commit direto na `main`. PR: `gh pr create --base main --fill` → `gh pr merge --squash --auto --delete-branch`.
-- Atualize `.ai/state/PROGRESS.md` (WU concluida, `proxima_acao`, `ultima_tag_verde`, Historico) e
-  as licoes — **no mesmo PR**.
+- **Bookkeeping SEPARADO (Revisao de Processo #001/P2):** `PROGRESS.md` e `licoes-aprendidas.md`
+  **NUNCA** entram em branch de WU — arquivos globais em branch empilhada geram conflito de squash
+  em cadeia (visto em 2026-06-11, PR #96). Acumule as anotacoes e entregue TUDO num unico PR
+  `docs/bookkeeping-<data>` ao **fim do run** (WU concluida, `proxima_acao`, `ultima_tag_verde`,
+  Historico, licoes). Se a rede bloquear PRs, a branch `docs/` fica pushed sozinha.
 - Board (se houver): **so depois do merge** com CI verde, mova o card para **Done** (link do PR no
   corpo). Tag `vX.Y.Z` se a WU fechou um marco.
 - **Fail-closed (DoD §9):** gate vermelho apos 2 tentativas / bloqueio externo → **nao** marque
@@ -92,6 +95,17 @@ invariantes (§3) e escopo (§5) preservados, PROGRESS + licoes atualizados.
 ### 6. Auto-learning (sempre ao final)
 Acrescente aprendizados em `docs/licoes-aprendidas.md` (formato `L-NNN`). Passo repetido/
 automatizavel → proponha script em `scripts/` ou melhoria nesta skill.
+
+## Economia de contexto/tokens (Revisao de Processo #001/P5 — plano Pro)
+- **Leitura minima por WU:** leia `PROGRESS.md` + o card + os arquivos que a WU toca. Dos docs do
+  cabecalho, leia **so as secoes pertinentes a WU** — NAO re-leia SDDs inteiros de modulos ja
+  implementados nem o historico completo do PROGRESS.
+- **1 WU por contexto:** ao concluir uma WU (PR + merge), continue para a proxima em **contexto
+  limpo** (`/clear` ou sessao nova). Contexto acumulado de varias WUs = tokens caros e atencao
+  diluida.
+- **Sem fan-out de agentes em background** (L-039/040/041): agentes paralelos travam em prompt de
+  permissao e worktrees sem `.venv`. Padrao: execucao **sequencial** no main loop; se delegar a um
+  agente, ele **so escreve arquivos** — gate/commit/PR ficam no main loop.
 
 ## Regras de ouro
 - Uma WU por vez; so avance com o gate verde.
