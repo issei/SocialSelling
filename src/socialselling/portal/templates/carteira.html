@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Carteira — Portal SocialSelling{% endblock %}
+{% block content %}
+<h1>Minha Carteira</h1>
+{% if not items %}
+  <p class="missing">Nenhum lead na carteira ainda.</p>
+{% else %}
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Empresa</th>
+      <th>Status</th>
+      <th>Situação</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td><a href="/lead/{{ item.lead.entity_id }}">{{ item.lead.company }}</a></td>
+      <td>
+        <select onchange="submitStatus('{{ item.lead.entity_id }}', this.value)">
+          {% for s in catalog_statuses %}
+          <option value="{{ s.status_id }}"{% if s.status_id == item.status_id %} selected{% endif %}>{{ s.label }}</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td>
+        {% if item.em_acompanhamento %}
+          <span class="badge badge-acompanhamento">Em acompanhamento</span>
+        {% else %}
+          <span class="badge badge-novo">Novo</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+<script>
+function submitStatus(entityId, statusId) {
+  fetch('/lead/' + entityId + '/feedback', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({kind: 'status', status_id: statusId})
+  }).then(r => { if (!r.ok) console.error('Erro ao registrar status'); });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ item.lead.company }} — Portal SocialSelling{% endblock %}
+{% block content %}
+<h1>{{ item.lead.company }}</h1>
+<p>
+  {% if item.lead.segmento %}<strong>Segmento:</strong> {{ item.lead.segmento }}<br>{% endif %}
+  {% if item.lead.cidade %}<strong>Cidade:</strong> {{ item.lead.cidade }}{% if item.lead.uf %}, {{ item.lead.uf }}{% endif %}<br>{% endif %}
+  {% if item.lead.site %}<strong>Site:</strong> <a href="{{ item.lead.site }}" target="_blank" rel="noopener">{{ item.lead.site }}</a><br>{% endif %}
+  {% if item.lead.instagram %}<strong>Instagram:</strong> <a href="{{ item.lead.instagram }}" target="_blank" rel="noopener">{{ item.lead.instagram }}</a><br>{% endif %}
+  {% if item.lead.email %}<strong>E-mail:</strong> {{ item.lead.email }}<br>{% endif %}
+  {% if item.lead.telefone %}<strong>Telefone:</strong> {{ item.lead.telefone }}<br>{% endif %}
+</p>
+
+<h2>Por que este lead?</h2>
+{% if item.lead.drivers %}
+  <ul>
+  {% for d in item.lead.drivers %}
+    <li class="{% if d.impact == 'positive' %}driver-positive{% else %}driver-negative{% endif %}">
+      {{ d.text }}
+      {% for ref in d.references %}
+        {% if ref.url %}
+          — <a href="{{ ref.url }}" target="_blank" rel="noopener">{{ ref.snippet or ref.source }}</a>
+        {% else %}
+          ({{ ref.source }})
+        {% endif %}
+      {% endfor %}
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p class="missing">Nenhum sinal identificado.</p>
+{% endif %}
+
+{% if item.lead.missing_evidence %}
+<h3>Sinais ausentes</h3>
+<ul>
+  {% for m in item.lead.missing_evidence %}
+  <li class="missing">{{ m }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h2>Status atual: {{ item.status_id }}</h2>
+<select id="status-select" onchange="submitStatus(this.value)">
+  {% for s in catalog_statuses %}
+  <option value="{{ s.status_id }}"{% if s.status_id == item.status_id %} selected{% endif %}>{{ s.label }}</option>
+  {% endfor %}
+</select>
+
+<p>
+  <button onclick="submitReaction('like')">👍 Like</button>
+  <button onclick="submitReaction('dislike')">👎 Dislike</button>
+</p>
+
+{% if history %}
+<h2>Histórico</h2>
+<table>
+  <thead><tr><th>Data</th><th>Tipo</th><th>Detalhe</th></tr></thead>
+  <tbody>
+  {% for ev in history %}
+  <tr>
+    <td>{{ ev.created_at[:10] }}</td>
+    <td>{{ ev.kind }}</td>
+    <td>{{ ev.status_id or ev.reaction or '' }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<script>
+var ENTITY_ID = {{ item.lead.entity_id | tojson }};
+function submitStatus(statusId) {
+  fetch('/lead/' + ENTITY_ID + '/feedback', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({kind: 'status', status_id: statusId})
+  }).then(r => { if (!r.ok) console.error('Erro ao registrar status'); });
+}
+function submitReaction(reaction) {
+  fetch('/lead/' + ENTITY_ID + '/feedback', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({kind: 'reaction', reaction: reaction})
+  }).then(r => { if (!r.ok) console.error('Erro ao registrar reação'); });
+}
+</script>
+{% endblock %}
