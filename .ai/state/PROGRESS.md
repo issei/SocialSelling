@@ -4,18 +4,18 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **2026-06-11 — WU-E1/E2/T1/T2 (ADR-010) mergeadas na `main`** via PRs #93–#96 (squash, gate verde). `main` com **226 testes**. Bloqueio de `api.github.com` do run 2026-06-10 resolvido. **À tarde: Revisão de Processo #001** (`docs/analysis/process-reviews/`) executada — cards P1/P2+P5/P3/P4a/P7 concluídos (PRs #98–#101 + board), skill `revisao-processo` criada, 34 cards AWS arquivados com prefixo `[ICEBOX-ADR008]`, Backlog ativo = 5 cards.
-- **ultima_tag_verde:** `v0.19.0` (ADR-010 WU-E1..T2; 226 testes).
-- **proxima_acao:** **🚀 ROADMAP ADR-010 — próxima WU: `WU-T3` (Auth por código de acesso)**
-  - **Estado das WUs ADR-010 (E1..T2 na `main`, tag `v0.19.0`):**
+- **marco_atual:** ✅ **2026-06-12 — WU-T3/T4/T5 + P4b + P6 mergeados na `main`** via PRs #104–#108 (squash, gate verde). `main` com **241 testes**. Tag `v0.20.0`. Todo o backlog de Revisão #001 concluído (P4b/P6 fechados esta noite).
+- **ultima_tag_verde:** `v0.20.0` (ADR-010 WU-E1..T5 + processo P4b/P6; 241 testes).
+- **proxima_acao:** **🚀 ROADMAP ADR-010 — próxima WU: `WU-E3` (CLI publish)**
+  - **Estado das WUs ADR-010 (`main`, tag `v0.20.0`):**
     - ✅ **WU-E1** `core/identity.py: canonical_entity_id` — 9 BDD; PR #93
     - ✅ **WU-E2** `portal/contracts.py` + `config/feedback_catalog.json` + loader — 9 BDD; PR #94
     - ✅ **WU-T1** scaffold portal (app FastAPI, BasePortalDAO, InMemoryDAO, PostgresDAO, /healthz) — 7 BDD; PR #95
     - ✅ **WU-T2** `POST /api/publish` (Bearer, 201/409/401/422) — 6 BDD; PR #96
-    - ⏳ **WU-T3** Auth por código (POST /login, cookie assinado, POST /logout, guarda de sessão) — **próxima**
-    - ⏳ WU-T4 APIs de feedback (POST lead/feedback + GET /api/feedback cursor)
-    - ⏳ WU-T5 UI Jinja2 (carteira + lead card)
-    - ⏳ WU-E3 CLI publish
+    - ✅ **WU-T3** Auth por código (POST /login, cookie assinado, POST /logout, guarda de sessão) — 4 BDD; PR #104
+    - ✅ **WU-T4** APIs de feedback (POST lead/feedback + GET /api/feedback cursor) — 5 BDD; PR #105
+    - ✅ **WU-T5** UI Jinja2 (GET /carteira + GET /lead/{entity_id}, CarteiraItem, build_carteira) — 6 BDD; PR #106
+    - ⏳ **WU-E3** CLI publish — **próxima**
     - ⏳ WU-E4 CLI pull-feedback
     - ⏳ WU-T6 render.yaml + runbook + smoke
     - ⏳ WU-E5 e2e offline
@@ -24,13 +24,13 @@
   - **Contas criadas pelo dono (2026-06-09):** Render free + Neon Postgres free (projeto "socialselling", região AWS us-east-1). Domínio `selling.issei.com.br` (CNAME) planejado. **WU-X2 = ação do dono** (CNAME + env vars + seed SQL).
   - **Na prateleira:** Cognito **WU-X1 ✅** (User Pool `us-east-1_o17XMPejk` + app client). Sem uso no piloto (auth = código de acesso + cookie assinado).
   - ADRs: `docs/decisions/ADR-010-piloto-portal-operadora.md`, `ADR-011-processo-agentico-de-referencia.md`. SDD: `docs/specs/portal-operadora-piloto-sdd.md`. Plano: `docs/planning/adr-010-backlog-plan.md`.
-- **wu_em_andamento:** — (nenhuma; próxima = WU-T3)
-- **passo_atual:** — (`main` verde 226 testes, tag `v0.19.0`)
+- **wu_em_andamento:** — (nenhuma; próxima = WU-E3)
+- **passo_atual:** — (`main` verde 241 testes, tag `v0.20.0`)
 - **pendências de processo (Revisão #001):**
-  - **P4c ✅ concluído:** worktrees órfãs removidas; `data/corpus/` no **`.gitignore`** (decisão do
-    dono 2026-06-11 — repo é público e o corpus tem PII de prospects; corpus fica só local).
-  - **P4b** (lições dedup+validador) e **P6** (`ship_wu.ps1`) em Todo para o run noturno.
-  - **P8** (cron 22:00) desbloqueado → Todo; ativação = sessão de dia com o dono.
+  - ✅ **P4b** lições dedup+validador (`scripts/check_licoes.py` no gate) — PR #107
+  - ✅ **P4c** worktrees órfãs removidas; `data/corpus/` no `.gitignore` — PR #103
+  - ✅ **P6** `scripts/ship_wu.ps1` cerimônia de entrega — PR #108
+  - **P8** (cron 22:00) desbloqueado → Backlog; ativação = sessão de dia com o dono. **Board ativo = 0 cards Todo/In Progress.**
 
 ### Status de implementação das specs
 | Spec | Estado | Tags |
@@ -91,3 +91,4 @@ Falha de gate = não merge. Flakiness = falha (zero tolerância).
 | 2026-06-10 | Run noturno ADR-010 (autônomo) | **BLOQUEIO DE REDE** (`api.github.com` TCP inacessível) — PRs e board não atualizados. WU-E1+E2+T1+T2 implementadas, gate verde (217 testes), branches pushed. Lições L-062. | branches pushed, aguardando merge manual |
 | 2026-06-11 | Desbloqueio PRs ADR-010 (sessão de dia) | Rede normalizada; PRs #93–#96 criados e mergeados em ordem (squash + update-branch; conflitos de squash na T2 resolvidos localmente, gate verde). `main` = 226 testes. Board sincronizado. | `v0.19.0` |
 | 2026-06-11 | Revisão de Processo #001 (sessão de dia) | Relatório histórico + skill `revisao-processo` (#98); 9 cards P especificados; executados: P1 (já atendido pelos merges), P2+P5 skill v2 (#99), P3 WIP just-in-time (#100), P4a icebox 34 cards AWS, P7 allowlist (#101), P4c parcial (worktrees ✅; corpus RETIDO — repo público + PII). P4b/P6 → noite; P8 desbloqueado. Lições L-064/065. | PRs #98–#101 |
+| 2026-06-12 | Run noturno ADR-010 (autônomo) | WU-T3 (auth cookie assinado, 4 BDD), WU-T4 (feedback APIs, 5 BDD), WU-T5 (carteira+lead card Jinja2, 6 BDD) mergeadas via PRs #104–#106. P4b (lições dedup + check_licoes.py no gate, PR #107) e P6 (ship_wu.ps1, PR #108) concluídos. 241 testes. Lições L-069/070/071. | `v0.20.0` |
