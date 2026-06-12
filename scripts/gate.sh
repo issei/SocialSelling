@@ -3,6 +3,9 @@
 # Uso:  ./scripts/gate.sh   (Linux / WSL)
 set -euo pipefail
 
+echo "== check_licoes =="
+python scripts/check_licoes.py
+
 echo "== ruff =="
 python -m ruff check .
 
