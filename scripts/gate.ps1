@@ -8,6 +8,10 @@ $venvPy = Join-Path $PSScriptRoot "..\.venv\Scripts\python.exe"
 $py = if (Test-Path $venvPy) { $venvPy } else { "py" }
 Write-Host "Python: $py" -ForegroundColor DarkGray
 
+Write-Host "== check_licoes ==" -ForegroundColor Cyan
+& $py scripts/check_licoes.py
+if ($LASTEXITCODE -ne 0) { Write-Host "check_licoes FALHOU" -ForegroundColor Red; exit 1 }
+
 Write-Host "== ruff ==" -ForegroundColor Cyan
 & $py -m ruff check .
 if ($LASTEXITCODE -ne 0) { Write-Host "ruff FALHOU" -ForegroundColor Red; exit 1 }

@@ -148,7 +148,7 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
 - **L-041 | Diagnóstico | Para diagnosticar agente travado, inspecione o FILESYSTEM da worktree** (`git status`, `ls` dos arquivos-alvo) em vez de ler o `.output` (transcript JSONL estoura o contexto). Revela exatamente até onde o agente chegou.
 
 ## Pré-condições externas (billing / entitlement)
-- **L-056 | Apollo | A master API (`mixed_people/search` etc.) é INACESSÍVEL no plano Free** —
+- **L-066 | Apollo | A master API (`mixed_people/search` etc.) é INACESSÍVEL no plano Free** —
   retorna `HTTP 403 {"error_code":"API_INACCESSIBLE", "error":"... not accessible with this
   api_key on a free plan. Please upgrade your plan ..."}`. Confirmado com chave real (06/2026).
   **Pegadinha:** People Search aparece como **"0 crédito"** na interface web, o que induz a crer
@@ -162,7 +162,7 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   Resolve o item aberto antigo ("acesso à API no Free é incerto").
 
 ## Processo / modo de trabalho
-- **L-057 | Processo | Modo operacional dia/noite (decidido 06/2026):** sessões interativas de **dia
+- **L-067 | Processo | Modo operacional dia/noite (decidido 06/2026):** sessões interativas de **dia
   só especificam e geram cards** (autoria, barata em tokens) — **não desenvolvem o produto**; a
   implementação é delegada ao **run noturno** das 22:00 (`github-sdd-sync`). Otimiza a cota do Pro.
   **Fronteira:** só **código de produto** (`src/`, `tests/`, fixtures) vira card; specs/ADRs/docs/
@@ -172,14 +172,14 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   Ver `docs/governance/modo-operacional.md`.
 
 - **L-058 | Web/CSV | BOM UTF-8 como literal `"﻿"` (U+FEFF) em `io.StringIO` + `csv.writer` funciona** e produz bytes `\xef\xbb\xbf` corretos. `csv.QUOTE_MINIMAL` alinha com RFC-4180; sem necessidade de `QUOTE_ALL`. Testar com `content[:3] == b"\xef\xbb\xbf"` é a asserção mais direta (bytes, não depende de decodificação).
-- **L-060 | Ambiente | Skill `especificar-card` exige Claude local (desktop/CLI), não web remoto.** O `gh project item-create` (necessário para criar cards no board) requer o `gh` CLI, ausente no container remoto. No ambiente web, `mcp__github__issue_write` cria issues soltas — não project items — e o usuário precisa linkar manualmente. Aplicar: usar Claude local para toda tarefa de autoria de card; reservar o ambiente web para runs de desenvolvimento (`github-sdd-sync`).
 - **L-059 | PowerShell/gh | `gh pr create --body-file <arquivo>` evita o problema de parsing do heredoc** quando o corpo tem parênteses, aspas ou palavras que o PowerShell interpreta como operadores. Gravar o body em arquivo temporário e limpar ao fim.
+- **L-060 | Ambiente | Skill `especificar-card` exige Claude local (desktop/CLI), não web remoto.** O `gh project item-create` (necessário para criar cards no board) requer o `gh` CLI, ausente no container remoto. No ambiente web, `mcp__github__issue_write` cria issues soltas — não project items — e o usuário precisa linkar manualmente. Aplicar: usar Claude local para toda tarefa de autoria de card; reservar o ambiente web para runs de desenvolvimento (`github-sdd-sync`).
 - **L-061 | Corpus/M2 | process-only-new funciona por domínio de `company.website`, não de `source_url` da evidência.** O domínio de `source_url` pode ser um agregador de notícias (exame.com) e não identifica a empresa. O domínio de `company.website` (extraído pelo Gemini na inferência) é a chave canônica. Portanto: armazenar no cache keyed por website-domain; fazer lookup pelo source_url domain = skip só quando a evidência É do próprio site da empresa (o que é correto — evidência de noticiário sempre passa pelo Gemini). Aplicar: ao reutilizar extração, aceitar que a otimização é parcial (cobre evidências do site próprio); documentar como feature parcial, não total.
 
 - **L-063 | Web/Profiles | `apply_profile_to_catalog` deve ficar em `schemas.py` (puro), não em `services.py`.** `services.py` já importa de `orchestrator.py`; se `orchestrator.py` também importasse de `services.py`, criaria ciclo. A solução é colocar funções puras (sem IO) em `schemas.py` onde ambos podem importar sem circular. Aplicar: funções de transformação pura que precisam ser compartilhadas entre camadas devem viver no módulo de tipos/schemas, não no de serviços.
 - **L-062 | M5/XAI | `evidence_index` como `dict | None` (default `None`) é mais seguro que `{}` como default mutável.** Mutable default args em Python são compartilhados entre chamadas; usar `None` e resolver `idx = evidence_index or {}` internamente evita bug sutil de estado compartilhado. Aplicar: qualquer parâmetro dict/list opcional deve usar `None` como default.
 
-- **L-063 | Infra | `api.github.com` pode ficar inacessível (TCP timeout) enquanto `github.com` e `api.github.com` respondendo ao ICMP ping.** O token `gh` armazenado no keyring pode mostrar "invalid" como sintoma do timeout, não de token expirado. Verificar com `curl -v https://api.github.com/user` antes de concluir que token é inválido. Mitigação: em runs autônomos, detectar o bloqueio e continuar com `git push` direto; documentar branches para PR manual pelo dono.
+- **L-068 | Infra | `api.github.com` pode ficar inacessível (TCP timeout) enquanto `github.com` e `api.github.com` respondendo ao ICMP ping.** O token `gh` armazenado no keyring pode mostrar "invalid" como sintoma do timeout, não de token expirado. Verificar com `curl -v https://api.github.com/user` antes de concluir que token é inválido. Mitigação: em runs autônomos, detectar o bloqueio e continuar com `git push` direto; documentar branches para PR manual pelo dono.
 
 - **L-064 | gh/Windows | Tooling de board no Windows tem 3 pegadinhas encadeadas.** (1) `gh project
   item-edit` em **draft issue** exige `--title` JUNTO com `--body` (só body → erro "Title can't be
@@ -194,6 +194,10 @@ Formato: `L-NNN | Categoria | Licao | Como aplicar`.
   `gh repo view --json visibility` e inspecionar o conteúdo.** Decisão de versionamento do corpus
   exige: repo privado, OU anonimização, OU gitignore (corpus fica só local). **Decidido
   (2026-06-11): `data/corpus/` no `.gitignore`** — corpus permanece apenas local (Revisão #001/P4c).
+
+- **L-069 | Portal/Auth | `SessionMiddleware` com `https_only=True` exige `TestClient(app, base_url="https://testserver")` para que o cookie com atributo `Secure` seja enviado de volta nas requisições subsequentes.** Com `http://testserver` (padrão) o httpx não retransmite cookies Secure e as rotas protegidas por `require_session` retornam 303 inesperado. Verificar o atributo com `assert "Secure" in response.headers["set-cookie"]`. Aplicar: em todo teste de auth do portal, inicializar o TestClient com base_url https.
+- **L-070 | Portal/Feedback | Para testar respostas 4xx do FastAPI com TestClient, usar `raise_server_exceptions=False`.** Sem isso, o cliente propaga a `HTTPException` como exceção Python e o `response.status_code` nunca é avaliado. Também: devolver 303 via `HTTPException(status_code=303, headers={"Location":"/login"})` (não `RedirectResponse`) de dentro de um `Depends` funciona corretamente no FastAPI e é verificável sem `allow_redirects=False`.
+- **L-071 | Portal/Templates | Starlette ≥ 0.20 (incluindo 1.x) inverteu a assinatura do `TemplateResponse`:** `request` agora é o PRIMEIRO argumento; o nome do template é o segundo; o contexto (terceiro) NÃO precisa mais da chave `"request"`. Chamada correta: `templates.TemplateResponse(request, "template.html", {"key": value})`. O mypy detecta a inversão antiga com `arg-type`; verificar antes de deploiar.
 
 ## Aberto / a confirmar
 - Fixtures gravadas de Tavily/Gemini ainda nao existem (necessarias para o BDD de M1/M2).
