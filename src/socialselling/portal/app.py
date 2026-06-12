@@ -19,6 +19,7 @@ from starlette.responses import Response
 
 from socialselling.portal.dao import BasePortalDAO
 from socialselling.portal.routers import auth as auth_router
+from socialselling.portal.routers import feedback as feedback_router
 from socialselling.portal.routers import publish as publish_router
 from socialselling.portal.routers.auth import require_session
 
@@ -65,6 +66,7 @@ def create_portal_app(dao: BasePortalDAO, *, https_only: bool = True) -> FastAPI
     # Routers (ordem reflete as WUs — sem dependência circular)
     app.include_router(publish_router.router)
     app.include_router(auth_router.router)
+    app.include_router(feedback_router.router)
 
     @app.get("/healthz", include_in_schema=False)
     async def healthz() -> HTMLResponse:
