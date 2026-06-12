@@ -181,3 +181,17 @@ class Operator(BaseModel):
     nome: str
     code_hash: str  # SHA-256 hex do código de acesso (§5.3)
     profile_id: str  # ICP Profile da operadora — escopo de TUDO que ela vê
+
+
+# --------------------------------------------------------------------------- #
+# Carteira (modelo de visão portal-interno — SDD §4.1)                        #
+# --------------------------------------------------------------------------- #
+class CarteiraItem(BaseModel):
+    """Lead na carteira da operadora (visão montada pelo serviço, nunca persistida)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    lead: PublishedLead
+    status_id: str  # "novo" quando não há evento de status (Open-World)
+    em_acompanhamento: bool  # True ⟺ lead só existe em snapshot anterior
+    run_id: str  # snapshot de origem da versão exibida do lead

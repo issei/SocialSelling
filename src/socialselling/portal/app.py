@@ -10,7 +10,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any, cast
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -19,9 +19,9 @@ from starlette.responses import Response
 
 from socialselling.portal.dao import BasePortalDAO
 from socialselling.portal.routers import auth as auth_router
+from socialselling.portal.routers import carteira as carteira_router
 from socialselling.portal.routers import feedback as feedback_router
 from socialselling.portal.routers import publish as publish_router
-from socialselling.portal.routers.auth import require_session
 
 
 class NoIndexMiddleware(BaseHTTPMiddleware):
@@ -67,16 +67,10 @@ def create_portal_app(dao: BasePortalDAO, *, https_only: bool = True) -> FastAPI
     app.include_router(publish_router.router)
     app.include_router(auth_router.router)
     app.include_router(feedback_router.router)
+    app.include_router(carteira_router.router)
 
     @app.get("/healthz", include_in_schema=False)
     async def healthz() -> HTMLResponse:
         return HTMLResponse('{"status":"ok"}', media_type="application/json")
-
-    # Stub /carteira (WU-T3: guarda de sessão; conteúdo completo em WU-T5)
-    @app.get("/carteira", include_in_schema=False)
-    async def carteira_stub(
-        _operator_id: str = Depends(require_session),  # noqa: B008
-    ) -> HTMLResponse:
-        return HTMLResponse("<html><body><h1>Carteira</h1></body></html>")
 
     return app
