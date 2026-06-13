@@ -4,24 +4,25 @@
 > Contrato de campos em docs/planning/autonomous-ops.md §2.
 
 ## Estado atual
-- **marco_atual:** ✅ **2026-06-12 — WU-T3/T4/T5 + P4b + P6 mergeados na `main`** via PRs #104–#108 (squash, gate verde). `main` com **241 testes**. Tag `v0.20.0`. Todo o backlog de Revisão #001 concluído (P4b/P6 fechados esta noite).
-- **ultima_tag_verde:** `v0.20.0` (ADR-010 WU-E1..T5 + processo P4b/P6; 241 testes).
-- **proxima_acao:** **🚀 ROADMAP ADR-010 — próxima WU: `WU-E3` (CLI publish) — TODO/Alta no board**
-  - **Estado das WUs ADR-010 (`main`, tag `v0.20.0`):**
-    - ✅ **WU-E1** `core/identity.py: canonical_entity_id` — 9 BDD; PR #93
-    - ✅ **WU-E2** `portal/contracts.py` + `config/feedback_catalog.json` + loader — 9 BDD; PR #94
-    - ✅ **WU-T1** scaffold portal (app FastAPI, BasePortalDAO, InMemoryDAO, PostgresDAO, /healthz) — 7 BDD; PR #95
-    - ✅ **WU-T2** `POST /api/publish` (Bearer, 201/409/401/422) — 6 BDD; PR #96
-    - ✅ **WU-T3** Auth por código (POST /login, cookie assinado, POST /logout, guarda de sessão) — 4 BDD; PR #104
-    - ✅ **WU-T4** APIs de feedback (POST lead/feedback + GET /api/feedback cursor) — 5 BDD; PR #105
-    - ✅ **WU-T5** UI Jinja2 (GET /carteira + GET /lead/{entity_id}, CarteiraItem, build_carteira) — 6 BDD; PR #106
-    - 📋 **WU-E3** CLI publish — **TODO/Alta** (run noturno pega esta primeiro)
-    - 📋 **WU-T6** `portal/main.py` + `render.yaml` + runbook + smoke — **TODO/Alta** (bloqueador do deploy; SDD §8 corrigido via PR #110)
-    - 📋 **portal-regression** BDD smoke boot→login→carteira→logout — **TODO/Media**
-    - ⏳ WU-E4 CLI pull-feedback — Backlog (depende de E3)
-    - ⏳ WU-E5 e2e offline — Backlog (depende de E3+E4+T6)
-    - 🔲 WU-X2 [externo/dono] Deploy Render + DNS + seed — Backlog (depende de T6)
-  - **Bug corrigido (2026-06-13):** SDD §8 prescrevia start command `portal.app:app` (factory sem instância) — corrigido para `portal.main:app`; WU-T6 agora inclui `portal/main.py` explicitamente. PR #110.
+- **marco_atual:** ✅ **2026-06-13 — WU-E3 + WU-T6 + portal-regression mergeados na `main`** via PRs #110–#113 (run noturno antecipado, autorizado pelo dono; squash, gate verde). `main` com **252 testes**. **Deploy do portal pronto para WU-X2** (ação do dono).
+- **ultima_tag_verde:** `v0.20.0` (próxima tag candidata: `v0.21.0` — fechar com WU-E4/E5 ou marcar agora o deploy-ready).
+- **proxima_acao:** **🚀 WU-E4 (CLI pull-feedback)** — fecha o loop motor↔portal (puxa tabulações → ADR-007 + calibração). Em paralelo, **WU-X2 (dono): deploy no Render** já é executável (render.yaml + runbook prontos).
+  - **Estado das WUs ADR-010 (`main`):**
+    - ✅ **WU-E1** `core/identity.py: canonical_entity_id` — PR #93
+    - ✅ **WU-E2** `portal/contracts.py` + `config/feedback_catalog.json` + loader — PR #94
+    - ✅ **WU-T1** scaffold portal (app FastAPI, BasePortalDAO, InMemoryDAO, PostgresDAO, /healthz) — PR #95
+    - ✅ **WU-T2** `POST /api/publish` (Bearer, 201/409/401/422) — PR #96
+    - ✅ **WU-T3** Auth por código (login/cookie/logout/guarda) — PR #104
+    - ✅ **WU-T4** APIs de feedback (POST lead/feedback + GET /api/feedback cursor) — PR #105
+    - ✅ **WU-T5** UI Jinja2 (GET /carteira + GET /lead/{entity_id}) — PR #106
+    - ✅ **WU-E3** CLI publish (`sync/publish.py`: top-20 sem score, run_id por conteúdo, registro local atômico, degradação limpa) — 4 BDD; PR #111
+    - ✅ **WU-T6** `portal/main.py` (ReconnectingPostgresDAO) + `render.yaml` + runbook + `smoke_portal.py` — 3 BDD; PR #112
+    - ✅ **portal-regression** smoke e2e boot→login→carteira→logout — 4 BDD; PR #113 (auto-merge)
+    - ⏳ **WU-E4** CLI pull-feedback — **próxima** (depende de E3 ✅)
+    - ⏳ WU-E5 e2e offline (publish→feedback→pull) — depende de E4
+    - 🔲 **WU-X2** [externo/dono] Deploy Render + DNS + seed — **DESBLOQUEADO** (render.yaml + runbook em `docs/runbooks/portal-piloto.md`)
+  - **Bug corrigido (2026-06-13):** SDD §8 prescrevia `portal.app:app` (factory sem instância) — corrigido p/ `portal.main:app`; `portal/main.py` criado na WU-T6. PR #110. Lições L-072/073/074.
+  - **Scripts de dev local (2026-06-12/13):** `scripts/run_portal.py`, `scripts/seed_neon.py`, `start_portal.bat` — testar o portal localmente (PostgresDAO/Neon ou InMemoryDAO). Neon já seedado com operadora Talita.
   - **🔄 PIVÔ (2026-06-09): ADR-010 + ADR-011 aprovadas (sessão de dia).** Execução roadmap AWS (ADR-008) **suspensa** — 32 cards AWS em Backlog. ADR-008 = visão futura (não revogada); ADR-009 dormente. Novo alvo: **motor local INALTERADO + portal da operadora** (`src/socialselling/portal/`; FastAPI+Jinja2+JS vanilla; Render free + Neon Postgres free). Motor nunca acessa banco — só HTTP.
   - **Contas criadas pelo dono (2026-06-09):** Render free + Neon Postgres free (projeto "socialselling", região AWS us-east-1). Domínio `selling.issei.com.br` (CNAME) planejado. **WU-X2 = ação do dono** (CNAME + env vars + seed SQL).
   - **Na prateleira:** Cognito **WU-X1 ✅** (User Pool `us-east-1_o17XMPejk` + app client). Sem uso no piloto (auth = código de acesso + cookie assinado).
