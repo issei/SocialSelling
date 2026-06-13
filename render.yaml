@@ -1,0 +1,19 @@
+# Render — IaC declarativa do portal da operadora (ADR-010, SDD §8).
+# Web Service free, região Virginia (US East, mesma do Neon free).
+# Segredos NÃO vivem aqui: env vars com `sync: false` são preenchidas no painel do Render.
+services:
+  - type: web
+    name: socialselling-portal
+    runtime: python
+    region: virginia
+    plan: free
+    buildCommand: pip install -e ".[portal]"
+    startCommand: uvicorn socialselling.portal.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: PUBLISH_TOKEN
+        sync: false
+      - key: SECRET_KEY
+        sync: false
