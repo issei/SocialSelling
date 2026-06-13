@@ -6,7 +6,7 @@
 ## Estado atual
 - **marco_atual:** ✅ **2026-06-12 — WU-T3/T4/T5 + P4b + P6 mergeados na `main`** via PRs #104–#108 (squash, gate verde). `main` com **241 testes**. Tag `v0.20.0`. Todo o backlog de Revisão #001 concluído (P4b/P6 fechados esta noite).
 - **ultima_tag_verde:** `v0.20.0` (ADR-010 WU-E1..T5 + processo P4b/P6; 241 testes).
-- **proxima_acao:** **🚀 ROADMAP ADR-010 — próxima WU: `WU-E3` (CLI publish)**
+- **proxima_acao:** **🚀 ROADMAP ADR-010 — próxima WU: `WU-E3` (CLI publish) — TODO/Alta no board**
   - **Estado das WUs ADR-010 (`main`, tag `v0.20.0`):**
     - ✅ **WU-E1** `core/identity.py: canonical_entity_id` — 9 BDD; PR #93
     - ✅ **WU-E2** `portal/contracts.py` + `config/feedback_catalog.json` + loader — 9 BDD; PR #94
@@ -15,11 +15,13 @@
     - ✅ **WU-T3** Auth por código (POST /login, cookie assinado, POST /logout, guarda de sessão) — 4 BDD; PR #104
     - ✅ **WU-T4** APIs de feedback (POST lead/feedback + GET /api/feedback cursor) — 5 BDD; PR #105
     - ✅ **WU-T5** UI Jinja2 (GET /carteira + GET /lead/{entity_id}, CarteiraItem, build_carteira) — 6 BDD; PR #106
-    - ⏳ **WU-E3** CLI publish — **próxima**
-    - ⏳ WU-E4 CLI pull-feedback
-    - ⏳ WU-T6 render.yaml + runbook + smoke
-    - ⏳ WU-E5 e2e offline
-    - 🔲 WU-X2 [externo/dono] Deploy Render + DNS + seed
+    - 📋 **WU-E3** CLI publish — **TODO/Alta** (run noturno pega esta primeiro)
+    - 📋 **WU-T6** `portal/main.py` + `render.yaml` + runbook + smoke — **TODO/Alta** (bloqueador do deploy; SDD §8 corrigido via PR #110)
+    - 📋 **portal-regression** BDD smoke boot→login→carteira→logout — **TODO/Media**
+    - ⏳ WU-E4 CLI pull-feedback — Backlog (depende de E3)
+    - ⏳ WU-E5 e2e offline — Backlog (depende de E3+E4+T6)
+    - 🔲 WU-X2 [externo/dono] Deploy Render + DNS + seed — Backlog (depende de T6)
+  - **Bug corrigido (2026-06-13):** SDD §8 prescrevia start command `portal.app:app` (factory sem instância) — corrigido para `portal.main:app`; WU-T6 agora inclui `portal/main.py` explicitamente. PR #110.
   - **🔄 PIVÔ (2026-06-09): ADR-010 + ADR-011 aprovadas (sessão de dia).** Execução roadmap AWS (ADR-008) **suspensa** — 32 cards AWS em Backlog. ADR-008 = visão futura (não revogada); ADR-009 dormente. Novo alvo: **motor local INALTERADO + portal da operadora** (`src/socialselling/portal/`; FastAPI+Jinja2+JS vanilla; Render free + Neon Postgres free). Motor nunca acessa banco — só HTTP.
   - **Contas criadas pelo dono (2026-06-09):** Render free + Neon Postgres free (projeto "socialselling", região AWS us-east-1). Domínio `selling.issei.com.br` (CNAME) planejado. **WU-X2 = ação do dono** (CNAME + env vars + seed SQL).
   - **Na prateleira:** Cognito **WU-X1 ✅** (User Pool `us-east-1_o17XMPejk` + app client). Sem uso no piloto (auth = código de acesso + cookie assinado).
