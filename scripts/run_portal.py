@@ -56,17 +56,18 @@ else:
     dao = InMemoryDAO()
     mode = "InMemoryDAO (dados perdidos ao reiniciar)"
 
-from socialselling.portal.app import create_portal_app
-import uvicorn
+import uvicorn  # noqa: E402  (import após carga do .env, por design)
+
+from socialselling.portal.app import create_portal_app  # noqa: E402
 
 app = create_portal_app(dao, https_only=False)
 
 print("=" * 50)
 print(f"  Modo:          {mode}")
 print(f"  PUBLISH_TOKEN: {PUBLISH_TOKEN[:8]}...")
-print(f"  Portal:        http://localhost:8000")
-print(f"  Login:         http://localhost:8000/login")
-print(f"  Health:        http://localhost:8000/healthz")
+print("  Portal:        http://localhost:8000")
+print("  Login:         http://localhost:8000/login")
+print("  Health:        http://localhost:8000/healthz")
 print("=" * 50)
 print("  Ctrl+C para parar\n")
 
