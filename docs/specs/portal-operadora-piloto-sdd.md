@@ -787,10 +787,11 @@ Detalhado em `docs/runbooks/portal-piloto.md` (WU-T6). Resumo:
    connection string (pooled) — vira `DATABASE_URL` **só no Render**.
 2. **Render (ação do dono — WU-X2):** Web Service free, região **Virginia (US East)** (mesma
    região do Neon), via `render.yaml`. Build `pip install -e ".[portal]"`; start
-   `uvicorn socialselling.portal.app:app --host 0.0.0.0 --port $PORT`; health check `/healthz`.
+   `uvicorn socialselling.portal.main:app --host 0.0.0.0 --port $PORT`; health check `/healthz`.
    Env vars: `DATABASE_URL`, `PUBLISH_TOKEN`, `SECRET_KEY` (gerar com
    `py -c "import secrets; print(secrets.token_urlsafe(32))"`). Free dorme após idle: primeiro
-   acesso pode levar ~1 min (aceito).
+   acesso pode levar ~1 min (aceito). **Atenção:** o Neon free suspende conexões ociosas — o
+   `portal/main.py` deve reconectar por request (nova conexão a cada lifespan ou retry automático).
 3. **Seed da operadora** (após o primeiro start criar as tabelas), via SQL editor do Neon:
    ```sql
    INSERT INTO operators (operator_id, nome, code_hash, profile_id)
@@ -834,7 +835,7 @@ deploy real, não o desenvolvimento).
 | **WU-T5** | UI da operadora (Jinja2 + JS vanilla): `GET /carteira` com a regra de visibilidade §4.1 (união, "em acompanhamento", terminais fora, ordenação determinística) e `GET /lead/{entity_id}` (drivers em linguagem natural com proveniência, `missing_evidence`, status atual + histórico, controles de status e like/dislike, **sem score**). | Cenários da carteira verdes (incluindo lead antigo não-terminal e dedupe); lead card não renderiza nenhum número de score; serviço da carteira coberto por testes determinísticos. |
 | **WU-E3** | CLI `publish` (`sync/publish.py`, §6.2): monta o top-20 do corpus ranqueado por perfil, `run_id` por hash de conteúdo, registro local atômico com scores em `data/published/`, `--dry-run` só grava local, POST com `PORTAL_PUBLISH_TOKEN`, degradação limpa quando o portal está fora do ar. | Cenários de publicação verdes com **HTTP mockado**; snapshot sem score (assert estrutural); 409 tratado como sucesso idempotente. |
 | **WU-E4** | CLI `pull-feedback` (`sync/pull_feedback.py`, §6.3): cursor em `data/feedback_events/cursor.json`, JSONL append-only, dedupe por `event_id`, consolidação reactions→`FeedbackStore` ADR-007 **por perfil** (features do registro local), statuses→`data/calibration/eventos.jsonl`, órfãos isolados, cursor atualizado atomicamente por último. | Cenários de pull verdes (feliz, cursor além do fim idempotente, órfão isolado) com HTTP mockado; reexecução não duplica nem altera arquivos. |
-| **WU-T6** | `render.yaml` (Web Service free, Virginia, build/start/health, env vars referenciadas sem valor) + runbook `docs/runbooks/portal-piloto.md` (§8 completo: Neon, seed SQL, DNS, ciclo manual, expurgo pós-pull) + `scripts/smoke_portal.py`. | `render.yaml` validado (lint YAML); runbook revisado pelo dono; smoke executável localmente contra URL arbitrária (sem rodar no gate). |
+| **WU-T6** | Entrypoint de produção `src/socialselling/portal/main.py` (lê `DATABASE_URL`/`PUBLISH_TOKEN`/`SECRET_KEY`, monta `PostgresDAO` com reconexão por request para tolerância ao idle do Neon) + `render.yaml` (Web Service free, Virginia, start `uvicorn socialselling.portal.main:app`, env vars referenciadas sem valor) + runbook `docs/runbooks/portal-piloto.md` (§8 completo: Neon, seed SQL, DNS, ciclo manual, expurgo pós-pull) + `scripts/smoke_portal.py`. | `uvicorn socialselling.portal.main:app` importa sem erro; `render.yaml` validado (lint YAML); runbook revisado pelo dono; smoke executável localmente contra URL arbitrária (sem rodar no gate). |
 | **WU-E5** | Cenário **e2e offline do loop completo**: `publish --dry-run` → snapshot injetado no portal com `InMemoryDAO` (sem rede) → login → eventos de status e reaction → `pull-feedback` contra o app de teste → consolidação verificada (FeedbackStore + calibração + cursor). Prova o contrato ponta-a-ponta dentro do gate. | Cenário e2e verde, determinístico, 100% offline; é o "smoke test ponta-a-ponta" do piloto no CI. |
 | **WU-X2** | **[Externo/dono]** Criar o Web Service no Render (região Virginia) a partir do `render.yaml`, configurar `DATABASE_URL`/`PUBLISH_TOKEN`/`SECRET_KEY`, CNAME `selling.issei.com.br`, rodar o smoke e fazer o seed da operadora Talita via SQL editor do Neon. | Smoke pós-deploy verde no domínio final; Talita loga com o código e vê a carteira publicada. |
 
