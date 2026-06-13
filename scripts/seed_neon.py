@@ -12,7 +12,6 @@ from __future__ import annotations
 import hashlib
 import os
 import sys
-import uuid
 from pathlib import Path
 
 
@@ -87,7 +86,7 @@ VALUES (%s, %s, %s, %s)
 ON CONFLICT (operator_id) DO NOTHING;
 """
 
-print(f"Conectando ao Neon...")
+print("Conectando ao Neon...")
 with psycopg.connect(DATABASE_URL) as conn:
     with conn.cursor() as cur:
         print("Criando tabelas (IF NOT EXISTS)...")
@@ -107,6 +106,6 @@ print(f"  Profile ID:    {PROFILE_ID}")
 if inserted:
     print(f"  Codigo login:  {ACCESS_CODE}   << use na tela /login")
 else:
-    print(f"  Operadora ja existia - codigo nao alterado")
+    print("  Operadora ja existia - codigo nao alterado")
     print(f"  Codigo login:  {ACCESS_CODE}   (se ainda nao foi trocado)")
 print("=" * 50)
